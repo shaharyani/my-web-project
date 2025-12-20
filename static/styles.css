@@ -1,0 +1,1080 @@
+/* General Reset */
+html{
+    scroll-behavior: smooth;
+}
+body {
+    font-family: 'Rubik', sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f0f4f8; /* Light background */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;  /* Full viewport height */
+    min-height: 100vh;
+}
+
+/* Top Bar */
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #2575fc;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 70px;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.footer-style{
+    position: page;
+    color: #2575fc;
+    display: flex;
+    font-weight: 600;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+}
+
+.topbar-container {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    align-items: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+}
+
+.nav-links{
+    display: flex;
+    gap: 10px;
+}
+
+#lagout-view {
+    color: black;
+}
+
+.no-link-style {
+    text-decoration: none;
+    color: inherit; /* Matches the surrounding text color */
+    cursor: pointer;
+  }
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 12px;
+    justify-content: flex-end; /* move items to the right */
+    align-items: center;       /* vertical alignment */
+    transition: all 0.3s ease;
+}
+
+.nav-links a:hover {
+    background-color: #ff6f61;
+    color: white;
+    border-radius: 4px;
+}
+
+/* Centering the login form */
+.card-container {
+    display: flex;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    justify-content: center;  /* Center the card horizontally */
+    align-items: start;      /* Center the card vertically */
+    height: 20%;             /* Full height to center the form */
+    padding: 20px 20px 20px;  /* Padding at the top to avoid overlap with topbar */
+}
+
+.card-container1 {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+}
+
+.card-container2 {
+    display: grid;
+    margin-top: 150px;
+    grid-template-columns: repeat(3, 1fr); /* 3 עמודות */
+    grid-auto-rows: auto;                  /* שורות אוטומטיות */
+    gap: 50px;                             /* רווח בין הכרטיסים */
+    justify-content: center;                /* מרכז את כל ה־grid אופקית */
+    padding: 50px;
+    width: 100%;
+}
+
+.card1 {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    width: 250px;           /* Set a fixed width for each card */
+    text-align: center;
+    transition: transform 0.3s ease; /* Add hover effect */
+    text-decoration: none; /* Remove underline from links */
+    color: inherit;        /* Ensure text color matches */
+}
+
+.card1:hover {
+    transform: translateY(-10px); /* Slight lift on hover */
+}
+
+.blend {
+  background-color: #2575fc; /* any color you want */
+  display: inline-block;
+}
+
+.blend img {
+  mix-blend-mode: multiply;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .card-container {
+        justify-content: center;  /* Center the cards on smaller screens */
+    }
+
+    .card1 {
+        width: 200px; /* Make cards smaller on smaller screens */
+    }
+}
+
+.card-container-screen{
+    width: 100vh;
+    display: flow;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    background-color: white;
+    border-color: #333333;
+    padding: 3rem 1rem;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Individual Card Styling (Login Card) */
+.login-container {
+    display: flex;
+    justify-content: flex-start; /* image left, card right */
+    align-items: center;         /* vertically center */
+    gap: 40px;                   /* space between image and card */
+    padding: 20px;
+}
+
+.image-login img {
+    width: 500px;   /* adjust size as needed */
+    height: auto;
+    border-radius: 12px;
+    transform: scale(1.5);
+}
+
+.image-login {
+    width: 100%;       /* makes image fit card width */
+    height: auto;      /* keeps image aspect ratio */
+    margin-bottom: 10px;
+}
+
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    width: 300px;      /* adjust width as needed */
+    text-align: right;  /* align text for RTL */
+}
+
+
+.card h2 {
+    font-size: 1.5em;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Style for input fields to make sure they don't exceed the card's width */
+input[type="name"], input[type="password"] {
+    width: 100%;  /* Ensure the input fields take up full width of the card */
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: 'Rubik';
+    box-sizing: border-box;  /* Ensures padding and border are included in width */
+}
+
+.card input:focus {
+    border-color: #2575fc;
+}
+
+.card button[type="submit"] {
+    text-align: center;
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background-color: #2575fc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Rubik';
+    transition: all 0.3s ease;
+}
+
+.card button[type="submit"]:hover {
+    background-color: #6a11cb;
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+.checkbox-wrapper{
+    text-align: center;
+}
+
+.card p {
+    text-align: center;
+}
+
+.card-container-buttons{
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.options-title {
+    padding: 20px;
+    text-align: right;
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 0.2rem;
+}
+
+.buttons-container{
+    background-color: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    font-weight: bold;
+    align-items: center;
+    margin-bottom: 0.2rem;
+}
+
+button {
+    text-align: center;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #1d4ed8;
+}
+
+button i {
+    font-size: 18px;
+    text-align: center;
+}
+
+.buttons-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 1rem;
+    text-align: center;
+    align-items: center;
+    margin-top: 1rem;
+    margin-left: 5rem;
+}
+
+/* Error Message Styling */
+.error-message {
+    font-size: 14px;
+    color: red;
+    margin-bottom: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card {
+        max-width: 90%;
+    }
+}
+
+@font-face {
+  font-family: 'Rubik';
+  src: url('/static/fonts/Rubik-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.toast {
+  visibility: hidden;
+  min-width: 250px;
+  max-width: 80%;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1000;
+  left: 50%;
+  bottom: 30px;
+  font-size: 17px;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out, visibility 0.5s;
+}
+
+.toast.show {
+  visibility: visible;
+  opacity: 1;
+}
+
+.checkbox-container {
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+}
+
+/* Hide browser checkbox */
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Custom box */
+.checkmark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 20px;
+  width: 20px;
+  border-style: solid; /* Required to show the border */
+  display: inline-block; /* Or block depending on element */
+  border-color: #2563eb;
+  border-width: 3px;
+  border-radius: 4px;
+  transition: .3s;
+}
+
+/* Hover effect */
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #2563eb;
+}
+
+/* Checked state */
+.checkbox-container input:checked ~ .checkmark {
+  background-color: #2563eb;
+}
+
+/* Checkmark */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+
+.user-info-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Horizontal layout container */
+.user-info-horizontal {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    direction: rtl;
+}
+
+/* Profile Picture */
+.profile-picture-section {
+    flex: 0 0 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    margin: 1rem;
+}
+
+.profile-picture-section h4{
+    font-size: 1rem;
+    color: #2575fc;
+    font-family: 'Rubik', sans-serif;
+}
+
+.profile-picture-section form{
+    font-size: 1rem;
+    color: #333;
+    text-align: center;
+    font-family: 'Rubik', sans-serif;
+}
+
+/* Profile picture styling */
+.profile-picture{
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    border: 3px solid #2575fc;
+    object-fit: cover;
+    font-family: 'Rubik', sans-serif;
+}
+
+/* User details list container */
+.user-info-list {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    font-size: 1.1rem;
+}
+
+/* Each row inside user info */
+.user-info-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 0.5rem;
+}
+
+.user-info-row:last-child {
+    border-bottom: none;
+}
+
+/* Label style */
+.user-info-label {
+    font-weight: bold;
+    color: #333;
+}
+
+/* Value style */
+.user-info-value {
+    color: #555;
+    max-width: 60%;
+    text-align: left;
+}
+
+/* Status colors */
+.status-active {
+    color: green;
+    font-weight: bold;
+}
+
+.status-inactive {
+    color: red;
+    font-weight: bold;
+}
+
+.user-admin {
+    color: #B8860B;
+    font-weight: bold;
+}
+
+.user-editor{
+    color: #777;
+    font-weight: bold;
+}
+
+.user-normal {
+    color: #777;
+}
+
+/* Change password card */
+.change-password-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    max-width: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    direction: rtl;
+}
+
+.change-password-card h2 {
+    color: #2575fc;
+    font-weight: 25px;
+    margin-bottom: 0.5rem;
+}
+
+.change-password-card input {
+    width: 100%;
+    padding: 12px;
+    font-family: 'Rubik', sans-serif;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.change-password-card input:focus {
+    border-color: #2575fc;
+    outline: none;
+}
+
+.change-password-card button {
+    background-color: #2575fc;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    margin-top: 1rem;
+    font-family: 'Rubik', sans-serif;
+    transition: background-color 0.3s ease;
+}
+
+.change-password-card button:hover {
+    background-color: #6a11cb;
+}
+
+/* Responsive: stack on smaller screens */
+@media (max-width: 768px) {
+    .user-info-horizontal {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .profile-picture-section {
+        flex: none;
+        align-items: center;
+    }
+
+    .user-info-list {
+        max-width: 100%;
+        font-size: 1rem;
+    }
+
+    .change-password-card {
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+}
+
+.user-info-title{
+    margin-top: 6rem;
+    text-align: right;
+    font-size: 32px;
+}
+
+/* Vertical cards container */
+.card-row {
+    display: flex;
+    margin: 10px 0 15px 0;
+    padding: 0 0 0 20%;
+    flex-direction: row; /* stack vertically */
+    align-items: center;    /* center horizontally */
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+/* Individual card style */
+.cardM {
+    background-color: white;
+    color: black;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+    width: 120px; /* fixed width for vertical cards */
+    text-align: center;
+    font-weight: bold;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hover effect */
+.cardM:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+.cardM.selected {
+    transform: translateY(-5px);
+    background-color: #2575fc;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    color: white;
+}
+
+/* Title below cards */
+#card-title {
+    text-align: right;
+    font-size: 1.8rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+
+.top-section {
+    padding: 10px 40px 0 40px;
+}
+
+.inline-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* THIS is what stacks rectangle + gray edit */
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* smaller rectangle */
+.big-rectangle {
+    width: 200px;
+    height: 200px;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    padding: 20px;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 per row */
+    grid-template-rows: repeat(2, 1fr);
+    height: 100%;
+    gap: 20px;
+    text-align: center;
+    align-items: center;
+}
+
+.value-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.value-item .label {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.value-item .number {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+/* Colors */
+.black { color: black; }
+
+.red { color: red; }
+
+.gray { color: gray; }
+
+.white {
+    color: white;
+    background: #333;
+    border-radius: 10px;
+    padding: 6px 0;
+}
+
+
+.data-table-card {
+    flex: 1;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    padding: 20px;
+    min-height: 260px;
+}
+
+/* Table styling */
+.data-table-card table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: right;
+}
+
+.data-table-card th {
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #eee;
+}
+
+.data-table-card td {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.data-table-card tr:last-child td {
+    border-bottom: none;
+}
+
+.filter-section {
+    display: flex;
+    gap: 10px;
+    align-items: start;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    font-family: 'Rubik', sans-serif;
+}
+.filter-section h3 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.filter-section select,
+.filter-section input {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    text-align: right;
+    transition: all 0.3s ease;
+    font-family: 'Rubik', sans-serif;
+}
+.filter-section select:focus,
+.filter-section input:focus {
+    outline: none;
+    text-align: right;
+    border-color: #ffcc00;
+    box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+    font-family: 'Rubik', sans-serif;
+}
+
+/* GRAY edit section (under rectangle) */
+.gray-edit-section {
+    margin-top: 10px;
+    background: #f7f7f7;          /* softer than white */
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    width: 200px;                 /* aligned with rectangle */
+    text-align: right;
+    font-family: 'Rubik', sans-serif;
+}
+
+.gray-edit-section h4 {
+    margin: 0 0 6px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+}
+
+/* Controls row */
+.gray-edit-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Number input */
+.gray-edit-controls input {
+    width: 95%;
+    height: 100%
+    padding: 6,0px;
+    font-size: 15px;
+    text-align: center;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: white;
+    font-family: 'Rubik', sans-serif;
+}
+
+/* Save button */
+.gray-edit-controls button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background: #666;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-family: 'Rubik', sans-serif;
+}
+
+.gray-edit-controls button:hover {
+    background: #444;
+}
+
+/* Main home layout */
+.home-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    padding: 40px;
+}
+
+/* Left content */
+.home-main {
+    flex: 1; /* takes remaining space */
+}
+
+/* Right rectangle */
+.home-side-rectangle {
+    width: 260px;
+    min-height: 400px;
+    background-color: white;
+    border-radius: 18px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    padding: 20px;
+    font-family: 'Rubik', sans-serif;
+    direction: rtl;
+}
+
+/* Text styling */
+.home-side-rectangle h3 {
+    margin-top: 0;
+    color: #2575fc;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.home-side-rectangle p {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.6;
+}
+
+.home-side-rectangle ul {
+    padding-right: 20px;
+    margin-top: 15px;
+}
+
+.home-side-rectangle li {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.icon {
+    width:32px;
+    height:32px;
+    vertical-align:middle;
+}
+
+.icon:hover {
+    transform: scale(1.1);
+    cursor: pointer;
+}
+
+.view-cell {
+    text-align: right;
+}
+
+.view-icon {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.view-icon:hover {
+    transform: scale(1.2);
+    opacity: 0.8;
+}
+
+.top-section #item-title {
+    color: #2575fc;
+    font-weight: bold;
+    font-size: 34px;
+    margin-bottom: 20px;
+    direction: ltr;
+}
+
+.profile-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f2f4f8;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    object-fit: cover;
+}
+
+.profile-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-btn:hover {
+    border-color: #2563eb; /* same blue as buttons */
+}
+
+.nav-btn {
+    background: #2563eb;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+/* Tooltip container */
+.profile-btn span.tooltip-text {
+    visibility: hidden;
+    width: max-content;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 5px 8px;
+    border-radius: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 120%;  /* position above the image */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+}
+
+/* Show tooltip on hover */
+.profile-btn:hover span.tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 3000; /* higher than topbar */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    font-family: 'Rubik', sans-serif;
+}
+
+/* Modal overlay */
+#serialModal {
+    display: none; /* hidden by default */
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5); /* semi-transparent background */
+    justify-content: center;
+    align-items: center;
+    font-family: 'Rubik', sans-serif;
+}
+
+/* Modal content box */
+#serialModal .modal-content {
+    background-color: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    max-width: 350px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    animation: modalScale 0.3s ease-out;
+}
+
+/* Scale animation */
+@keyframes modalScale {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Close button */
+#serialModal .close {
+    float: right;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+}
+
+/* Input field */
+#serialModal input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+}
+
+/* Submit button */
+#serialModal button {
+    background-color: #2575fc;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#serialModal button:hover {
+    background-color: #6a11cb;
+    transform: translateY(-2px);
+}

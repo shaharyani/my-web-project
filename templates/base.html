@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-container">
+            <a href="" class="logo"></a>
+            <div class="nav-links">
+                {% if user %}
+                    <a id="lagout-view" href="/logout">יציאה ({{session.user_name}})</a>
+                    <a href="/about">אודות</a>
+                    <a href="/">בית</a>
+
+                {% else %}
+                    <a href="/login">התחברות</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <div id="toast" class="toast"></div>
+
+<script>
+  function showToast(message, type = 'info', duration = 3000) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+
+    // Change background color based on type
+    switch(type) {
+      case 'success':
+        toast.style.backgroundColor = '#28a745';
+        break;
+      case 'error':
+        toast.style.backgroundColor = '#dc3545';
+        break;
+      case 'warning':
+        toast.style.backgroundColor = '#ffc107';
+        toast.style.color = '#000';
+        break;
+      default:
+        toast.style.backgroundColor = '#333';
+        toast.style.color = '#fff';
+    }
+
+    toast.classList.add('show');
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, duration);
+  }
+
+  // Show flashed messages as toast
+  window.onload = () => {
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          showToast("{{ message|safe }}", "{{ category }}");
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  };
+</script>
+
+    <!-- Main Content -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>איזור ניהול</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    {% extends "base.html" %}
+{% block content %}
+
+<!-------------------- PAGE TITLE -------------------->
+<h2 style="
+    margin: 80px 0 20px;
+    direction: rtl;
+    font-size: 32px;">
+    איזור ניהול משתמשים
+</h2>
+
+<!-------------------- CREATE USER BUTTON -------------------->
+<div style="direction: rtl; margin-bottom: 20px;">
+    <button onclick="openModal()" class="btn-create">צור משתמש חדש</button>
+</div>
+
+<!-------------------- USERS TABLE -------------------->
+<div class="data-table-card">
+    <table>
+        <thead>
+            <tr>
+                <th>שם מלא</th>
+                <th>מדור</th>
+                <th>מספר מזהה</th>
+                <th>סיסמה</th>
+                <th>סוג הרשאה</th>
+                <th>מנהל</th>
+                <th>פעולות</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td class="{{ 'user-active' if user.is_active else 'user-inactive' }}">
+                    {{ user.name }}
+                </td>
+                <td>{{ user.mador }}</td>
+                <td>{{ user.id }}</td>
+                <td>{{ user.password }}</td>
+                <td>{{ user.type }}</td>
+                <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+
+                <td>
+                    {% if user.name != session.get('user_name') %}
+                    <button style="background-color:gray; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
+                            onclick="openEditModal(
+                        '{{ user.name }}',
+                        '{{ user.mador }}',
+                        '{{ user.type }}',
+                        {{ 'true' if user.is_admin else 'false' }}
+                    )">
+                        ערוך
+                    </button>
+                    {% endif %}
+
+                    {% if user.name != session.get('user_name') %}
+                    <form action="{{ url_for('delete_user', username=user.name) }}"
+                          method="POST"
+                          style="display:inline;">
+                        <button type="submit"
+                                style="background-color:red; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
+                                onclick="return confirm('Are you sure you want to delete {{ user.name }}?');">
+                            מחק
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="data-table-card">
+    <h3 style="direction: ltr; font-size: 32px; margin-bottom: 32px">System logs</h3>
+    <ul style="list-style:none; padding:0; direction:rtl;">
+        {% if logs %}
+            {% for log in logs %}
+                <li style="padding:10px; border-bottom:1px solid #eee;">
+                    <span style="color:gray">{{ log.timestamp }}</span>
+                    [<strong>{{ log.level }}</strong>] {{ log.message }}
+                </li>
+            {% endfor %}
+        {% else %}
+            <li>אין פעולות להצגה</li>
+        {% endif %}
+    </ul>
+</div>
+
+<!-------------------- CREATE USER MODAL -------------------->
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <h2>יצירת משתמש חדש</h2>
+
+        <form action="{{ url_for('create_user') }}" method="POST">
+            <div class="form-group">
+                <label>שם מלא</label>
+                <input type="text" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label>מדור</label>
+                <input type="text" name="mador" required>
+            </div>
+
+            <div class="form-group">
+                <label>סיסמה</label>
+                <input type="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label>סוג</label>
+                <select name="type">
+                    <option value="1">הרשאה מרבית</option>
+                    <option value="0">הרשאה מצומצמת</option>
+                </select>
+            </div>
+
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="is_admin"> מנהל מערכת
+                </label>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-create">צור</button>
+                <button type="button" onclick="closeModal()" class="btn-cancel">בטל</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-------------------- EDIT USER MODAL -------------------->
+<div id="editUserModal" class="modal">
+    <div class="modal-content">
+        <h2>עריכת משתמש</h2>
+
+        <form action="{{ url_for('edit_user') }}" method="POST">
+            <input type="hidden" name="name" id="edit-name">
+
+            <div class="form-group">
+                <label>מדור</label>
+                <input type="text" name="mador" id="edit-mador" required>
+            </div>
+
+            <div class="form-group">
+                <label>סוג</label>
+                <select name="type" id="edit-type">
+                    <option value="1">הרשאה מרבית</option>
+                    <option value="0">הרשאה מצומצמת</option>
+                </select>
+            </div>
+
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" name="is_admin" id="edit-admin">
+                    מנהל מערכת
+                </label>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-create">שמור</button>
+                <button type="button" onclick="closeEditModal()" class="btn-cancel">בטל</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-------------------- SCRIPTS -------------------->
+<script>
+function openModal() {
+    document.getElementById('userModal').style.display = 'block';
+}
+function closeModal() {
+    document.getElementById('userModal').style.display = 'none';
+}
+
+function openEditModal(name, mador, type, isAdmin) {
+    document.getElementById("edit-name").value = name;
+    document.getElementById("edit-mador").value = mador;
+    document.getElementById("edit-type").value = type;
+    document.getElementById("edit-admin").checked = isAdmin;
+    document.getElementById("editUserModal").style.display = "block";
+}
+
+function closeEditModal() {
+    document.getElementById("editUserModal").style.display = "none";
+}
+</script>
+
+<style>
+/* ------------------ Users Table Card ------------------ */
+.data-table-card {
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    padding: 20px;
+    margin-top: 20px;
+    width: 100%;
+    direction: rtl;
+    font-family: 'Rubik', sans-serif;
+}
+
+.data-table-card li{
+    direction: ltr;
+}
+
+.data-table-card table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: right;
+    border-radius: 8px 8px 0 0;
+}
+
+.data-table-card th, .data-table-card td {
+    padding: 12px 15px;
+    font-size: 14px;
+
+    color: #555;
+}
+
+.data-table-card th {
+    background-color: #2575fc;
+    color: white;
+    font-weight: 600;}
+
+.data-table-card tbody tr:nth-child(even) {
+    background-color: #f7f7f7;
+}
+
+.data-table-card tbody tr:hover {
+    background-color: #e6f0ff;
+}
+
+/* Action buttons */
+.data-table-card button {
+    background-color: #2575fc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.data-table-card button:hover {
+    background-color: #6a11cb;
+    transform: translateY(-2px);
+}
+
+/* Status colors */
+.data-table-card td.user-active { color: green; font-weight: bold; }
+.data-table-card td.user-inactive { color: red; font-weight: bold; }
+
+/* Admin / Normal types */
+.user-admin { color: #B8860B; font-weight: bold; }
+.user-normal { color: #777; }
+
+/* ------------------ Modal Styling ------------------ */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+    direction: rtl;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 25px 30px;
+    border-radius: 12px;
+    width: 400px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    text-align: right;
+    transition: all 0.3s ease;
+}
+
+.modal-content h2 {
+    text-align: center;
+    color: #2575fc;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* Form inputs */
+.form-group { margin-bottom: 15px; }
+.form-group label { font-weight: 600; color: #333; display: block; margin-bottom: 5px; }
+.form-group input, .form-group select {
+    width: 50%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-family: 'Rubik', sans-serif;
+    text-align: right;
+    transition: all 0.3s ease;
+}
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: #2575fc;
+    box-shadow: 0 0 5px rgba(37,117,252,0.5);
+}
+
+/* Checkbox */
+.checkbox-group { display: flex; gap: 15px; margin-bottom: 20px; justify-content: flex-start; }
+.checkbox-group label { display: flex; align-items: center; justify-content: flex-end; font-weight: 500; }
+
+/* Modal Buttons */
+.button-group { display: flex; align-items: center; gap: 10px; }
+.btn-create, .btn-cancel {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    transition: all 0.3s ease;
+}
+.btn-create { background-color: #2575fc; color: white; }
+.btn-create:hover { background-color: #6a11cb; transform: translateY(-2px); }
+.btn-cancel { background-color: #ccc; color: #333; }
+.btn-cancel:hover { background-color: #999; transform: translateY(-2px); }
+</style>
+{% endblock %}
+</body>
+</html>

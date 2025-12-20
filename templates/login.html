@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כניסה</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+{% extends "base.html" %}
+
+{% block title %}כניסה{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="image-login">
+        <img src="{{ url_for('static', filename='images/banner.png') }}" alt="User Image" class="card-image">
+    </div>
+
+    <div class="card">
+        <h2>התחברות למערכת</h2>
+
+        <form method="POST" dir="rtl">
+            <label for="fname">שם מלא</label>
+            <input type="name" id="fname" name="name">
+
+            <label for="lname">סיסמה</label>
+            <input type="password" id="lname" name="password"><br><br>
+
+            <div class="checkbox-wrapper">
+                <label class="checkbox-container">
+                    <input type="checkbox" name="remember">
+                    <span class="checkmark"></span>
+                    זכור אותי
+                </label>
+            </div><br>
+
+            <button type="submit" class="buttons-container">התחבר</button>
+        </form>
+
+        <br>
+        <p>גרסה 15.2.0/10</p>
+        <p>כל הזכויות שמורות ©</p>
+    </div>
+</div>
+
+{% endblock %}
+
+</body>
+</html>

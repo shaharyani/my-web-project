@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מידע אישי</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+{% extends "base.html" %}
+{% block content %}
+
+<div class="user-info-container">
+    <h2 class="user-info-title">מידע אישי >> {{ user.name }}</h2>
+    <div class="user-info-horizontal">
+
+        <!-- PROFILE PICTURE + UPLOAD -->
+        <div class="profile-picture-section">
+
+    <img src="{{ url_for('static', filename=profile_image) }}"
+         class="profile-picture">
+
+    <form action="{{ url_for('upload_profile_picture') }}"
+          method="POST"
+          enctype="multipart/form-data">
+
+        <input type="file"
+               name="profile_picture"
+               accept="image/*"
+               onchange="this.form.submit()"
+               style="display:none"
+               id="fileInput">
+
+        <h4>
+            <label for="fileInput" style="cursor:pointer;">
+                עדכן תמונה
+            </label>
+        </h4>
+
+    </form>
+</div>
+
+        <!-- USER DETAILS -->
+        <div class="user-info-list">
+            <div class="user-info-row">
+                <span class="user-info-label">שם משתמש</span>
+                <span class="user-info-value">{{ user.name }}</span>
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">מדור</span>
+                <span class="user-info-value">ענף/{{ user.mador }}</span>
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">מספר מזהה</span>
+                <span class="user-info-value">{{ user.id }}</span>
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">סטטוס</span>
+                {% if user.is_active %}
+                    <span class="user-info-value status-active">פעיל</span>
+                {% else %}
+                    <span class="user-info-value status-inactive">לא פעיל</span>
+                {% endif %}
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">הרשאות</span>
+                {% if user.is_admin %}
+                    <span class="user-info-value user-admin">מנהל מערכת</span>
+                {% elif user.type == 1 %}
+                    <span class="user-info-value user-editor">משתמש עורך</span>
+                {% else %}
+                    <span class="user-info-value user-normal">משתמש צופה</span>
+                {% endif %}
+            </div>
+            <div class="user-info-row">
+                <span class="user-info-label">התחברות אחרונה</span>
+                <span class="user-info-value">{{ user.last_login }}</span>
+            </div>
+        </div>
+
+    </div> <!-- /.user-info-horizontal -->
+
+    <!-- CHANGE PASSWORD FORM -->
+    <div class="change-password-card">
+        <h2>שנה סיסמה</h2>
+        <form action="{{ url_for('change_password') }}" method="POST">
+            <input type="password" name="current_password" placeholder="סיסמה נוכחית" required>
+            <input type="password" name="new_password" placeholder="סיסמה חדשה" required>
+            <input type="password" name="confirm_password" placeholder="אישור סיסמה" required>
+            <br>
+            <button type="submit">עדכן סיסמה</button>
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
+</body>
+
+<script>
+const fileInput = document.getElementById("profileInput");
+const form = document.getElementById("profileForm");
+
+form.addEventListener("submit", (e) => e.preventDefault()); // prevent normal submit
+
+fileInput.addEventListener("change", () => {
+    const formData = new FormData(form);
+
+    fetch("/upload_profile_picture", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.filename) {
+            const img = document.querySelector(".profile-picture");
+            img.src = `/static/profile_pics/${data.filename}?v=${new Date().getTime()}`;
+        } else {
+            alert(data.error || "Error uploading image");
+        }
+    })
+    .catch(err => console.error(err));
+});
+</script>
+
+
+</html>

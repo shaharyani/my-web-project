@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אודות</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+{% extends "base.html" %}
+{% block title %}אודות{% endblock %}
+{% block content %}
+
+    <div class="card-container1">
+        <img style="margin-left:30%; width: 50%; height: auto;" src="{{ url_for('static', filename='images/about.png') }}">
+        <div class="card" style="width: 75%; padding: 10px 15px 10px 44px; margin: 50px 0 0 0">
+            <p style="direction: rtl; text-align: justify; font-size: 20px">
+            <strong style="color:#2563eb;">מדינת ישראל</strong> היא מדינה דמוקרטית במזרח התיכון, שהוקמה בשנת <strong>1948</strong>, ומהווה בית לאומי לעם היהודי לצד מדינה לכל אזרחיה. מיקומה הגאוגרפי וההיסטוריה הארוכה שלה הופכים אותה לאחת המדינות הייחודיות והמורכבות בעולם.
+            </p>
+
+            <p style="direction: rtl; text-align: justify; font-size: 20px">
+            החברה הישראלית מאופיינת ב<strong>מגוון תרבותי רחב</strong>, הכולל יהודים, מוסלמים, נוצרים ודרוזים, לצד עולים ממדינות רבות. פסיפס זה יוצר חברה דינמית, רב־לשונית ורב־תרבותית, שבה מתקיימים מסורות עתיקות לצד אורח חיים מודרני.
+            </p>
+
+            <p style="direction: rtl; text-align: justify; font-size: 20px">
+            ישראל נחשבת ל<strong style="color:#2563eb;">מעצמת חדשנות וטכנולוגיה</strong>, עם הישגים בולטים בתחומי ההייטק, הרפואה, החקלאות והמדע. פיתוחים ישראליים משפיעים על חיי היום־יום של מיליוני אנשים ברחבי העולם, בתחומים כמו סייבר, בינה מלאכותית, מים ואנרגיה.
+            </p>
+
+            <p style="direction: rtl; text-align: justify; font-size: 20px">
+            מערכת החינוך והאקדמיה בישראל מהוות בסיס מרכזי להתפתחות זו, תוך עידוד <strong>חשיבה יצירתית, יזמות ומחקר</strong>. מוסדות ההשכלה הגבוהה בארץ נהנים מהכרה בינלאומית ותורמים לקידום ידע וחדשנות.
+            </p>
+
+            <p style="direction: rtl; text-align: justify; font-size: 20px">
+            לצד ההצלחות, המדינה מתמודדת עם <strong>אתגרים ביטחוניים, חברתיים וכלכליים</strong>, המחייבים חוסן לאומי ושיתוף פעולה בין חלקי החברה השונים. ההתמודדות עם אתגרים אלו מעצבת את אופייה של המדינה ואת סדר יומה הציבורי.
+            </p>
+
+            <p style="direction: rtl; text-align: justify; font-size: 20px">
+            למרות המורכבות, ישראל ממשיכה לשאוף ל<strong style="color:#2563eb;">פיתוח, יציבות ושגשוג</strong>, תוך חיזוק ערכים של דמוקרטיה, חופש, חדשנות וערבות הדדית. השילוב בין עבר עשיר להווה דינמי יוצר מדינה צעירה ברוחה ובעלת השפעה עולמית.
+            </p>
+        </div>
+
+        <p style="direction: rtl; margin-top:20px;">
+            © כל הזכויות שמורות.
+        </p>
+        <p style="direction: rtl; margin:0px;">
+             ענף ענף/מדור מדור | 15.2.0/10
+        </p>
+    </div>
+
+
+{% endblock %}
+</body>
+</html>
