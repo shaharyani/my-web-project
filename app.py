@@ -230,14 +230,11 @@ def create_user():
     mador = request.form['mador']
     password = request.form['password']
     is_active = request.form.get('is_active') == 'on'
-    is_admin = request.form.get('is_admin') == 'on'
     last_login = datetime.now().strftime("%H:%M %d/%m/%Y")
+    type = int(request.form['type'])  # Keep the type from the form
 
-    # Determine type based on admin status
-    if is_admin:
-        type = 2  # Admin
-    else:
-        type = int(request.form['type'])  # Keep the type from the form
+    if type == 0: is_admin = True
+    else: is_admin = False
 
     # Check if name is unique
     if manager.find_user_by_name(name):

@@ -31,7 +31,6 @@
                 <th>שם מלא</th>
                 <th>מדור</th>
                 <th>מספר מזהה</th>
-                <th>סיסמה</th>
                 <th>סוג הרשאה</th>
                 <th>מנהל</th>
                 <th>פעולות</th>
@@ -45,11 +44,17 @@
                 </td>
                 <td>{{ user.mador }}</td>
                 <td>{{ user.id }}</td>
-                <td>{{ user.password }}</td>
                 <td>{{ user.type }}</td>
                 <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
 
                 <td>
+                    {% if user.name != session.get('user_name') %}
+                    <button style="background-color:gray; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
+                            onclick="setPasswordModal()">
+                        אפס סיסמה
+                    </button>
+                    {% endif %}
+
                     {% if user.name != session.get('user_name') %}
                     <button style="background-color:gray; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
                             onclick="openEditModal(
@@ -58,7 +63,7 @@
                         '{{ user.type }}',
                         {{ 'true' if user.is_admin else 'false' }}
                     )">
-                        ערוך
+                        ערוך משתמש
                     </button>
                     {% endif %}
 
@@ -69,7 +74,7 @@
                         <button type="submit"
                                 style="background-color:red; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
                                 onclick="return confirm('Are you sure you want to delete {{ user.name }}?');">
-                            מחק
+                             מחק משתמש
                         </button>
                     </form>
                     {% endif %}
@@ -114,21 +119,16 @@
 
             <div class="form-group">
                 <label>סיסמה</label>
-                <input type="password" name="password" required>
+                <input type="text" name="password" readonly value="123">
             </div>
 
             <div class="form-group">
                 <label>סוג</label>
                 <select name="type">
+                    <option value="0">מנהל מערכת</option>
                     <option value="1">הרשאה מרבית</option>
-                    <option value="0">הרשאה מצומצמת</option>
+                    <option value="2">הרשאה מצומצמת</option>
                 </select>
-            </div>
-
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" name="is_admin"> מנהל מערכת
-                </label>
             </div>
 
             <div class="button-group">
@@ -155,16 +155,10 @@
             <div class="form-group">
                 <label>סוג</label>
                 <select name="type" id="edit-type">
+                    <option value="0">מנהל מערכת</option>
                     <option value="1">הרשאה מרבית</option>
-                    <option value="0">הרשאה מצומצמת</option>
+                    <option value="2">הרשאה מצומצמת</option>
                 </select>
-            </div>
-
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" name="is_admin" id="edit-admin">
-                    מנהל מערכת
-                </label>
             </div>
 
             <div class="button-group">
@@ -175,6 +169,19 @@
     </div>
 </div>
 
+<!-------------------- SET PASSWORD 123 MODAL -------------------->
+    <div id="setPasswordModal" class="modal">
+        <div class="modal-content">
+            <h2>איפוס סיסמה</h2>
+            <p>הסיסמה מתאפסת ל <b>123</b></p>
+            <p><b>הודעה על כך נשלחה למייל</b></p>
+            <br>
+            <div class="button-group">
+                <button type="button" onclick="closeSetPasswordModal()" class="btn-cancel">סגור הודעה</button>
+            </div>
+        </div>
+    </div>
+
 <!-------------------- SCRIPTS -------------------->
 <script>
 function openModal() {
@@ -184,11 +191,18 @@ function closeModal() {
     document.getElementById('userModal').style.display = 'none';
 }
 
-function openEditModal(name, mador, type, isAdmin) {
+function setPasswordModal() {
+    document.getElementById("setPasswordModal").style.display = "block";
+}
+
+function closeSetPasswordModal(){
+    document.getElementById("setPasswordModal").style.display = "none";
+}
+
+function openEditModal(name, mador, type) {
     document.getElementById("edit-name").value = name;
     document.getElementById("edit-mador").value = mador;
     document.getElementById("edit-type").value = type;
-    document.getElementById("edit-admin").checked = isAdmin;
     document.getElementById("editUserModal").style.display = "block";
 }
 
@@ -217,7 +231,7 @@ function closeEditModal() {
 .data-table-card table {
     width: 100%;
     border-collapse: collapse;
-    text-align: right;
+    text-align: center;
     border-radius: 8px 8px 0 0;
 }
 
