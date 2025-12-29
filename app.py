@@ -1,8 +1,7 @@
 from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response
 from functools import wraps
-
 from flask_login import login_required
-
+import re
 from User import User
 from datetime import datetime
 import logging
@@ -67,6 +66,22 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 console_handler.setLevel(logging.INFO)
 app.logger.addHandler(console_handler)
+
+def get_logs(limit=5):
+    logs = []
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            for line in f.readlines():
+                # Parse each line like: [timestamp] LEVEL: message
+                match = re.match(r"\[(.*?)\] (\w+): (.*)", line)
+                if match:
+                    timestamp, level, message = match.groups()
+                    logs.append({
+                        "timestamp": timestamp,
+                        "level": level,
+                        "message": message
+                    })
+    return logs[-limit:]
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -225,6 +240,7 @@ def view_result(serial, code, world, land):
 @login_required
 def admin():
     user = get_current_user()
+    logs = get_logs(limit=5)
     if not user or not user.is_admin:
         flash("למשתמש זה אין הרשאות מנהל.", "error")
         return redirect(url_for("home"))
@@ -252,7 +268,7 @@ def admin():
         )
         users.append(u)
 
-    return render_template('admin.html', user=user.get_name(), users=users)
+    return render_template('admin.html', user=user.get_name(), users=users, logs=logs)
 
 @app.route('/create_user', methods=['POST'])
 @login_required

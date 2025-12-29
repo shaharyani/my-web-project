@@ -47,7 +47,7 @@
                 <td>{{ user.type }}</td>
                 <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
 
-                <td>
+                <td style="display: flex; align-items: center;">
                     {% if user.name != session.get('user_name') %}
                     <button style="background-color:gray; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
                             onclick="setPasswordModal()">
@@ -63,7 +63,7 @@
                         '{{ user.type }}',
                         {{ 'true' if user.is_admin else 'false' }}
                     )">
-                        ערוך משתמש
+                        ערוך
                     </button>
                     {% endif %}
 
@@ -74,7 +74,7 @@
                         <button type="submit"
                                 style="background-color:red; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
                                 onclick="return confirm('Are you sure you want to delete {{ user.name }}?');">
-                             מחק משתמש
+                             מחק
                         </button>
                     </form>
                     {% endif %}
@@ -87,7 +87,7 @@
 
 <div class="data-table-card" style="margin-bottom: 50px">
     <h3 style="direction: ltr; font-size: 32px; margin-bottom: 32px">System logs</h3>
-    <ul style="list-style:none; padding:0; direction:rtl;">
+    <ul style="list-style:none; padding:0; direction:ltr;">
         {% if logs %}
             {% for log in logs %}
                 <li style="padding:10px; border-bottom:1px solid #eee;">
