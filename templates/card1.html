@@ -88,16 +88,19 @@
                 </div>
             </div>
 
-            <div class="gray-edit-section" style="background: #f1f8f1;">
-                <h4 style="color: #3f6b3f;">הוספת עיר חדשה</h4>
-                <div class="gray-edit-controls">
-                    <button style="background: #3a6b3a;" onclick="saveGray()">שמירה</button>
-                    <input type="text" id="" placeholder="מס' סיראלי">
-                    <input type="text" id="" placeholder="קוד אישי">
+            <div class="gray-edit-section">
+                <h4 style="margin-bottom: 15px;">הוספת עיר חדשה</h4>
+                <div class="gray-edit-controls" style="display: flex; flex-direction: column; gap: 10px;">
+                    <input type="text" placeholder="מס' סידורי" style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;">
+                    <input type="text" placeholder="קוד אישי" style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;">
+                    <div style="display: flex; justify-content: flex-start;">
+                        <button onclick="saveGray()" style="padding:10px 20px; border:none; border-radius:6px; background:#3a6b3a; color:white; font-weight:bold; cursor:pointer;">
+                            הוסף
+                        </button>
+                    </div>
                 </div>
             </div>
             {% endif %}
-
         </div>
 
         <!-- ===== CENTER TABLE ===== -->
