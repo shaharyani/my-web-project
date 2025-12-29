@@ -7,6 +7,7 @@ from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 from db import get_users_db
+from db import get_products_db
 import os
 
 app = Flask(__name__)
@@ -26,6 +27,23 @@ CREATE TABLE IF NOT EXISTS users (
     last_login TEXT,
     profile_image TEXT DEFAULT 'user_photo.png'
 )
+""")
+conn.commit()
+conn.close()
+
+conn = get_products_db()
+cursor = conn.cursor()
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        serial TEXT UNIQUE NOT NULL,
+        code TEXT UNIQUE NOT NULL,
+        card_type TEXT NOT NULL,
+        land_type TEXT NOT NULL,
+        status TEXT DEFAULT 'N',   -- R - RED | B - BLACK | W - WHITE | N - NONE
+        owner TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    )
 """)
 conn.commit()
 conn.close()
@@ -445,7 +463,7 @@ def admin_dashboard():
 lands = ["ארץ 1", "ארץ 2", "ארץ 3", "ארץ 4", "ארץ 5"]
 @app.route('/card<int:num>' , methods=["POST"])
 @login_required
-def add_land():
+def add_land(): #TODO: Finish this process
     user = get_current_user()
     num = request.form.get("num") # The number of the card that came from
 
@@ -467,7 +485,6 @@ def add_land():
         is_admin=user.admin_check(),
         gray_value=0
     )
-
 
 # ------------------ Other routes (about, user page etc.) ------------------
 @app.route('/about')
