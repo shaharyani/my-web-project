@@ -24,3 +24,18 @@
 [2025-12-28 23:43:31,434] INFO: User 'רוני' (ID: 3) status changed to 1 by admin.
 [2025-12-28 23:43:40,931] INFO: User 'איתי' (ID: 4) status changed to 0 by admin.
 [2025-12-28 23:45:10,598] INFO: User 'איתי' (ID: 4) status changed to 2 by admin.
+[2025-12-29 16:12:55,140] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2025-12-29 16:18:30,684] INFO: User 'שחר יהודה יאני' (ID: 1) logged out successfully.
+[2025-12-29 16:18:34,595] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2025-12-29 16:18:40,219] INFO: User 'רוני' (ID: 2) logged out successfully.
+[2025-12-29 16:18:44,266] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2025-12-29 17:44:55,782] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 17:45:00,779] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 18:07:54,363] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 18:08:00,813] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 18:08:10,546] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 18:09:24,153] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 18:09:48,873] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2025-12-29 18:10:05,219] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 18:11:08,278] WARNING: Login failed for 'שחר יהודה יאני'.
+[2025-12-29 18:11:13,715] WARNING: Login failed for 'שחר יהודה יאני'.

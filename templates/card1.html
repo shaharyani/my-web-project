@@ -16,6 +16,11 @@
 
     <!-- ===== TOP CARDS ===== -->
     <div class="card-row">
+        {% if is_admin %}
+            <button id="add-land-btn" onclick="openAddLandModal()">
+                +
+            </button>
+        {% endif %}
         <div class="cardM" onclick="showTitle('ארץ 5', this)">ארץ 5</div>
         <div class="cardM" onclick="showTitle('ארץ 4', this)">ארץ 4</div>
         <div class="cardM" onclick="showTitle('ארץ 3', this)">ארץ 3</div>
@@ -24,6 +29,27 @@
     </div>
 
     <div id="card-title" class="title-text">עולם 1 > ארץ 1</div>
+
+    <!-- ADD LAND MODAL -->
+    {% if is_admin %}
+        <div id="addLandModal" class="modal">
+            <div class="modal-content-land">
+                <h2>הוספת ארץ חדשה</h2>
+                <form method="POST" action="/card1">
+                    <input type="text"
+                           name="land_name"
+                           placeholder="שם הארץ"
+                           required
+                           autofocus>
+
+                     <div class="button-group">
+                        <button type="submit" class="btn-create-land">הוסף</button>
+                         <button type="button" onclick="closeAddLandModal()" class="btn-cancel-land">בטל</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
 
     <!-- ===== MAIN LAYOUT ===== -->
     <div class="inline-layout">
@@ -59,6 +85,15 @@
                 <div class="gray-edit-controls">
                     <button onclick="saveGray()">שמירה</button>
                     <input type="number" id="grayInput" value="{{ gray_value }}">
+                </div>
+            </div>
+
+            <div class="gray-edit-section" style="background: #f1f8f1;">
+                <h4 style="color: #3f6b3f;">הוספת עיר חדשה</h4>
+                <div class="gray-edit-controls">
+                    <button style="background: #3a6b3a;" onclick="saveGray()">שמירה</button>
+                    <input type="text" id="" placeholder="מס' סיראלי">
+                    <input type="text" id="" placeholder="קוד אישי">
                 </div>
             </div>
             {% endif %}
@@ -193,6 +228,31 @@
 
 <!-- ===== SCRIPT ===== -->
 <script>
+    function openAddLandModal() {
+        document.getElementById("addLandModal").style.display = "flex";
+    }
+
+    function closeAddLandModal() {
+             // Hide the modal
+        document.getElementById("addLandModal").style.display = "none";
+
+        // Clear all input fields inside the modal
+        const inputs = document.querySelectorAll("#addLandModal input");
+        inputs.forEach(input => input.value = "");
+
+        // Optional: clear textareas as well, if you have any
+        const textareas = document.querySelectorAll("#addLandModal textarea");
+        textareas.forEach(textarea => textarea.value = "");
+    }
+
+    // Close when clicking outside
+    window.addEventListener("click", function(e) {
+        const modal = document.getElementById("addLandModal");
+        if (e.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+
 function showTitle(name, element) {
     document.getElementById('card-title').innerText = "עולם 1 > " + name;
     document.getElementById('selected-country').innerText = name;

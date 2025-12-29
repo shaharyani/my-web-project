@@ -622,6 +622,107 @@ button i {
     margin: 1rem 0;
 }
 
+#add-land-btn {
+    background: white;
+    color: #2575fc;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-family: 'Rubik', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+#add-land-btn:hover {
+    background: #1d5ed8;
+    transform: scale(1.25);
+    color: white;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 5000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content-land {
+    background: white;
+    padding: 25px;
+    width: 340px;
+    border-radius: 16px;
+    text-align: center;
+    font-family: 'Rubik', sans-serif;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+.modal-content-land h2 {
+    margin-bottom: 20px;
+    color: #2575fc;
+}
+
+.modal-content-land form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.modal-content-land input {
+    width: 70%;
+    padding: 45px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+    font-family: 'Rubik', sans-serif;
+    font-size: 1.3rem;
+    direction: rtl;
+}
+
+/* Buttons row */
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* Buttons */
+.btn-create-land,
+.btn-cancel-land {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn-create-land {
+    background-color: #2575fc;
+    color: white;
+}
+
+.btn-create-land:hover {
+    background-color: #1d5ed8;
+    transform: translateY(-2px);
+}
+
+.btn-cancel-land {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.btn-cancel-land:hover {
+    background-color: #bdbdbd;
+    transform: translateY(-2px);
+}
+
+
 /* Individual card style */
 .cardM {
     background-color: white;
@@ -672,7 +773,7 @@ button i {
 .left-panel {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
 }
 
 /* smaller rectangle */

@@ -1,18 +1,35 @@
-from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response, jsonify
+from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response
 from functools import wraps
-import pandas as pd
+
+from flask_login import login_required
+
 from User import User
-from UserManager import UserManager
 from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
+from db import get_users_db
 import os
 
 app = Flask(__name__)
 app.secret_key = '27653sdvft&@gbadhsf7231ah!368'
 
-manager = UserManager(r'C:\Users\shaha\PycharmProjects\PythonProjectWeb\users.xlsx')
-manager.load_users_from_excel()  # Load users on startup
+conn = get_users_db()
+cursor = conn.cursor()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL,
+    mador TEXT,
+    password TEXT NOT NULL,
+    type INTEGER DEFAULT 2,
+    is_active INTEGER DEFAULT 1,
+    is_admin INTEGER DEFAULT 0,
+    last_login TEXT,
+    profile_image TEXT DEFAULT 'user_photo.png'
+)
+""")
+conn.commit()
+conn.close()
 
 UPLOAD_FOLDER = os.path.join("static", "profile_pics")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -55,6 +72,7 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/upload_profile_picture", methods=["POST"])
+@login_required
 def upload_profile_picture():
     file = request.files.get("profile_picture")
 
@@ -66,7 +84,7 @@ def upload_profile_picture():
         flash("סוג קובץ לא נתמך", "error")
         return redirect("/user_page")
 
-    user = manager.find_user_by_name(session["user_name"])
+    user = User.get_by_name(session.get("user_name"))
 
     ext = file.filename.rsplit(".", 1)[1].lower()
     filename = f"user_{user.id}.{ext}"
@@ -82,8 +100,8 @@ def load_user_from_cookie():
     if "user_name" not in session:
         cookie_user = request.cookies.get("remember_user")
         if cookie_user:
-            manager.load_users_from_excel()
-            temp_user = manager.find_user_by_name(cookie_user)
+            # Load the user directly from DB
+            temp_user = User.get_by_name(cookie_user)
             if temp_user:
                 session["user_name"] = temp_user.get_name()
 
@@ -100,7 +118,7 @@ def get_current_user():
     user_name = session.get("user_name")
     if not user_name:
         return None
-    return manager.find_user_by_name(user_name)
+    return User.get_by_name(user_name)
 
 # ------------------ Routes ------------------
 @app.route('/')
@@ -134,7 +152,7 @@ def card(num):
 
     return render_template(
         f'card{num}.html',
-        user=user.get_name(),
+        user=user.get_by_name(user.get_name()) if user else None,
         is_admin=user.admin_check(),
         gray_value=0
     )
@@ -142,7 +160,7 @@ def card(num):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user_name = request.form.get("name").strip()
+        user_name = request.form.get("name", "").strip()
         user_password = request.form.get("password")
         remember = request.form.get("remember")
 
@@ -150,44 +168,42 @@ def login():
             flash("Please enter both Name and password.", "warning")
             return render_template("login.html")
 
-        manager.load_users_from_excel()
-        temp_user = manager.find_user_by_name(user_name)
+        temp_user = User.get_by_name(user_name)
 
         if temp_user and temp_user.check_password(user_password):
             session["user_name"] = temp_user.name
-            temp_user.is_active = 1  # mark as active
-            manager.save_users_to_excel()
+            temp_user.activate()  # mark as active
 
             flash(f"שלום {temp_user.name}", "success")
             app.logger.info(f"User '{temp_user.name}' (ID: {temp_user.id}) logged in successfully.")
             response = make_response(redirect("/"))
 
             if remember == "on":
-                response.set_cookie("remember_user", temp_user.name, max_age=60*60*24*30)
+                response.set_cookie("remember_user", temp_user.name, max_age=60 * 60 * 24 * 30)
             else:
                 response.set_cookie("remember_user", '', expires=0)
 
             return response
         else:
             flash("Invalid Name or password.", "error")
-            app.logger.warning(f"User '{temp_user.name}' attempted login with incorrect password.")
+            app.logger.warning(f"Login failed for '{user_name}'.")
             return render_template("login.html")
 
+    # Ensure GET request returns the login page
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
-    user = get_current_user()
+    user = User.get_by_name(session.get("user_name"))
     if user:
-        user.is_active = 0
+        user.deactivate()
         user.set_last_login(datetime.now().strftime("%H:%M %d/%m/%Y"))
-        manager.save_users_to_excel()  # save the change
 
     session.clear()
     response = make_response(redirect("/login"))
     response.delete_cookie("remember_user")
     flash("You have been logged out.", "success")
-    app.logger.info(f"User '{user.name}' (ID: {user.id}) logged out successfully.")
+    app.logger.info(f"User '{user.name}' logged out successfully." if user else "Unknown user logged out.")
     return response
 
 @app.route("/view-result/<serial>/<code>/<world>/<land>")
@@ -210,56 +226,65 @@ def view_result(serial, code, world, land):
 def admin():
     user = get_current_user()
     if not user or not user.is_admin:
-        flash('למשתמש זה אין הרשאות מנהל.', "error")
-        return redirect(url_for('home'))
+        flash("למשתמש זה אין הרשאות מנהל.", "error")
+        return redirect(url_for("home"))
 
-    manager.load_users_from_excel()
-    return render_template('admin.html', user=user.get_name(), users=manager.users)
+    # Fetch all users from the database
+    conn = get_users_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users ORDER BY id")
+    users_data = cursor.fetchall()
+    conn.close()
+
+    # Convert DB rows to User objects
+    users = []
+    for row in users_data:
+        u = User(
+            name=row[1],
+            mador=row[2],
+            id=row[0],
+            password=row[3],
+            type=row[4],
+            is_active=bool(row[5]),
+            is_admin=bool(row[6]),
+            last_login=row[7],
+            profile_image=row[8] if row[8] else "user_photo.png"
+        )
+        users.append(u)
+
+    return render_template('admin.html', user=user.get_name(), users=users)
 
 @app.route('/create_user', methods=['POST'])
 @login_required
 def create_user():
-    current_user = get_current_user()
+    current_user = User.get_by_name(session["user_name"])
 
     if not current_user.is_admin:
         flash("You are not authorized to create users.", "error")
-        return redirect(url_for('admin'))
+        return redirect(url_for('admin_dashboard'))
 
-    # Get form data
     name = request.form['name']
     mador = request.form['mador']
     password = request.form['password']
     is_active = request.form.get('is_active') == 'on'
+    type = int(request.form['type'])
+    is_admin = True if type == 0 else False
+
+    if User.get_by_name(name):
+        flash(f"Username '{name}' already exists.", "error")
+        return redirect(url_for('admin_dashboard'))
+
     last_login = datetime.now().strftime("%H:%M %d/%m/%Y")
-    type = int(request.form['type'])  # Keep the type from the form
+    new_user = User.create(name, mador, password, type, is_active, is_admin, last_login)
 
-    if type == 0: is_admin = True
-    else: is_admin = False
-
-    # Check if name is unique
-    if manager.find_user_by_name(name):
-        flash(f"Username '{name}' already exists. Please choose a different name.", "error")
-        return redirect(url_for('admin'))
-
-    # Generate unique ID
-    if manager.users:
-        max_id = max([u.id for u in manager.users])
-        new_id = max_id + 1
-    else:
-        new_id = 1
-
-    # Add user (no Excel reload here!)
-    new_user = User(name, mador, new_id, password, type, is_active, is_admin, last_login)
-    manager.add_user(new_user)
-
-    flash(f"User {name} created successfully with ID {new_id}.", "success")
-    return redirect(url_for('admin'))
+    flash(f"User {name} created successfully with ID {new_user.id}.", "success")
+    return redirect(url_for('admin_dashboard'))
 
 @app.route("/edit_user", methods=["POST"])
 @login_required
 def edit_user():
-    current_user = get_current_user()
-    if not current_user.is_admin:
+    current_user = User.get_by_name(session.get("user_name"))
+    if not current_user or not current_user.is_admin:
         flash("אין הרשאה", "error")
         return redirect(url_for("admin"))
 
@@ -274,20 +299,24 @@ def edit_user():
     except (ValueError, TypeError):
         user_type = 0  # default type if missing
 
-    user = manager.find_user_by_name(name)
+    user = User.get_by_name(name)
     if not user:
         flash("משתמש לא נמצא", "error")
         return redirect(url_for("admin"))
 
+    # Update fields
     user.mador = mador
     user.type = 2 if is_admin else user_type
     user.is_admin = is_admin
 
-    manager.save_users_to_excel()
+    # Update DB fields
+    user.update_db_field("mador", user.mador)
+    user.update_db_field("type", user.type)
+    user.update_db_field("is_admin", int(user.is_admin))
 
     flash("המשתמש עודכן בהצלחה", "success")
     app.logger.info(
-        f"User '{user.name}' (ID: {user.id}) status changed to {user.type} by admin."
+        f"User '{user.name}' (ID: {user.id}) updated: type={user.type}, admin={user.is_admin} by {current_user.name}."
     )
 
     return redirect(url_for("admin"))
@@ -298,56 +327,47 @@ def change_password():
     new = request.form.get("new_password")
     confirm = request.form.get("confirm_password")
 
-    user = manager.find_user_by_name(session.get("user_name"))
+    user = User.get_by_name(session.get("user_name"))
 
-    # Check current password
     if not user.check_password(current):
         flash("סיסמה נוכחית שגויה", "error")
         return redirect("/user_page")
 
-    # Check new password matches confirm
     if new != confirm:
         flash("הסיסמא החדשה אינה תואמת", "error")
         return redirect("/user_page")
 
-    # Update user object
-    user.password = new  # TODO: replace with hashed password if needed
+    user.set_password(new)  # hashes & updates DB automatically
+
     flash("סיסמה עודכנה בהצלחה", "success")
     app.logger.info(f"User '{user.name}' (ID: {user.id}) changed password.")
-
-    # --- Update Excel file ---
-    try:
-        # Load Excel file
-        df = pd.read_excel(manager.excel_file)
-
-        # Find row by user name
-        user_row = df['name'] == user.name
-
-        # Update password column
-        df.loc[user_row, 'password'] = new  # TODO: hash if required
-
-        # Save Excel file
-        df.to_excel(manager.excel_file, index=False)
-    except Exception as e:
-        flash(f"שגיאה בעדכון הקובץ: {e}", "error")
 
     return redirect("/user_page")
 
 @app.route('/delete_user/<username>', methods=['POST'])
 @login_required
 def delete_user(username):
-    current_user = get_current_user()
+    current_user = User.get_by_name(session["user_name"])
     if not current_user.is_admin:
         flash("You are not authorized to delete users.", "error")
-        return redirect(url_for('admin'))
+        return redirect(url_for('admin_dashboard'))
 
     if username == current_user.name:
         flash("You cannot delete your own account.", "error")
-        return redirect(url_for('admin'))
+        return redirect(url_for('admin_dashboard'))
 
-    manager.remove_user(username)
-    flash(f"User {username} has been deleted.", "success")
-    return redirect(url_for('admin'))
+    user_to_delete = User.get_by_name(username)
+    if user_to_delete:
+        conn = get_users_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM users WHERE id=?", (user_to_delete.id,))
+        conn.commit()
+        conn.close()
+        flash(f"User {username} has been deleted.", "success")
+    else:
+        flash(f"User {username} not found.", "error")
+
+    return redirect(url_for('admin_dashboard'))
 
 @app.route("/admin")
 @login_required
@@ -357,7 +377,27 @@ def admin_dashboard():
         flash("למשתמש זה אין הרשאות מנהל.", "error")
         return redirect(url_for("home"))
 
-    manager.load_users_from_excel()
+    # --- Load users from DB ---
+    conn = get_users_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users ORDER BY id")
+    users_data = cursor.fetchall()
+    conn.close()
+
+    users = []
+    for row in users_data:
+        u = User(
+            name=row[1],
+            mador=row[2],
+            id=row[0],
+            password=row[3],
+            type=row[4],
+            is_active=bool(row[5]),
+            is_admin=bool(row[6]),
+            last_login=row[7],
+            profile_image=row[8] if row[8] else "user_photo.png"
+        )
+        users.append(u)
 
     # --- Load logs ---
     logs_parsed = []
@@ -365,7 +405,6 @@ def admin_dashboard():
         with open(LOG_FILE, "r", encoding="utf-8") as f:
             for line in f.readlines()[::-1]:  # newest first
                 try:
-                    # parse: [timestamp] LEVEL: message
                     timestamp_end = line.index("]") + 1
                     timestamp = line[:timestamp_end].strip()
                     rest = line[timestamp_end:].strip()
@@ -379,12 +418,40 @@ def admin_dashboard():
                     })
                 except Exception:
                     logs_parsed.append({"timestamp": "", "level": "", "message": line.strip()})
+
     return render_template(
         "admin.html",
         user=current_user.get_name(),
-        users=manager.users,
+        users=users,
         logs=logs_parsed
     )
+
+lands = ["ארץ 1", "ארץ 2", "ארץ 3", "ארץ 4", "ארץ 5"]
+@app.route('/card<int:num>' , methods=["POST"])
+@login_required
+def add_land():
+    user = get_current_user()
+    num = request.form.get("num") # The number of the card that came from
+
+    land_name = request.form.get("land_name", "").strip()
+
+    if not land_name:
+        flash("שם הארץ לא יכול להיות ריק", "error")
+
+    if land_name in lands:
+        flash("הארץ כבר קיימת", "error")
+
+
+    lands.append(land_name)
+    flash("ארץ נוספה בהצלחה", "success")
+
+    return render_template(
+        f'card{num}.html',
+        user=user.get_name(),
+        is_admin=user.admin_check(),
+        gray_value=0
+    )
+
 
 # ------------------ Other routes (about, user page etc.) ------------------
 @app.route('/about')
@@ -395,8 +462,8 @@ def about():
 @app.route("/user_page")
 @login_required
 def user_page():
-    user = manager.find_user_by_name(session["user_name"])
-
+    user = User.get_by_name(session.get("user_name"))
+    # Profile image logic
     profile_image = "images/user_photo.png"
     for ext in ["png", "jpg", "jpeg", "gif"]:
         path = f"static/profile_pics/user_{user.id}.{ext}"
