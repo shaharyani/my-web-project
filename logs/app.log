@@ -45,3 +45,10 @@
 [2025-12-29 18:37:32,469] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
 [2025-12-29 18:43:48,993] INFO: User 'רוני' (ID: 2) updated: type=2, admin=False by שחר יהודה יאני.
 [2025-12-29 18:44:02,978] INFO: User 'רוני' (ID: 2) updated: type=2, admin=False by שחר יהודה יאני.
+[2025-12-29 18:51:42,393] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2025-12-29 18:51:46,593] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2025-12-29 18:51:54,913] INFO: User 'רוני' logged out successfully.
+[2025-12-29 18:51:58,286] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2025-12-29 18:52:15,897] INFO: User 'שחר יהודה יאני' (ID: 1) changed password.
+[2025-12-29 18:52:25,361] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2025-12-29 18:52:28,309] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
