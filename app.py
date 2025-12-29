@@ -1,13 +1,14 @@
-from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response
+from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response, jsonify
 from functools import wraps
 from flask_login import login_required
 import re
+
+from Product import Product
 from User import User
 from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
-from db import get_users_db
-from db import get_products_db
+from db import get_users_db, get_products_db
 import os
 
 app = Flask(__name__)
@@ -30,25 +31,6 @@ CREATE TABLE IF NOT EXISTS users (
 """)
 conn.commit()
 conn.close()
-
-conn = get_products_db()
-cursor = conn.cursor()
-
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        serial TEXT UNIQUE NOT NULL,
-        code TEXT UNIQUE NOT NULL,
-        card_type TEXT NOT NULL,
-        land_type TEXT NOT NULL,
-        status TEXT DEFAULT 'N',   -- R - RED | B - BLACK | W - WHITE | N - NONE
-        owner TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-""")
-conn.commit()
-conn.close()
-
 
 UPLOAD_FOLDER = os.path.join("static", "profile_pics")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -155,8 +137,26 @@ def get_current_user():
         return None
     return User.get_by_name(user_name)
 
+def get_product_by_serial(serial):
+    conn = get_products_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, serial, code, card_type, land_type, status, owner
+        FROM products
+        WHERE serial = ?
+        """,
+        (serial,)
+    )
+
+    row = cursor.fetchone()
+    conn.close()
+
+    return Product(*row) if row else None
+
 # ------------------ Routes ------------------
-@app.route('/')
+@app.route("/", methods=["GET", "POST"])
 @login_required
 def home():
     user = get_current_user()
@@ -170,11 +170,21 @@ def home():
             user_photo = f"profile_pics/user_{user.id}.{ext}"  # path relative to static/
             break
 
+    product = None
+
+    if request.method == "POST":
+        serial = request.form.get("serial", "").strip()
+        if serial:
+            product = get_product_by_serial(serial)
+
     return render_template(
         'index.html',
-        user=user.get_name() if user else None,
+        user=user if user else None,
+        is_admin=user.is_admin,
         gitLab_logo=gitLab_logo,
-        user_photo=user_photo
+        user_photo=user_photo,
+        product=product,
+        show_modal=request.method == "POST"
     )
 
 @app.route('/card<int:num>')
@@ -256,6 +266,12 @@ def view_result(serial, code, world, land):
     )
 
 # ------------------ Admin Routes ------------------
+@app.route('/newItems')
+@login_required
+def newItems():
+    user = get_current_user()
+    return render_template("new_items.html", user=user)
+
 @app.route('/admin')
 @login_required
 def admin():
@@ -465,7 +481,7 @@ def admin_dashboard():
 lands = ["ארץ 1", "ארץ 2", "ארץ 3", "ארץ 4", "ארץ 5"]
 @app.route('/card<int:num>' , methods=["POST"])
 @login_required
-def add_land(): #TODO: Finish this process
+def add_land():
     user = get_current_user()
     num = request.form.get("num") # The number of the card that came from
 
