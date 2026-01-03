@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>404 - דף לא נמצא</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='images/404banner.png') }}");
+            background-size: cover;        /* cover whole screen */
+            background-position: center;   /* center image */
+            background-repeat: no-repeat;  /* no tiling */
+            background-attachment: fixed;  /* optional: parallax effect */
+        }
+
+        .container404 {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 72px;
+            margin: 0;
+            color: #3a6b3a;
+        }
+
+        p {
+            font-size: 18px;
+            margin: 15px 0 25px;
+        }
+
+        a {
+            text-decoration: none;
+            padding: 10px 20px;
+            background: #3a6b3a;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        a:hover {
+            background: #2e552e;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('home') }}">חזרה לדף הבית</a>
+</body>
+</html>
