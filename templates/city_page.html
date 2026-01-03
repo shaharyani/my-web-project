@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עולם 1</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="top-section">
+
+    <!-- ===== TOP CARDS ===== -->
+    <div class="card-row">
+        <div id="card-title" class="title-text">{{ land_type }} > {{ city_name }}</div>
+    </div>
+
+    <!-- ===== MAIN LAYOUT ===== -->
+    <div class="inline-layout">
+
+        <!-- ===== LEFT PANEL ===== -->
+        <div class="left-panel">
+
+            <!-- VALUES RECTANGLE -->
+            <div class="big-rectangle">
+                <div class="values-grid">
+                    <div class="value-item black">
+                        <div class="label">BLACK</div>
+                        <div class="number">{{ counts.BLACK }}</div>
+                    </div>
+                    <div class="value-item red">
+                        <div class="label">RED</div>
+                        <div class="number">{{ counts.RED }}</div>
+                    </div>
+                    <div class="value-item white">
+                        <div class="label">WHITE</div>
+                        <div class="number">{{ counts.WHITE }}</div>
+                    </div>
+
+                    <div class="value-item gray">
+                        <div class="label">GRAY</div>
+                        <div class="number">{{ gray_value }}</div>
+                    </div>
+                </div>
+            </div>
+
+            {% if is_admin %}
+                <div class="gray-edit-section">
+                    <h4>עריכת ערך אפור</h4>
+                    <div class="gray-edit-controls">
+                        <button onclick="saveGray()">שמירה</button>
+                        <input type="number" id="grayInput" value="{{ gray_value }}">
+                    </div>
+                </div>
+
+                <div class="gray-edit-section">
+                <h4 style="margin-bottom: 15px;">הוספת מוצר חדש</h4>
+
+                <form method="POST"
+                      action="{{ url_for('add_product', city_name=city_name) }}"
+                      class="gray-edit-controls"
+                      style="display: flex; flex-direction: column; gap: 10px;">
+
+                    <input
+                        type="text"
+                        name="serial"
+                        placeholder="מס' סידורי"
+                        required
+                        style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;"
+                    >
+
+                    <input
+                        type="text"
+                        name="code"
+                        placeholder="קוד אישי"
+                        required
+                        style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;"
+                    >
+
+                    <div style="display: flex; justify-content: flex-start;">
+                        <button
+                            type="submit"
+                            style="padding:10px 20px; border:none; border-radius:6px;
+                                   background:#3a6b3a; color:white; font-weight:bold; cursor:pointer;">
+                            הוסף
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ===== CENTER TABLE ===== -->
+        <div class="data-table-card">
+            <div class="filter-section">
+                <input type="text" placeholder="ערך סינון" id="tableFilter">
+                <select id="columnSelect">
+                    <option value="0">מצב</option>
+                    <option value="1">קוד אישי</option>
+                    <option value="2">מספר סידורי</option>
+                </select>
+                <h3>בחר אפשרות סינון</h3>
+            </div>
+
+            <table id="propertyTable">
+                <thead>
+                    <tr>
+                        <th>תוצאות</th>
+                        <th>מצב</th>
+                        <th>קוד אישי</th>
+                        <th>מספר סידורי</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                       <td class="view-cell">
+                            <a href="{{ url_for('view_result',
+                                                city_name=p.city_name,
+                                                serial=p.serial,
+                                                code=p.code) }}">
+                                <img src="{{ url_for('static', filename='images/eye.png') }}"
+                                     class="view-icon"
+                                     alt="view">
+                            </a>
+                        </td>
+                        <td>{{ p.status }}</td>
+                        <td>{{ p.code }}</td>
+                        <td>{{ p.serial }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ===== RIGHT INFO RECTANGLE ===== -->
+        <div class="home-side-rectangle">
+            <h3>מידע כללי עבור <span id="selected-country">{{ city_name }}</span></h3>
+
+            <p>
+                <span id="selected-country-data">
+                    {{ des }}
+                </span>
+            </p>
+
+            <h4>{{ file_title1 }}</h4>
+            <p>{{ des1 }}</p>
+            <a href="{{ url_for('open_pdf', filepath=pdf_paths[0]) }}" target="_blank">
+                <img class="icon" src="{{ url_for('static', filename='images/file.png') }}" alt="PDF">
+            </a>
+
+            <h4>{{ file_title2 }}</h4>
+            <p>{{ des2 }}</p>
+            <a href="{{ url_for('open_pdf', filepath=pdf_paths[1]) }}" target="_blank">
+                <img class="icon" src="{{ url_for('static', filename='images/file.png') }}" alt="PDF">
+            </a>
+            <h4>{{ file_title3 }}</h4>
+            <p>{{ des3 }}</p>
+             <img class="icon" src="{{ url_for('static', filename='images/xls.png') }}"
+                 alt="XLS">
+
+            {% if is_admin %}
+                <h5 style=" font-size: 1rem; color: #2575fc; font-family: 'Rubik', sans-serif; text-align: center;">
+                    עריכת הפרטים
+                </h5>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== SCRIPT ===== -->
+<script>
+    function openAddLandModal() {
+        document.getElementById("addLandModal").style.display = "flex";
+    }
+
+    function closeAddLandModal() {
+             // Hide the modal
+        document.getElementById("addLandModal").style.display = "none";
+
+        // Clear all input fields inside the modal
+        const inputs = document.querySelectorAll("#addLandModal input");
+        inputs.forEach(input => input.value = "");
+
+        // Optional: clear textareas as well, if you have any
+        const textareas = document.querySelectorAll("#addLandModal textarea");
+        textareas.forEach(textarea => textarea.value = "");
+    }
+
+    // Close when clicking outside
+    window.addEventListener("click", function(e) {
+        const modal = document.getElementById("addLandModal");
+        if (e.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+
+    // Filter table
+    const tableFilterInput = document.getElementById('tableFilter');
+    const columnSelect = document.getElementById('columnSelect');
+    const table = document.getElementById('propertyTable');
+
+    tableFilterInput.addEventListener('input', filterTable);
+    columnSelect.addEventListener('change', filterTable);
+
+    function filterTable() {
+        const input = tableFilterInput.value.toLowerCase().trim();
+        const columnIndex = parseInt(columnSelect.value);
+        const rows = table.getElementsByTagName('tr');
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName('td');
+            if (!cells[columnIndex]) continue;
+            const text = cells[columnIndex].textContent.toLowerCase().trim();
+            rows[i].style.display = text.includes(input) ? '' : 'none';
+        }
+    }
+
+    function saveGray() {
+        const value = document.getElementById("grayInput").value;
+        if (value === "" || value < 0) { alert("Invalid value"); return; }
+        alert("GRAY value updated");
+    }
+
+    // Run after page loads
+    window.addEventListener("DOMContentLoaded", () => {
+        const titleElement = document.getElementById("card-title");
+        showTitle("{{ land_type }}", titleElement);
+    });
+</script>
+
+{% endblock %}
+</body>
+</html>

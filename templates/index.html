@@ -18,47 +18,13 @@
 
 <!-- Cards Container -->
 <div class="card-container2" style="margin-bottom: 40px;">
-    <!-- Card 1 -->
-    <a href="/card1" class="card1">
-        <img src="{{ url_for('static', filename='images/earth.png') }}" alt="Our Team" style="width:60%; border-radius: 8px;">
-        <h3>עולם 1</h3>
-        <p>This is the first card. It contains some content.</p>
-    </a>
-
-    <!-- Card 2 -->
-    <a href="/card2" class="card1">
-        <img src="{{ url_for('static', filename='images/earth.png') }}" alt="Our Team" style="width:60%; border-radius: 8px;">
-        <h3>עולם 2</h3>
-        <p>This is the second card. It also contains some content.</p>
-    </a>
-
-    <!-- Card 3 -->
-    <a href="/card3" class="card1">
-        <img src="{{ url_for('static', filename='images/earth.png') }}" alt="Our Team" style="width:60%; border-radius: 8px;">
-        <h3>עולם 3</h3>
-        <p>This is the third card. You can put anything here.</p>
-    </a>
-
-    <!-- Card 4 -->
-    <a href="/card4" class="card1">
-        <img src="{{ url_for('static', filename='images/earth.png') }}" alt="Our Team" style="width:60%; border-radius: 8px;">
-        <h3>עולם 4</h3>
-        <p>This is the fourth card. It has similar content to the others.</p>
-    </a>
-
-    <!-- Card 5 -->
-    <a href="/card5" class="card1">
-        <img src="{{ url_for('static', filename='images/earth.png') }}" alt="Our Team" style="width:60%; border-radius: 8px;">
-        <h3>עולם 5</h3>
-        <p>This is the fifth card. Feel free to customize it.</p>
-    </a>
-
-    <!-- Admin Card -->
-    <a href="/admin" class="card1">
-        <img src="{{ url_for('static', filename='images/earth.png') }}" alt="Our Team" style="width:60%; border-radius: 8px;">
-        <h3>איזור ניהול</h3>
-        <p>This is the sixth card. Feel free to customize it.</p>
-    </a>
+    {% for city in cities %}
+        <div class="city-title">
+            <a href="{{ url_for('city_page', city_name=city.name) }}">
+                <h3>{{ city.title }}</h3>
+            </a>
+        </div>
+    {% endfor %}
 </div>
 
 <!-- Modal Dialog -->
@@ -139,11 +105,6 @@
         <div class="options-title">אפשרויות נוספות</div>
     </div>
 </div>
-
-<!-- Footer -->
-<footer class="footer-style">
-    <a href="#top" class="no-link-style">בחזרה להתחלה</a>
-</footer>
 
 {% endblock %}
 

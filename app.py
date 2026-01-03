@@ -1,8 +1,11 @@
-from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response, jsonify
+import sqlite3
+
+from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response, jsonify, send_file, \
+    abort
 from functools import wraps
 from flask_login import login_required
 import re
-
+from collections import Counter
 from Product import Product
 from User import User
 from datetime import datetime
@@ -31,6 +34,24 @@ CREATE TABLE IF NOT EXISTS users (
 """)
 conn.commit()
 conn.close()
+
+conn1 = get_products_db()
+cursor = conn1.cursor()
+cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            serial TEXT UNIQUE NOT NULL,
+            code TEXT NOT NULL,
+            land_type TEXT NOT NULL,
+            city_name TEXT NOT NULL,
+            status TEXT CHECK(status IN ('R','W','B','N')) DEFAULT 'N',
+            owner TEXT,
+            notes TEXT
+        )
+    """)
+
+conn1.commit()
+conn1.close()
 
 UPLOAD_FOLDER = os.path.join("static", "profile_pics")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -68,6 +89,10 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 console_handler.setLevel(logging.INFO)
 app.logger.addHandler(console_handler)
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
 
 def get_logs(limit=5):
     logs = []
@@ -143,7 +168,7 @@ def get_product_by_serial(serial):
 
     cursor.execute(
         """
-        SELECT id, serial, code, card_type, land_type, status, owner
+        SELECT id, serial, code, card_type, land_type, status, owner, notes
         FROM products
         WHERE serial = ?
         """,
@@ -177,6 +202,19 @@ def home():
         if serial:
             product = get_product_by_serial(serial)
 
+    cities_dir = os.path.join(app.template_folder, "cities")
+
+    cities = []
+
+    for folder in os.listdir(cities_dir):
+        folder_path = os.path.join(cities_dir, folder)
+
+        if os.path.isdir(folder_path):
+            cities.append({
+                "name": folder,
+                "title": folder.replace("_", " ").title(),
+            })
+
     return render_template(
         'index.html',
         user=user if user else None,
@@ -184,22 +222,150 @@ def home():
         gitLab_logo=gitLab_logo,
         user_photo=user_photo,
         product=product,
-        show_modal=request.method == "POST"
+        show_modal=request.method == "POST",
+        cities=cities
     )
 
-@app.route('/card<int:num>')
+def getLandType(city_name) ->str:
+    if (city_name == "עיר1" or city_name == "עיר2" or city_name == "עיר3" or city_name == "עיר4"):
+        land = "ארץ1"
+    else:
+        land = "ארץ2"
+
+    return land
+
+def load_product_by_city(city_name):
+    STATUS_MAP = {
+        "R": "RED",
+        "W": "WHITE",
+        "B": "BLACK",
+        "N": "NONE"
+    }
+
+    products = []
+    conn = get_products_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, serial, code, land_type, city_name, status, owner, notes
+        FROM products
+        WHERE city_name = ?
+        ORDER BY id DESC
+    """, (city_name,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    for row in rows:
+        notes_list = row[7].split(",") if row[7] else []
+
+        p = Product(
+            id=row[0],
+            serial=row[1],
+            code=row[2],
+            land_type=row[3],
+            city_name=row[4],
+            status=STATUS_MAP.get(row[5], row[5]),
+            owner=row[6],
+            notes=notes_list
+        )
+
+        products.append(p)
+
+    return products
+
+@app.route("/city/<city_name>/add_product", methods=["POST"])
 @login_required
-def card(num):
+def add_product(city_name):
+    serial = request.form.get("serial", "").strip()
+    code = request.form.get("code", "").strip()
+
+    if not serial or not code:
+        flash("יש למלא מספר סידורי וקוד", "error")
+        return redirect(url_for("city_page", city_name=city_name))
+
+    conn = get_products_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO products
+            (serial, code, land_type, city_name, status, owner, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            serial,
+            code,
+            getLandType(city_name),
+            city_name,
+            "N",
+            "",
+            ""
+        ))
+        conn.commit()
+
+    except sqlite3.IntegrityError:
+        flash("מוצר עם מספר סידורי וקוד זהים כבר קיים", "error")
+
+    finally:
+        conn.close()
+
+    return redirect(url_for("city_page", city_name=city_name))
+
+def get_file_data(path,row_num) -> str:
+    with open(path, "r", encoding="utf-8") as f:
+        return f.readlines()[row_num].strip()
+
+@app.route("/open-pdf/<path:filepath>")
+@login_required
+def open_pdf(filepath):
+    # Normalize path (prevents ../ tricks)
+    filepath = os.path.normpath(filepath)
+
+    # Ensure file exists
+    if not os.path.isfile(filepath):
+        abort(404)
+
+    # Allow PDFs only
+    if not filepath.lower().endswith(".pdf"):
+        abort(403)
+
+    return send_file(filepath, as_attachment=False) # open in browser
+
+@app.route("/city_page/<city_name>")
+@login_required
+def city_page(city_name):
     user = get_current_user()
     if not user:
         flash("User not found.", "error")
         return redirect(url_for('login'))
 
+    land_type = getLandType(city_name)
+
+    products = load_product_by_city(city_name)
+    status_counter = Counter(p.status for p in products)  # counts RED, WHITE, BLACK
+    counts = {
+        "RED": status_counter.get("RED", 0),
+        "WHITE": status_counter.get("WHITE", 0),
+        "BLACK": status_counter.get("BLACK", 0)
+    }
+    file_path = f"templates/cities/{city_name}/General.txt"
+    pdf_paths = [get_file_data(file_path,7), get_file_data(file_path,8)]
     return render_template(
-        f'card{num}.html',
+        "city_page.html",
         user=user.get_by_name(user.get_name()) if user else None,
         is_admin=user.admin_check(),
-        gray_value=0
+        gray_value=0,
+        city_name=city_name,
+        land_type=land_type,
+        products=load_product_by_city(city_name),
+        counts=counts,
+        des=get_file_data(file_path,0),
+        file_title1=get_file_data(file_path,1),
+        des1=get_file_data(file_path,2),
+        file_title2=get_file_data(file_path,3),
+        des2=get_file_data(file_path,4),
+        file_title3=get_file_data(file_path,5),
+        des3=get_file_data(file_path,6),
+        pdf_paths=pdf_paths
     )
 
 @app.route("/login", methods=["GET", "POST"])
@@ -251,17 +417,18 @@ def logout():
     app.logger.info(f"User '{user.name}' logged out successfully." if user else "Unknown user logged out.")
     return response
 
-@app.route("/view-result/<serial>/<code>/<world>/<land>")
+@app.route("/view-result/<city_name>/<serial>")
 @login_required
-def view_result(serial, code, world, land):
-    # If you want additional info, you can prepare it here
+def view_result(city_name, serial):
+    code = request.args.get("code")  # grab code from query string
+    user = get_current_user()
     info_text = f"מידע מפורט על {serial} ({code})"
     return render_template(
         "view-result.html",
+        user=user,
         serial=serial,
         code=code,
-        world=world,
-        land=land,
+        city_name=city_name,
         info_text=info_text
     )
 
@@ -476,32 +643,6 @@ def admin_dashboard():
         user=current_user.get_name(),
         users=users,
         logs=logs_parsed
-    )
-
-lands = ["ארץ 1", "ארץ 2", "ארץ 3", "ארץ 4", "ארץ 5"]
-@app.route('/card<int:num>' , methods=["POST"])
-@login_required
-def add_land():
-    user = get_current_user()
-    num = request.form.get("num") # The number of the card that came from
-
-    land_name = request.form.get("land_name", "").strip()
-
-    if not land_name:
-        flash("שם הארץ לא יכול להיות ריק", "error")
-
-    if land_name in lands:
-        flash("הארץ כבר קיימת", "error")
-
-
-    lands.append(land_name)
-    flash("ארץ נוספה בהצלחה", "success")
-
-    return render_template(
-        f'card{num}.html',
-        user=user.get_name(),
-        is_admin=user.admin_check(),
-        gray_value=0
     )
 
 # ------------------ Other routes (about, user page etc.) ------------------

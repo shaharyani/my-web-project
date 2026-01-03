@@ -112,14 +112,52 @@ body {
 
 .card-container2 {
     display: grid;
+    background: #f7f7f7;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    border: 1px solid #e0e0e0;
     margin-top: 150px;
-    grid-template-columns: repeat(3, 1fr); /* 3 עמודות */
+    grid-template-columns: repeat(4, 0.5fr); /* 3 עמודות */
     grid-auto-rows: auto;                  /* שורות אוטומטיות */
-    gap: 50px;                             /* רווח בין הכרטיסים */
+    gap: 7px;                             /* רווח בין הכרטיסים */
     justify-content: center;                /* מרכז את כל ה־grid אופקית */
     padding: 50px;
+    text-align: center;
     width: 100%;
 }
+
+.city-title {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+
+.city-title a{
+    display: inline-block;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.city-title a:hover {
+    color: #2575fc;
+     transform: translateY(-4px);
+}
+
+.city-title a.active {
+    background-color: #2575fc;
+    color: white;
+}
+
+
 
 .card1 {
     background-color: white;
@@ -617,6 +655,7 @@ button i {
     margin: 10px 0 15px 0;
     padding: 0 0 0 20%;
     flex-direction: row; /* stack vertically */
+    justify-content: flex-end;
     align-items: center;    /* center horizontally */
     gap: 1rem;
     margin: 1rem 0;
