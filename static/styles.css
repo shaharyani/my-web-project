@@ -1,6 +1,8 @@
 /* General Reset */
 html{
     scroll-behavior: smooth;
+    height: 100%; /* Required for min-height to work correctly in some browsers */
+    margin: 0;
 }
 body {
     font-family: 'Rubik', sans-serif;
@@ -11,10 +13,17 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;  /* Full viewport height */
+    height: 100%;
     min-height: 100vh;
 }
+/* This is the container in your base.html that wraps {% block content %} */
+.main-wrapper {
+    flex: 1 0 auto; /* This pushes the footer down */
+}
 
+footer {
+    flex-shrink: 0; /* Ensures the footer stays its intended height */
+}
 /* Top Bar */
 .topbar {
     position: fixed;
@@ -51,10 +60,11 @@ body {
 }
 
 .logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: white;
-    text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    width: 70px;
+    height: 46.666px;
 }
 
 .nav-links{
@@ -116,7 +126,7 @@ body {
     border-radius: 12px;
     font-size: 0.7rem;
     border: 1px solid #e0e0e0;
-    margin-top: 150px;
+    margin-top: 50px;
     grid-template-columns: repeat(4, 0.5fr); /* 3 עמודות */
     grid-auto-rows: auto;                  /* שורות אוטומטיות */
     gap: 7px;                             /* רווח בין הכרטיסים */
@@ -157,8 +167,39 @@ body {
     color: white;
 }
 
+.city-item {
+    transition: opacity 0.2s ease;
+}
 
 
+.city-search-input {
+    width: 70%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-family: 'Rubik', sans-serif;
+    font-size: 1rem;
+    direction: rtl;
+    text-align: right;
+}
+
+.no-city-message {
+    display: none;
+    text-align: center;
+    text-align: center;
+    margin-top: 20px;
+    margin-left: 35px;
+    padding: 5px;
+    background-color: #ffebee;
+    color: #c62828;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+/* This class gets toggled by your JavaScript */
+.no-city-message.visible {
+    display: block;
+}
 .card1 {
     background-color: white;
     padding: 20px;
@@ -739,6 +780,8 @@ button i {
     cursor: pointer;
     font-family: 'Rubik', sans-serif;
     transition: transform 0.2s ease, background 0.2s ease;
+    background-color: #e0e0e0;
+    color: #333;
 }
 
 .btn-create-land {
@@ -749,11 +792,6 @@ button i {
 .btn-create-land:hover {
     background-color: #1d5ed8;
     transform: translateY(-2px);
-}
-
-.btn-cancel-land {
-    background-color: #e0e0e0;
-    color: #333;
 }
 
 .btn-cancel-land:hover {
@@ -799,6 +837,8 @@ button i {
 }
 
 .top-section {
+    margin-top: 80px;
+    margin-bottom: 40px;
     padding: 10px 40px 0 40px;
 }
 
@@ -880,7 +920,7 @@ button i {
 .data-table-card table {
     width: 100%;
     border-collapse: collapse;
-    text-align: right;
+    text-align: center;
 }
 
 .data-table-card th {
@@ -904,9 +944,8 @@ button i {
 .filter-section {
     display: flex;
     gap: 10px;
-    align-items: start;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-center;
     font-family: 'Rubik', sans-serif;
 }
 .filter-section h3 {
@@ -937,7 +976,7 @@ button i {
 
 /* GRAY edit section (under rectangle) */
 .gray-edit-section {
-    margin-top: 10px;
+    margin-top: 20px;
     background: #f7f7f7;          /* softer than white */
     border-radius: 12px;
     border: 1px solid #e0e0e0;
@@ -974,6 +1013,19 @@ button i {
     font-family: 'Rubik', sans-serif;
 }
 
+.gray-edit-controls select {
+    width: 95%;
+    height: 100%
+    padding: 6,0px;
+    font-size: 15px;
+    text-align: center;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: white;
+    color: gray;
+    font-family: 'Rubik', sans-serif;
+}
+
 /* Save button */
 .gray-edit-controls button {
     padding: 6px 12px;
@@ -981,7 +1033,7 @@ button i {
     border: none;
     background: #666;
     color: white;
-    font-size: 13px;
+    font-size: 15px;
     cursor: pointer;
     transition: background 0.2s ease;
     font-family: 'Rubik', sans-serif;
@@ -1051,8 +1103,12 @@ button i {
     cursor: pointer;
 }
 
+#propertyTable {
+    text-align: center;
+}
+
 .view-cell {
-    text-align: right;
+    text-align: center;
 }
 
 .view-icon {
@@ -1217,4 +1273,139 @@ button i {
 #serialModal button:hover {
     background-color: #6a11cb;
     transform: translateY(-2px);
+}
+
+
+.code-badge {
+    background-color: #f0f4f8;
+    color: #2575fc;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin: 2px;
+    display: inline-block;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+}
+
+/* התאמה לטבלה בתוך data-table-card שתהיה ממורכזת בטקסט */
+#summaryTable td {
+    vertical-align: middle;
+}
+
+.code-badge {
+    background-color: #e1f5fe;
+    color: #2575fc;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 5px;
+    border: 1px solid #2575fc;
+    display: inline-block;
+}
+
+#tableFilter {
+    text-align: right;    /* מיישר את הטקסט לימין */
+    direction: rtl;       /* קובע את כיוון זרימת התווים (משמאל לימין) */
+    unicode-bidi: plaintext; /* מבטיח שסימני פיסוק לא יקפצו לצד הלא נכון */
+    padding-right: 10px;  /* רווח קטן מהדופן הימנית */
+}
+
+#rtl-input::placeholder {
+    text-align: right;
+    direction: rtl;
+}
+
+.filter-section {
+    display: flex;
+    flex-direction: row-reverse; /* שומר על סדר אלמנטים נכון בעברית */
+    align-items: center;        /* ממרכז את כל האובייקטים אנכית באותו קו */
+    justify-content: center;    /* ממרכז את כל השורה לאמצע הדף */
+    gap: 15px;                  /* יוצר רווח שווה בין הכותרת, הסלקט והאינפוט */
+    margin-bottom: 20px;
+    direction: rtl;
+}
+
+.filter-title {
+    margin: 0;                  /* מבטל שוליים של h3 שעלולים להרוס את המרכוז */
+    font-size: 1.1rem;
+    white-space: nowrap;        /* מונע מהטקסט לרדת שורה */
+}
+
+.filter-select, .filter-input {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-family: 'Rubik', sans-serif;
+}
+
+.filter-input {
+    width: 200px;               /* ניתן לשנות את הרווח לפי הצורך */
+}
+
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none; /* JS toggles to flex */
+    justify-content: center;
+    align-items: center;
+    z-index: 10001;
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    50% { transform: translateX(8px); }
+    75% { transform: translateX(-8px); }
+    100% { transform: translateX(0); }
+}
+
+.apply-shake {
+    animation: shake 0.4s ease-in-out;
+}
+
+.confirm-box {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    max-width: 400px;
+    width: 90%;
+    direction: rtl;
+}
+
+.confirm-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-confirm {
+    background: #28a745;
+    color: white; border: none; padding: 8px 25px;
+    border-radius: 6px; cursor: pointer; font-weight: bold;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white; border: none; padding: 8px 25px;
+    border-radius: 6px; cursor: pointer;
+}
+
+.btn-confirm:hover { background: #218838; }
+
+.status-admin-panel {
+        background: #ffffff; border: 2px solid #eef0f2; padding: 12px;
+        border-radius: 10px; margin-bottom: 15px; display: flex;
+        align-items: center; justify-content: space-between; gap: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+.status-select-admin {
+   padding: 6px 12px; border-radius: 6px; border: 1px solid #ced4da;
+   font-weight: bold; cursor: pointer; outline: none; background-color: #f8f9fa;
 }

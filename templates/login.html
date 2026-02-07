@@ -16,6 +16,7 @@
 <div class="login-container">
     <div class="image-login">
         <img src="{{ url_for('static', filename='images/banner.png') }}" alt="User Image" class="card-image">
+        <img class="logo" src="{{ url_for('static', filename='images/logo.png') }}" style="margin-top:70px; transform: scale(1.1);">
     </div>
 
     <div class="card">
@@ -42,8 +43,66 @@
         <br>
         <p>גרסה 15.2.0/10</p>
         <p>כל הזכויות שמורות ©</p>
+
+        <a href="javascript:void(0)" onclick="openNewUserDialog()" style="text-decoration: none; margin-right: 10px;">
+            <p style="color: #2575fc; font-weight: bold;">
+                 כאן יוצרים חשבון
+            </p>
+        </a>
+    </div>
+
+    <div id="newUserDialog" class="modal-overlay" style="display: none; direction: rtl;">
+        <div class="confirm-box" style="max-width: 450px; width: 90%; text-align: right; padding: 30px;">
+
+            <h3 style="margin-bottom: 15px; color: #2575fc; font-family: 'Rubik', sans-serif; text-align: center; font-size: 32px;">
+                יצירת משתמש חדש במערכת
+            </h3>
+
+            <p style="color: #666; font-size: 1.01rem; margin-bottom: 25px; line-height: 1.5; text-align: center; font-family: 'Rubik', sans-serif;">
+                מלא את כתובת המייל לצורך יצירת החשבון
+            </p>
+
+            <form action="{{ url_for('create_user') }}" method="POST">
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+
+                    <div class="input-group" style="text-align: center;">
+                        <input type="email" name="email" required placeholder="example@email.com"
+                            style="width: 40%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; outline: none; text-align: center;">
+                    </div>
+                </div>
+
+                <div class="confirm-buttons" style="margin-top: 30px; display: flex; justify-content: center; gap: 12px;">
+                    <button type="submit" class="btn-confirm"
+                        style="padding: 10px 30px; border: none; border-radius: 8px; background: #3a6b3a; color: white; font-weight: bold; cursor: pointer; font-family: 'Rubik', sans-serif;">
+                        צור משתמש
+                    </button>
+                    <button type="button" class="btn-cancel" onclick="closeNewUserDialog()"
+                        style="padding: 10px 30px; border: none; border-radius: 8px; background: #6c757d; color: white; font-weight: bold; cursor: pointer; font-family: 'Rubik', sans-serif;">
+                        ביטול
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+    function openNewUserDialog() {
+        document.getElementById('newUserDialog').style.display = 'flex';
+    }
+
+    function closeNewUserDialog() {
+        document.getElementById('newUserDialog').style.display = 'none';
+    }
+
+    // סגירה בלחיצה מחוץ לקופסה
+    window.addEventListener('click', function(event) {
+        const userModal = document.getElementById('newUserDialog');
+        if (event.target === userModal) {
+            closeNewUserDialog();
+        }
+    });
+</script>
 
 {% endblock %}
 

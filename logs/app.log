@@ -62,3 +62,54 @@
 [2026-01-04 00:05:22,975] INFO: User 'שחר יהודה יאני' logged out successfully.
 [2026-01-04 00:05:29,005] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
 [2026-01-04 00:54:48,510] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-01-30 16:37:40,326] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-01-30 23:22:03,208] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-01-31 12:11:52,358] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-01-31 15:49:07,605] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-01-31 15:49:15,400] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2026-01-31 15:49:51,420] INFO: User 'רוני' logged out successfully.
+[2026-01-31 15:50:07,573] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-01-31 15:50:11,035] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-01-31 16:23:29,646] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-01-31 19:35:00,406] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-01-31 19:35:05,576] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2026-01-31 19:35:49,248] INFO: User 'רוני' logged out successfully.
+[2026-01-31 19:35:52,818] WARNING: Login failed for 'שחר יהודה יאני'.
+[2026-01-31 19:35:58,617] WARNING: Login failed for 'שחר יהודה יאני'.
+[2026-01-31 19:36:05,149] WARNING: Login failed for 'שחר יהודה יאני'.
+[2026-01-31 19:36:12,633] WARNING: Login failed for 'שחר יהודה יאני'.
+[2026-01-31 19:36:20,691] WARNING: Login failed for 'שחר יהודה יאני'.
+[2026-01-31 19:36:25,727] WARNING: Login failed for 'שחר יהודה יאני'.
+[2026-01-31 19:36:34,760] INFO: User 'יובל' (ID: 3) logged in successfully.
+[2026-01-31 19:36:46,844] INFO: User 'יובל' logged out successfully.
+[2026-01-31 19:36:54,515] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-01-31 19:47:42,272] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-01-31 22:02:44,410] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-01-31 23:42:47,869] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-05 22:04:29,789] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-05 22:50:46,994] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-05 22:50:51,131] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-06 12:05:01,845] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-06 12:55:18,680] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-06 12:55:22,673] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2026-02-06 12:55:36,188] INFO: User 'רוני' logged out successfully.
+[2026-02-06 12:55:40,242] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-06 13:19:01,538] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-06 13:36:25,367] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-06 13:39:08,904] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-06 13:39:33,524] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-07 13:16:26,547] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-07 16:06:13,854] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-07 16:06:17,816] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2026-02-07 16:06:37,845] INFO: User 'רוני' logged out successfully.
+[2026-02-07 16:06:59,882] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-07 16:18:24,149] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-07 16:18:28,212] WARNING: Login failed for 'רוני'.
+[2026-02-07 16:18:34,310] WARNING: Login failed for 'רוני'.
+[2026-02-07 16:18:39,334] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2026-02-07 16:19:13,490] INFO: User 'רוני' logged out successfully.
+[2026-02-07 16:19:21,187] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-07 22:55:41,827] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-07 22:55:45,385] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2026-02-07 23:04:17,959] INFO: User 'רוני' logged out successfully.
+[2026-02-07 23:04:22,419] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.

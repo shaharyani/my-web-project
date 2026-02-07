@@ -12,6 +12,5 @@ class Product:
         self.notes = notes or []
 
     def __str__(self):
-        return (f"Product(id={self.id}, serial='{self.serial}', code='{self.code}', "
-                f"land_type='{self.land_type}', city_name='{self.city_name}', "
-                f"status='{self.status}', owner='{self.owner}', note='{self.notes}')")
+        return (f"Product(id={self.id}, serial='{self.serial}', city='{self.city_name}', "
+                f"status='{self.status}', current_code='{self.code}', notes={self.notes})")

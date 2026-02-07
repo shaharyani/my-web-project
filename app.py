@@ -1,21 +1,27 @@
 import sqlite3
 
-from flask import Flask, flash, request, session, redirect, render_template, url_for, make_response, jsonify, send_file, \
-    abort
+from flask import Flask, session, redirect, render_template, url_for, make_response, send_file, abort, \
+    send_from_directory
 from functools import wraps
+from flask_login import LoginManager
 from flask_login import login_required
 import re
 from collections import Counter
+from flask import request, jsonify, flash
+from Codes import Codes
 from Product import Product
 from User import User
 from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
-from db import get_users_db, get_products_db
+from db import get_users_db, get_products_db, get_tests_db, get_codes_db
 import os
 
 app = Flask(__name__)
 app.secret_key = '27653sdvft&@gbadhsf7231ah!368'
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
 
 conn = get_users_db()
 cursor = conn.cursor()
@@ -38,20 +44,51 @@ conn.close()
 conn1 = get_products_db()
 cursor = conn1.cursor()
 cursor.execute("""
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            serial TEXT UNIQUE NOT NULL,
-            code TEXT NOT NULL,
-            land_type TEXT NOT NULL,
-            city_name TEXT NOT NULL,
-            status TEXT CHECK(status IN ('R','W','B','N')) DEFAULT 'N',
-            owner TEXT,
-            notes TEXT
-        )
-    """)
-
+    CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        serial TEXT UNIQUE NOT NULL,
+        code TEXT NOT NULL,
+        land_type TEXT NOT NULL,
+        city_name TEXT NOT NULL,
+        status TEXT CHECK(status IN ('R','W','B','N')) DEFAULT 'N',
+        owner TEXT,
+        notes TEXT,          -- רשימת הערות בפורמט JSON
+        all_codes TEXT       -- רשימת כל הקודים בפורמט JSON
+    )
+""")
 conn1.commit()
 conn1.close()
+
+conn2 = get_tests_db()
+cursor = conn2.cursor()
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS tests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        serial TEXT NOT NULL,
+        test_name TEXT,              -- העמודה שהייתה חסרה וגרמה לשגיאה
+        city_name TEXT,              -- מומלץ: כדי לדעת לאיזו עיר הבדיקה שייכת
+        test_level INTEGER NOT NULL,
+        checked_by TEXT NOT NULL,
+        is_passed INTEGER CHECK(is_passed IN (0, 1)) DEFAULT 0,
+        excel_str_file TEXT,
+        test_date TEXT,
+        is_verified INTEGER CHECK(is_verified IN (0, 1)) DEFAULT 0
+    )
+""")
+conn2.commit()
+conn2.close()
+
+conn3 = get_codes_db()
+cursor = conn3.cursor()
+cursor.execute("""
+        CREATE TABLE IF NOT EXISTS city_codes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            city_name TEXT UNIQUE NOT NULL,
+            all_codes TEXT NOT NULL
+        )
+    """)
+conn3.commit()
+conn3.close()
 
 UPLOAD_FOLDER = os.path.join("static", "profile_pics")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -94,7 +131,15 @@ app.logger.addHandler(console_handler)
 def page_not_found(e):
     return render_template("404.html"), 404
 
-def get_logs(limit=5):
+@app.errorhandler(405)
+def method_not_supported(e):
+    return render_template("405.html"), 404
+
+@app.errorhandler(401)
+def page_unauthorized(e):
+    return render_template("401.html"), 401
+
+def get_logs(limit=6):
     logs = []
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "r", encoding="utf-8") as f:
@@ -114,7 +159,7 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/upload_profile_picture", methods=["POST"])
-@login_required
+@login_manager.user_loader
 def upload_profile_picture():
     file = request.files.get("profile_picture")
 
@@ -136,6 +181,10 @@ def upload_profile_picture():
 
     flash("התמונה עודכנה בהצלחה", "success")
     return redirect("/user_page")
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.get_by_id(user_id)
 
 @app.before_request
 def load_user_from_cookie():
@@ -162,13 +211,15 @@ def get_current_user():
         return None
     return User.get_by_name(user_name)
 
+
 def get_product_by_serial(serial):
     conn = get_products_db()
     cursor = conn.cursor()
 
+    # הוספנו את city_name לשאילתה כדי להתאים למבנה ה-Class
     cursor.execute(
         """
-        SELECT id, serial, code, card_type, land_type, status, owner, notes
+        SELECT id, serial, code, land_type, city_name, status, owner, notes
         FROM products
         WHERE serial = ?
         """,
@@ -178,7 +229,15 @@ def get_product_by_serial(serial):
     row = cursor.fetchone()
     conn.close()
 
-    return Product(*row) if row else None
+    if row:
+        # המרה של מחרוזת ה-notes מה-DB לרשימה (List[str]) עבור ה-Constructor
+        # אם ה-notes ב-DB הם "הערה1,הערה2", זה יהפוך ל-['הערה1', 'הערה2']
+        data = list(row)
+        raw_notes = data[7]
+        data[7] = raw_notes.split(',') if raw_notes else []
+
+        return Product(*data)
+    return None
 
 # ------------------ Routes ------------------
 @app.route("/", methods=["GET", "POST"])
@@ -218,6 +277,8 @@ def home():
     return render_template(
         'index.html',
         user=user if user else None,
+        user_code=user.type if user else None,
+        global_counts=get_all_status(),
         is_admin=user.is_admin,
         gitLab_logo=gitLab_logo,
         user_photo=user_photo,
@@ -233,6 +294,24 @@ def getLandType(city_name) ->str:
         land = "ארץ2"
 
     return land
+
+def get_all_status():
+    conn = get_products_db()
+    cursor = conn.cursor()
+    # שליפת כל הסטטוסים מכל הערים
+    cursor.execute("SELECT status FROM products")
+    all_statuses = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
+    status_counter = Counter(all_statuses)
+
+    # החזרת מילון מעובד עם שמות הצבעים
+    return {
+        "RED": status_counter.get("R", 0),
+        "WHITE": status_counter.get("W", 0),
+        "BLACK": status_counter.get("B", 0),
+        "GRAY": status_counter.get("N", 0)  # שימוש ב-'N' עבור סטטוס חדש/אפור
+    }
 
 def load_product_by_city(city_name):
     STATUS_MAP = {
@@ -288,23 +367,13 @@ def add_product(city_name):
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO products
-            (serial, code, land_type, city_name, status, owner, notes)
+            INSERT INTO products (serial, code, land_type, city_name, status, owner, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            serial,
-            code,
-            getLandType(city_name),
-            city_name,
-            "N",
-            "",
-            ""
-        ))
+        """, (serial, code, getLandType(city_name), city_name, "N", "", ""))
         conn.commit()
-
+        flash("מוצר נוסף בהצלחה", "success")
     except sqlite3.IntegrityError:
-        flash("מוצר עם מספר סידורי וקוד זהים כבר קיים", "error")
-
+        flash("שגיאה: מספר סידורי זה כבר קיים", "error")
     finally:
         conn.close()
 
@@ -330,42 +399,197 @@ def open_pdf(filepath):
 
     return send_file(filepath, as_attachment=False) # open in browser
 
+
+@app.route("/open_excel/<path:filepath>")
+@login_required
+def open_excel(filepath):
+    # This assumes your paths are stored relative to the project root
+    # e.g., "static/cities/London/data.xlsx"
+    directory = os.path.dirname(filepath)
+    filename = os.path.basename(filepath)
+
+    # Check if file exists to avoid 404 crash
+    if not os.path.exists(filepath):
+        return "קובץ לא נמצא (File not found)", 404
+
+    return send_from_directory(directory, filename)
+
+@app.route('/get_tests/<serial>')
+def get_tests(serial):
+    conn = get_tests_db()
+    cursor = conn.cursor()
+
+    # שליפת כל העמודות שצריך להציג ב-Frontend
+    cursor.execute("""
+        SELECT id, test_name, is_passed, test_date, checked_by, is_verified 
+        FROM tests 
+        WHERE serial = ?
+    """, (serial,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    results = []
+    for row in rows:
+        results.append({
+            "id": row[0],
+            "test_name": row[1] or "בדיקת מערכת",  # טיפול במקרה שהשדה ריק
+            "is_passed": bool(row[2]),
+            # עיצוב התאריך מ-YYYYmmDDHHMMSS לפורמט קריא
+            "formatted_date": format_date_helper(row[3]),
+            "checked_by": row[4],
+            "is_verified": bool(row[5])
+        })
+
+    return jsonify(results)
+
+def format_date_helper(date_str):
+    if not date_str or len(date_str) < 14: return date_str
+    # הופך 20260131195545 ל- 31/01/2026 19:55
+    return f"{date_str[6:8]}/{date_str[4:6]}/{date_str[0:4]} {date_str[8:10]}:{date_str[10:12]}"
+
+
+@app.route('/verify_all_tests/<serial>', methods=['POST'])
+def verify_all_tests(serial):
+    try:
+        conn = get_tests_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tests SET is_verified = 1 WHERE serial = ?", (serial,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+
+@app.route('/verify_single_test/<int:test_id>', methods=['POST'])
+def verify_single_test(test_id):
+    try:
+        conn = get_tests_db()
+        cursor = conn.cursor()
+        # Set is_verified to 1 for the specific ID
+        cursor.execute("UPDATE tests SET is_verified = 1 WHERE id = ?", (test_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+@app.route('/open_test_file/<int:test_id>')
+def open_test_file(test_id):
+    conn = get_tests_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT excel_str_file FROM tests WHERE id = ?", (test_id,))
+    file_name = cursor.fetchone()[0]
+    conn.close()
+
+    # שליחת הקובץ מהתיקייה שבה שמורים קבצי הבדיקות
+    return send_from_directory('path/to/test_files', file_name)
+
+
+@app.route("/update_city_info/<city_name>", methods=["POST"])
+@login_required
+def update_city_info(city_name):
+    user = get_current_user()
+    if not user or not user.admin_check():
+        return "Unauthorized", 403
+
+    # Get paths from form
+    p1 = request.form.get("path1", "").strip()
+    p2 = request.form.get("path2", "").strip()
+    p3 = request.form.get("path3", "").strip()
+
+    # Server-side validation
+    if (p1 and not p1.lower().endswith('.pdf')) or (p2 and not p2.lower().endswith('.pdf')):
+        # You could use flash() here to show an error message on the UI
+        return "Error: File 1 and 2 must be PDF files", 400
+
+    if p3 and not p3.lower().endswith('.xlsx'):
+        return "Error: File 3 must be an XLSX file", 400
+
+    file_path = f"templates/cities/{city_name}/General.txt"
+
+    lines = [
+        request.form.get("des", "").replace("\n", " "),
+        request.form.get("file_title1", ""),
+        request.form.get("des1", ""),
+        p1,
+        request.form.get("file_title2", ""),
+        request.form.get("des2", ""),
+        p2,
+        request.form.get("file_title3", ""),
+        request.form.get("des3", ""),
+        p3
+    ]
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        for line in lines:
+            f.write(line + "\n")
+
+    return redirect(url_for('city_page', city_name=city_name))
+
 @app.route("/city_page/<city_name>")
 @login_required
 def city_page(city_name):
     user = get_current_user()
+    session['user_type'] = user.type
     if not user:
-        flash("User not found.", "error")
         return redirect(url_for('login'))
 
-    land_type = getLandType(city_name)
-
     products = load_product_by_city(city_name)
-    status_counter = Counter(p.status for p in products)  # counts RED, WHITE, BLACK
+
+    # תיקון הספירה: load_product_by_city כבר הפך את p.status למילים (RED, WHITE...)
+    status_counter = Counter(p.status for p in products)
+
     counts = {
         "RED": status_counter.get("RED", 0),
         "WHITE": status_counter.get("WHITE", 0),
         "BLACK": status_counter.get("BLACK", 0)
     }
+
+    # תיקון gray_value: הסטטוס N הפך למילה NONE בתוך load_product_by_city
+    gray_value = status_counter.get("NONE", 0)
+
+    # שליפת נתונים לדיאלוג הגלובלי - פותר את ה-UndefinedError
+    global_counts = get_all_status()
+    sync_city_files_to_db(city_name)
     file_path = f"templates/cities/{city_name}/General.txt"
-    pdf_paths = [get_file_data(file_path,7), get_file_data(file_path,8)]
+    total_codes = Codes.get_codes_by_city_list(city_name)
+
     return render_template(
         "city_page.html",
-        user=user.get_by_name(user.get_name()) if user else None,
+        user=user,
         is_admin=user.admin_check(),
-        gray_value=0,
+        gray_value=gray_value,
         city_name=city_name,
-        land_type=land_type,
-        products=load_product_by_city(city_name),
+        global_counts=global_counts,
+        land_type=getLandType(city_name),
+        products=products,
         counts=counts,
-        des=get_file_data(file_path,0),
-        file_title1=get_file_data(file_path,1),
-        des1=get_file_data(file_path,2),
-        file_title2=get_file_data(file_path,3),
-        des2=get_file_data(file_path,4),
-        file_title3=get_file_data(file_path,5),
-        des3=get_file_data(file_path,6),
-        pdf_paths=pdf_paths
+        des=get_file_data(file_path, 0),
+        # File 1
+        file_title1=get_file_data(file_path, 1),
+        des1=get_file_data(file_path, 2),
+        path1=get_file_data(file_path, 3),  # New specific variable for dialog
+
+        # File 2
+        file_title2=get_file_data(file_path, 4),
+        des2=get_file_data(file_path, 5),
+        path2=get_file_data(file_path, 6),  # New specific variable for dialog
+
+        # File 3
+        file_title3=get_file_data(file_path, 7),
+        des3=get_file_data(file_path, 8),
+        path3=get_file_data(file_path, 9),  # New specific variable for dialog
+
+        # This list can be used for the download links on the page
+        pdf_paths=[
+            get_file_data(file_path, 3),
+            get_file_data(file_path, 6),
+            get_file_data(file_path, 9)
+        ],
+        all_codes=sorted(total_codes)
     )
 
 @app.route("/login", methods=["GET", "POST"])
@@ -417,27 +641,173 @@ def logout():
     app.logger.info(f"User '{user.name}' logged out successfully." if user else "Unknown user logged out.")
     return response
 
-@app.route("/view-result/<city_name>/<serial>")
-@login_required
-def view_result(city_name, serial):
-    code = request.args.get("code")  # grab code from query string
-    user = get_current_user()
-    info_text = f"מידע מפורט על {serial} ({code})"
-    return render_template(
-        "view-result.html",
-        user=user,
-        serial=serial,
-        code=code,
-        city_name=city_name,
-        info_text=info_text
-    )
-
 # ------------------ Admin Routes ------------------
+def sync_city_files_to_db(city_name):
+    city_folder = os.path.join(app.root_path, 'templates', 'cities', city_name)
+
+    if not os.path.exists(city_folder):
+        return
+
+    conn = get_tests_db()
+    cursor = conn.cursor()
+
+    # יצירת הטבלה (ליתר ביטחון)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            serial TEXT NOT NULL,
+            test_name TEXT,
+            city_name TEXT,
+            test_level INTEGER NOT NULL,
+            checked_by TEXT NOT NULL,
+            is_passed INTEGER DEFAULT 0,
+            excel_str_file TEXT,
+            test_date TEXT,
+            is_verified INTEGER DEFAULT 0
+        )
+    """)
+
+    cursor.execute("SELECT excel_str_file FROM tests")
+    existing_files = {row[0] for row in cursor.fetchall()}
+
+    for filename in os.listdir(city_folder):
+        if filename.startswith(city_name) and filename.endswith(".txt") and filename not in existing_files:
+            try:
+                # 1. הסרת שם העיר מההתחלה
+                content = filename[len(city_name):]
+
+                # 2. שימוש ב-Regex חכם שמחפש 14 ספרות שמתחילות ב-"202" (עבור שנת 202x)
+                # זה מונע ממנו לעצור על ה-00129 של הסריאל
+                match = re.search(r'(202\d{11})', content)
+
+                if match:
+                    date_string = match.group(1)
+                    start_pos, end_pos = match.span()
+
+                    # 3. חילוץ הסריאל המלא: כל מה שלפני התאריך
+                    # אם התוכן הוא "sn-001292026...", ה-start_pos יהיה בדיוק אחרי ה-00129
+                    raw_serial = content[:start_pos]
+                    serial = raw_serial.upper()  # ייתן SN-00129
+
+                    # 4. חילוץ הבודק: כל מה שאחרי התאריך
+                    after_date = content[end_pos:].replace(".txt", "")
+                    checked_by_clean = re.sub(r'unit\d*', '', after_date).replace('_', ' ').strip()
+
+                    # 5. שם הבדיקה
+                    test_name = "BEFORETEST1" if "BEFORETEST1" in filename else "INITTEST"
+
+                    cursor.execute("""
+                        INSERT INTO tests (serial, test_name, city_name, test_level, checked_by, is_passed, excel_str_file, test_date, is_verified)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (serial, test_name, city_name, 1, checked_by_clean, 1, filename, date_string, 0))
+                else:
+                    print(f"DEBUG: Could not find valid 202x date in {filename}")
+
+            except Exception as e:
+                print(f"Error processing {filename}: {e}")
+
+    conn.commit()
+    conn.close()
+
+@app.route('/update_product_status', methods=['POST'])
+def update_product_status():
+    user_type = session.get('user_type')
+    if user_type not in [0, 1]:
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+
+    data = request.get_json()
+    serial = data.get('serial')
+    full_status = data.get('status')  # יקבל 'RED', 'BLACK' וכו'
+
+    # מילון תרגום למניעת שגיאת CHECK constraint
+    status_map = {
+        'RED': 'R',
+        'BLACK': 'B',
+        'WHITE': 'W',
+        'NONE': 'N'
+    }
+
+    # המרת הסטטוס לאות אחת, אם לא נמצא במילון - נשמור את המקור
+    db_status = status_map.get(full_status, full_status)
+
+    try:
+        conn = get_products_db()  # ודא שזו פונקציית החיבור שלך
+        cursor = conn.cursor()
+
+        cursor.execute("UPDATE products SET status = ? WHERE serial = ?", (db_status, serial))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"success": False, "message": str(e)})
+
+@app.route('/add_code', methods=['POST'])
+def add_code_route():
+    data = request.json
+    city = data.get('city_name')
+    new_code = data.get('code')
+
+    if not city or not new_code:
+        return jsonify({"success": False, "message": "נתונים חסרים"}), 400
+
+    # 1. בדיקה גלובלית - האם הקוד קיים בעיר כלשהי במערכת?
+    if not Codes.is_code_globally_unique(new_code):
+        message = f"הקוד {new_code} כבר תפוס על ידי עיר אחרת!"
+        flash(message, "error")
+        return jsonify({"success": False, "message": message})
+
+    # 2. ניסיון לשלוף את העיר הנוכחית
+    city_obj = Codes.get_codes_by_city(city)
+
+    # 3. אם העיר לא קיימת, ניצור אובייקט חדש
+    if not city_obj:
+        last_id = Codes.get_last_id()
+        city_obj = Codes(id=(last_id or 0) + 1, city_name=city)
+
+    # 4. הוספה ושמירה (הקוד כבר הוכח כייחודי בבדיקה למעלה)
+    city_obj.all_codes.append(new_code)
+    city_obj.save_to_db()
+
+    flash(f"הקוד {new_code} נוסף בהצלחה לעיר {city}", "success")
+    return jsonify({"success": True, "message": "הקוד נוסף בהצלחה"})
+
+
+@app.route('/remove_code', methods=['POST'])
+def remove_code_route():
+    data = request.json
+    city_name = data.get('city_name')
+    code_to_remove = data.get('code')
+
+    city_obj = Codes.get_codes_by_city(city_name)
+
+    if city_obj and code_to_remove in city_obj.all_codes:
+        city_obj.all_codes.remove(code_to_remove)
+        city_obj.save_to_db()
+        return jsonify({"success": True, "message": "הקוד הוסר"})
+
+    return jsonify({"success": False, "message": "הקוד לא נמצא"}), 404
+
 @app.route('/newItems')
 @login_required
 def newItems():
     user = get_current_user()
-    return render_template("new_items.html", user=user)
+
+    cities_dir = os.path.join(app.template_folder, "cities")
+    cities = []
+    for folder in os.listdir(cities_dir):
+        folder_path = os.path.join(cities_dir, folder)
+
+        if os.path.isdir(folder_path):
+            cities.append({
+                "name": folder,
+                "title": folder.replace("_", " ").title(),
+            })
+
+    existing_codes = Codes.get_all_city_codes()
+
+    return render_template("new_items.html", user=user, cities=cities, existing_codes=existing_codes)
 
 @app.route('/admin')
 @login_required

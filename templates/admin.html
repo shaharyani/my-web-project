@@ -12,12 +12,11 @@
 
 <!-------------------- PAGE TITLE -------------------->
 <h2 style="
-    margin: 200px 0 20px;
+    margin: 500px 0 20px;
     direction: rtl;
     font-size: 32px;">
     איזור ניהול משתמשים
 </h2>
-
 <!-------------------- CREATE USER BUTTON -------------------->
 <div style="direction: rtl; margin-bottom: 20px;">
     <button onclick="openModal()" class="btn-create">צור משתמש חדש</button>
@@ -85,8 +84,23 @@
     </table>
 </div>
 
-<div class="data-table-card" style="margin-bottom: 50px">
-    <h3 style="direction: ltr; font-size: 32px; margin-bottom: 32px">System logs</h3>
+    <div class="data-table-card" style="margin-bottom: 10px">
+        <h3 style="direction: rtl; font-size: 32px; margin-bottom: 32px">הודעות התחברות</h3>
+        <ul style="list-style:none; padding:0; direction:ltr;">
+            {% if logs %}
+                {% for log in logs %}
+                    <li style="padding:10px; border-bottom:1px solid #eee;">
+                        <span style="color:gray">{{ log.timestamp }}</span>
+                        [<strong>{{ log.level }}</strong>] {{ log.message }}
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li>אין פעולות להצגה</li>
+            {% endif %}
+        </ul>
+    </div>
+    <div class="data-table-card" style="margin-bottom: 50px">
+    <h3 style="direction: rtl; font-size: 32px; margin-bottom: 32px">הודעות בדיקות</h3>
     <ul style="list-style:none; padding:0; direction:ltr;">
         {% if logs %}
             {% for log in logs %}

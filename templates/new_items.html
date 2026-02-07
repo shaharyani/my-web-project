@@ -10,14 +10,220 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-------------------- PAGE TITLE -------------------->
-<h2 style="
-    margin: 200px 0 20px;
-    direction: rtl;
-    font-size: 52px;">
+<h2 style="margin: 50px 0 10px; direction: rtl; font-size: 52px;">
     איזור הערים החדשות
 </h2>
 
+<div class="card-container1" dir="rtl">
+    <div class="buttons-container" style="margin: 0 auto;">
+        <div class="filter-section" style="width: 80%; display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <button onclick="addEntry()" id="add-land-btn">
+                <span>הוסף</span>
+            </button>
+            <input type="text" id="codeInput" class="city-search-input" placeholder="הכנס קוד" style="width: auto; margin-left: 10px;">
+            <select id="citySelect" class="city-search-input" style="width: auto; margin-left: 10px;">
+                <option value="" disabled selected>בחר עיר</option>
+                {% for c in cities %}
+                    <option value="{{ c.title }}">{{ c.title }}</option>
+                {% endfor %}
+            </select>
+            <h3 style="width: auto; color: #2575fc; margin-left: 15px;">הוספת קוד לפי עיר</h3>
+        </div>
+    </div>
+
+    <div class="data-table-card" style="width: 80%; margin-top: 20px;">
+        <h3 style="text-align: right; color: #2575fc;">סיכום נתונים</h3>
+        <table id="summaryTable">
+            <thead style="text-align: center;">
+                <tr>
+                    <th>עיר</th>
+                    <th>קודים משויכים</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+<div id="toast-container" class="toast-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="toast {{ 'success' if category == 'success' else 'error' }}">
+              {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+</div>
+
+<style>
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .toast {
+        background: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        min-width: 250px;
+        direction: rtl;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .toast.success { background: #28a745; border-right: 5px solid #1e7e34; }
+    .toast.error { background: #dc3545; border-right: 5px solid #bd2130; }
+    .toast.info { background: #2575fc; border-right: 5px solid #1a5ecf; }
+
+    @keyframes slideIn {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast.fade-out {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .code-badge {
+        background-color: #f0f4f8;
+        color: #2575fc;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 13px;
+        font-weight: bold;
+        margin: 2px;
+        border: 1px solid #d1d9e6;
+        display: inline-block;
+        position: relative;
+        padding-right: 25px !important; /* רווח ל-X */
+    }
+
+    .remove-btn {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #ff4d4d;
+        font-weight: bold;
+        font-size: 16px;
+        padding: 0 5px;
+        transition: color 0.2s;
+    }
+
+    .remove-btn:hover {
+        color: #b30000;
+    }
+</style>
+
+<script>
+// 1. קבלת הנתונים הקיימים מ-Flask (מתוך ה-DB)
+    // 1. קבלת הנתונים (נשאר אותו דבר)
+    const cityData = {{ (existing_codes | default({})) | tojson | safe }};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderTable();
+        // הערה: ה-Flash מטופל אוטומטית על ידי base.html ב-window.onload
+    });
+
+    function addEntry() {
+        const city = document.getElementById('citySelect').value;
+        const code = document.getElementById('codeInput').value.trim();
+
+        if (!city || !code) {
+            // שימוש בפונקציה מ-base.html
+            showToast("אנא בחר עיר והכנס קוד", "error");
+            return;
+        }
+
+        fetch('/add_code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city_name: city, code: code })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // עדכון מקומי
+                if (!cityData[city]) cityData[city] = [];
+                if (!cityData[city].includes(code)) {
+                    cityData[city].push(code);
+                    renderTable();
+                }
+                document.getElementById('codeInput').value = '';
+
+                // שימוש בפונקציה מ-base.html
+                showToast(data.message || "הקוד נוסף בהצלחה!", "success");
+            } else {
+                showToast(data.message, "error");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast("תקלה בתקשורת עם השרת", "error");
+        });
+    }
+
+function renderTable() {
+    const tbody = document.querySelector('#summaryTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    Object.keys(cityData).sort().forEach(city => {
+        const codes = cityData[city];
+        if (codes.length === 0) return;
+
+        const row = document.createElement('tr');
+
+        // יצירת הקודים עם כפתור מחיקה (x)
+        const codesHtml = codes.map(c => `
+            <span class="code-badge">
+                ${c}
+                <span class="remove-btn" onclick="removeCode('${city}', '${c}')">&times;</span>
+            </span>
+        `).join(' ');
+
+        row.innerHTML = `
+            <td style="font-weight: bold; padding: 12px; border-bottom: 1px solid #eee;">${city}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #eee;">${codesHtml}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function removeCode(city, codeToRemove) {
+    if (!confirm(`האם אתה בטוח שברצונך למחוק את הקוד ${codeToRemove}?`)) return;
+
+    fetch('/remove_code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city_name: city, code: codeToRemove })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // עדכון המודל המקומי
+            cityData[city] = cityData[city].filter(c => c !== codeToRemove);
+            renderTable();
+            showToast("הקוד הוסר בהצלחה", "success");
+        } else {
+            showToast("שגיאה במחיקת הקוד", "error");
+        }
+    })
+    .catch(err => showToast("תקלה בתקשורת", "error"));
+}
+</script>
 {% endblock %}
 </body>
 </html>
