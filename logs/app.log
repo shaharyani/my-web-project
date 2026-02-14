@@ -113,3 +113,9 @@
 [2026-02-07 22:55:45,385] INFO: User 'רוני' (ID: 2) logged in successfully.
 [2026-02-07 23:04:17,959] INFO: User 'רוני' logged out successfully.
 [2026-02-07 23:04:22,419] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-07 23:37:14,775] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-14 18:11:51,974] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.
+[2026-02-14 19:17:51,884] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-02-14 19:17:55,626] INFO: User 'רוני' (ID: 2) logged in successfully.
+[2026-02-14 19:18:07,162] INFO: User 'רוני' logged out successfully.
+[2026-02-14 19:18:10,128] INFO: User 'שחר יהודה יאני' (ID: 1) logged in successfully.

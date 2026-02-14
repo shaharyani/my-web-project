@@ -79,29 +79,6 @@
 
 {% block content %}
     <style>
-        .typing-wrapper {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin: 35px 0;
-        }
-
-        .typing-container {
-            font-family: 'Rubik', sans-serif;
-            font-size: 48px;
-            color: #2575fc;
-            font-weight: bold;
-            direction: rtl;
-            overflow: hidden;
-            white-space: nowrap;
-            border-left: 3px solid blue; /* הסמן בשמאל */
-
-            /* אנימציה */
-            animation:
-                type-and-erase 15s steps(25, end) infinite, /* steps לפי כמות האותיות */
-                blink-caret 0.75s step-end infinite;
-        }
-
         @keyframes type-and-erase {
             0%, 10% {
                 width: 0;
@@ -153,137 +130,155 @@
         .close-btn:hover { color: #ff4d4d; }
     </style>
 
-    <a id="top"></a>
-    <div class="typing-container">
-       ברוכים הבאים למצב הגלים
-    </div>
+<a id="top"></a>
 
-    <div class="buttons-container" style="display: flex; flex-direction: column; align-items: center; width: 70%; max-width: 1200px; margin: 0 auto;">
-        <input
-            type="text"
-            id="citySearch"
-            placeholder="חפש עיר..."
-            oninput="filterCities()"
-            class="city-search-input">
-        <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">להוספת עיר חדשה פנה למנהל</span>
+<div class="main-page-wrapper">
 
-        {% if is_admin %}
-            <a href="javascript:void(0)" onclick="openNewCityDialog()" style="text-decoration: none;">
-                <span style="background-color: #2575fc; color: White; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; cursor: pointer;">
-                    הגדרת עיר חדשה
-                </span>
-            </a>
+    <div class="sidebar-container">
+        <div class="updates-block" style="margin-left: 60px">
+            <h3>עדכונים שוטפים</h3>
+            <p>ברוכים הבאים למערכת ניהול הערים. כאן תוכלו לראות הנחיות אחרונות ועדכונים מהשטח.</p>
+
+            <ul>
+                {% if remote_list_items %}
+                    {% for item in remote_list_items %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                {% else %}
+                    <li style="background: none; border: 1px dashed #ccc; color: #999; text-align: center;">אין עדכונים חדשים</li>
+                {% endif %}
+            </ul>
+        </div>
+        {% if user_code == 1 or is_admin %}
+            <div class="updates-block" style="margin-left: 60px; margin-top: 20px">
+            <h3>מוצרים שחזרו</h3>
+            <p>כאן יופיעו מוצרים שחזרו אל המחסן.</p>
+
+            <ul>
+                {% if all_retrun_items %}
+                    {% for item in all_retrun_items %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                {% else %}
+                    <li style="background: none; border: 1px dashed #ccc; color: #999; text-align: center;">אין עדכונים חדשים</li>
+                {% endif %}
+            </ul>
+        </div>
         {% endif %}
+    </div>
+    <div class="content-main-area">
+
+        <div class="search-section">
+            <input type="text" id="citySearch" placeholder="חפש עיר..." oninput="filterCities()" class="city-search-input">
+            <span class="search-subtext">להוספת עיר חדשה פנה למנהל</span>
+
+            {% if is_admin %}
+                <a href="javascript:void(0)" onclick="openNewCityDialog()" class="admin-link">
+                    <span class="admin-badge">הגדרת עיר חדשה</span>
+                </a>
+            {% endif %}
+        </div>
+
+        <div id="noCityMessage" class="no-city-message">❌ לא נמצאו ערים מתאימות</div>
+
+        <div class="card-container2">
+            {% for city in cities %}
+                <div class="city-title city-item" data-city="{{ city.title }}">
+                    <a href="{{ url_for('city_page', city_name=city.name) }}">
+                        <h3>{{ city.title }}</h3>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
 
         <div id="newCityDialog" class="modal-overlay" style="display: none; direction: rtl;">
             <div class="confirm-box" style="max-width: 450px; width: 90%; text-align: right; padding: 30px;">
 
-                <h3 style="text-align: center; margin-bottom: 15px; color: #2575fc; font-family: 'Rubik', sans-serif; font-size: 32px;">
-                    הגדרת עיר חדשה במערכת
-                </h3>
+            <h3 style="text-align: center; margin-bottom: 15px; color: #2575fc; font-family: 'Rubik', sans-serif; font-size: 32px;">
+                הגדרת עיר חדשה במערכת
+            </h3>
 
-                <p style="text-align: center; color: #666; font-size: 1.23rem; margin-bottom: 0px; line-height: 1.5;">
-                    כדי להוסיף עיר חדשה, יש להזין את שם העיר כפי שהוא מופיע באנגלית CamelCase.
-                </p>
-                <p style="text-align: center; color: #666; font-size: 1.23rem; margin-bottom: 25px; line-height: 1.5;">
-                    פעולה זו דורשת יצירת תיקייה ייעודית, יצירת תיקיות משנה וקובץ הגדרות ראשוני עבור העיר החדשה.
-                </p>
+            <p style="text-align: center; color: #666; font-size: 1.23rem; margin-bottom: 0px; line-height: 1.5;">
+                כדי להוסיף עיר חדשה, יש להזין את שם העיר כפי שהוא מופיע באנגלית CamelCase.
+            </p>
+            <p style="text-align: center; color: #666; font-size: 1.23rem; margin-bottom: 25px; line-height: 1.5;">
+                פעולה זו דורשת יצירת תיקייה ייעודית, יצירת תיקיות משנה וקובץ הגדרות ראשוני עבור העיר החדשה.
+            </p>
 
-                <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                    <label style="font-weight: bold; color: #333; display: block; margin-bottom: 8px;">למשל עבור העיר ירושלים:</label>
-                    <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-                        <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">שם התיקייה: ירושלים</span>
-                        <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">general.txt ליצירה כמפורט במדריך</span>
-                    </div>
-                    <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">יצירת תת־תיקיות: InitTest, AfterEarth, AfterRun</span>
-                    <label style="font-weight: bold; color: #cc0000; display: block; margin-top: 15px;">
-                        מחיקה או עריכה של תיקיות או קבצים אחרים תוביל לפגיעה בתיעוד
-                    </label>
-                    <label style="font-weight: bold; color: white; background: #cc0000; display: block; padding: 5px">
-                        אין לעשות פעולות אחרות בפקודה
-                    </label>
+            <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <label style="font-weight: bold; color: #333; display: block; margin-bottom: 8px;">למשל עבור העיר ירושלים:</label>
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                    <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">שם התיקייה: ירושלים</span>
+                    <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">general.txt ליצירה כמפורט במדריך</span>
                 </div>
-                <div class="confirm-buttons" style="margin-top: 20px; display: flex; justify-content: flex-center; gap: 12px;">
-                    <button type="button" class="btn-cancel" onclick="closeNewCityDialog()"
-                            style="padding: 10px 25px; border: none; border-radius: 8px; background: #6c757d; color: white; font-weight: bold; cursor: pointer; font-family: 'Rubik', sans-serif;">
-                            הבנתי
-                    </button>
-                </div>
+                <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">יצירת תת־תיקיות: InitTest, AfterEarth, AfterRun</span>
+                <label style="font-weight: bold; color: #cc0000; display: block; margin-top: 15px;">
+                    מחיקה או עריכה של תיקיות או קבצים אחרים תוביל לפגיעה בתיעוד
+                </label>
+                <label style="font-weight: bold; color: white; background: #cc0000; display: block; padding: 5px">
+                    אין לעשות פעולות אחרות בפקודה
+                </label>
             </div>
+            <div class="confirm-buttons" style="margin-top: 20px; display: flex; justify-content: flex-center; gap: 12px;">
+                <button type="button" class="btn-cancel" onclick="closeNewCityDialog()"
+                style="padding: 10px 25px; border: none; border-radius: 8px; background: #6c757d; color: white; font-weight: bold; cursor: pointer; font-family: 'Rubik', sans-serif;">
+                הבנתי
+                </button>
+            </div>
+            </div>
+        </div>
+
+        <div id="serialModal" class="modal" style="{% if show_modal %}display:flex{% else %}display:none{% endif %}; align-items: center; justify-content: center;">
+            <div class="modal-content">
+                <span class="close-btn" onclick="document.getElementById('serialModal').style.display='none'">&times;</span>
+                <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold; text-align: center;">חיפוש לפי מספר סידורי</h2>
+                <form method="POST" action="{{ url_for('home') }}" class="serial-form" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                    <input type="text" name="serial" placeholder="הכנס כאן" required style="font-family: 'Rubik', sans-serif; width: 80%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 16px;">
+                    <button type="submit" class="btn-create-land" style="width: 30%; display: flex; justify-content: center; align-items: center; text-align: center;">חפש</button>
+                </form>
+
+                {% if show_modal %}
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+                {% if product %}
+                    <div style="text-align: right; background: #f8f9fa; padding: 20px; border-radius: 12px; width: 90%; margin: 0 auto; border: 1px solid #ececec;">
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;">{{ product.serial }}<b> :מספר סידורי</b></p>
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>קוד:</b> {{ product.code }}</p>
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>סוג קרקע: </b>{{ product.land_type }}</p>
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;">
+                        <b>סטטוס:</b>
+                        {% if product.status == 'R' or product.status == 'RED' %}
+                        <span style="color: red;">אדום (תקול)</span>
+                        {% elif product.status == 'W' or product.status == 'WHITE' %}
+                        <span style="color: #555;">לבן (תקין)</span>
+                        {% elif product.status == 'B' or product.status == 'BLACK' %}
+                        <span style="color: black;">שחור (בבדיקה)</span>
+                        {% elif product.status == 'N' or product.status == 'NONE' %}
+                        <span style="color: gray;">חדש (טרם נבדק)</span>
+                        {% else %}
+                        {{ product.status }}
+                        {% endif %}
+                        </p>
+                        <p style="margin: 8px 0;">{{ product.owner }}<b> :חתום על-ידי</b> </p>
+                    </div>
+                {% else %}
+                    <div style="padding: 15px; background: #fff5f5; border-radius: 10px; width: 80%; margin: 0 auto; text-align: center;">
+                    <p style="color: #d9534f; font-weight: bold; margin: 0;">❌ מוצר לא נמצא במערכת</p>
+                    </div>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 
-    <div id="noCityMessage" class="no-city-message" style="display: none; text-align: center; color: red; padding: 20px; font-weight: bold;">
-        ❌ לא נמצאו ערים מתאימות
-    </div>
+        <div id="statusDialog" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeGlobalStatus()">&times;</span>
+                <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold;">סטטוס מוצרים - כל המערכת</h2>
+                {# הגדרת ברירת מחדל למקרה שהמשתנה לא עבר מהשרת #}
+                {% set global_counts = global_counts | default({'RED':0, 'WHITE':0, 'BLACK':0, 'GRAY':0}) %}
 
-    <div class="card-container2" style="margin-bottom: 40px;">
-        {% for city in cities %}
-            <div class="city-title city-item" data-city="{{ city.title }}">
-                <a href="{{ url_for('city_page', city_name=city.name) }}">
-                    <h3>{{ city.title }}</h3>
-                </a>
-            </div>
-        {% endfor %}
-    </div>
-
-    <div id="serialModal" class="modal" style="{% if show_modal %}display:flex{% else %}display:none{% endif %}; align-items: center; justify-content: center;">
-    <div class="modal-content">
-        <span class="close-btn" onclick="document.getElementById('serialModal').style.display='none'">&times;</span>
-
-        <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold; text-align: center;">חיפוש לפי מספר סידורי</h2>
-
-        <form method="POST" action="{{ url_for('home') }}" class="serial-form" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
-            <input type="text" name="serial" placeholder="הכנס כאן" required
-                   style="font-family: 'Rubik', sans-serif; width: 80%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 16px;">
-
-            <button type="submit" class="btn-create-land" style="width: 30%; display: flex; justify-content: center; align-items: center; text-align: center;">חפש</button>
-        </form>
-
-        {% if show_modal %}
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-
-            {% if product %}
-                <div style="text-align: right; background: #f8f9fa; padding: 20px; border-radius: 12px; width: 90%; margin: 0 auto; border: 1px solid #ececec;">
-                    <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;">{{ product.serial }}<b> :מספר סידורי</b></p>
-                    <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>קוד:</b> {{ product.code }}</p>
-                    <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>סוג קרקע: </b>{{ product.land_type }}</p>
-                    <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;">
-                        <b>סטטוס:</b>
-                        {% if product.status == 'R' or product.status == 'RED' %}
-                            <span style="color: red;">אדום (תקול)</span>
-                        {% elif product.status == 'W' or product.status == 'WHITE' %}
-                            <span style="color: #555;">לבן (תקין)</span>
-                        {% elif product.status == 'B' or product.status == 'BLACK' %}
-                            <span style="color: black;">שחור (בבדיקה)</span>
-                        {% elif product.status == 'N' or product.status == 'NONE' %}
-                            <span style="color: gray;">חדש (טרם נבדק)</span>
-                        {% else %}
-                            {{ product.status }}
-                        {% endif %}
-                    </p>
-                    <p style="margin: 8px 0;">{{ product.owner }}<b> :חתום על-ידי</b> </p>
-                </div>
-            {% else %}
-                <div style="padding: 15px; background: #fff5f5; border-radius: 10px; width: 80%; margin: 0 auto; text-align: center;">
-                    <p style="color: #d9534f; font-weight: bold; margin: 0;">❌ מוצר לא נמצא במערכת</p>
-                </div>
-            {% endif %}
-        {% endif %}
-    </div>
-</div>
-
-    <div id="statusDialog" class="modal-overlay">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeGlobalStatus()">&times;</span>
-
-        <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold;">סטטוס מוצרים - כל המערכת</h2>
-
-        {# הגדרת ברירת מחדל למקרה שהמשתנה לא עבר מהשרת #}
-        {% set global_counts = global_counts | default({'RED':0, 'WHITE':0, 'BLACK':0, 'GRAY':0}) %}
-
-        <div class="values-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px;">
-            <div class="value-item black" style="padding: 15px; border-radius: 10px; background: #f8f9fa;">
+                <div class="values-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px;">
+                <div class="value-item black" style="padding: 15px; border-radius: 10px; background: #f8f9fa;">
                 <div class="label" style="font-weight: bold; color: #333;">BLACK</div>
                 <div class="number" style="font-size: 24px;">{{ global_counts.BLACK }}</div>
             </div>
@@ -302,48 +297,34 @@
         </div>
 
         <div style="margin-top: 25px; display: flex; justify-content: center; width: 100%;">
-            <button type="button"
-                    class="btn-cancel-land"
-                    onclick="closeGlobalStatus()"
-                    style="width: 20%; display: flex; justify-content: center; align-items: center; text-align: center;">
+            <button type="button" class="btn-cancel-land" onclick="closeGlobalStatus()" style="width: 20%; display: flex; justify-content: center; align-items: center; text-align: center;">
                 סגור
             </button>
         </div>
     </div>
 </div>
 
-    <div class="buttons-container">
-            {% if is_admin %}
-                <a class="profile-btn" href="{{ url_for('newItems') }}">
-                    <img src="{{ url_for('static', filename='images/new_item.png') }}" title="ערים חדשות">
-                </a>
-            {% endif %}
+        <div class="bottom-options-bar">
+            <div class="icons-row">
+                {% if is_admin %}
+                    <a class="profile-btn" href="{{ url_for('newItems') }}"><img src="{{ url_for('static', filename='images/new_item.png') }}" title="ערים חדשות"></a>
+                {% endif %}
 
-            {% if user_code == 1 or is_admin %}
-                <a class="profile-btn" onclick="openGlobalStatus()">
-                        <img src="{{ url_for('static', filename='images/status.png') }}" title="מצב כללי">
-                </a>
+                {% if user_code == 1 or is_admin %}
+                    <a class="profile-btn" onclick="openGlobalStatus()"><img src="{{ url_for('static', filename='images/status.png') }}" title="מצב כללי"></a>
+                    <a class="profile-btn" href="https://gitlab.com/" target="_blank"><img src="{{ url_for('static', filename=gitLab_logo | default('images/gitLab_logo.png')) }}" title="GITLAB"></a>
+                {% endif %}
 
-                <a class="profile-btn" href="https://gitlab.com/" target="_blank">
-                    <img src="{{ url_for('static', filename=gitLab_logo | default('images/gitLab_logo.png')) }}" title="GITLAB">
-                </a>
-            {% endif %}
-
-            <a class="profile-btn" onclick="document.getElementById('serialModal').style.display='flex'">
-                <img src="{{ url_for('static', filename='images/search.png') }}" title="חיפוש מתקדם">
-            </a>
-
-            <a class="profile-btn" onclick="document.getElementById('serialModal').style.display='flex'">
-                <img src="{{ url_for('static', filename='images/signature.png') }}" title="חתימות">
-            </a>
-
-            <a href="{{ url_for('user_page') }}" class="profile-btn">
-                <img src="{{ url_for('static', filename=user_photo | default('images/user_photo.png')) }}">
-            </a>
+                <a class="profile-btn" onclick="document.getElementById('serialModal').style.display='flex'"><img src="{{ url_for('static', filename='images/search.png') }}" title="חיפוש מתקדם"></a>
+                <a class="profile-btn" onclick="document.getElementById('serialModal').style.display='flex'"><img src="{{ url_for('static', filename='images/signature.png') }}" title="חתימות"></a>
+                <a href="{{ url_for('user_page') }}" class="profile-btn"><img src="{{ url_for('static', filename=user_photo | default('images/user_photo.png')) }}"></a>
+            </div>
             <div class="options-title">אפשרויות נוספות</div>
+        </div>
     </div>
+</div>
 
-    <script>
+<script>
         function openGlobalStatus() {
             document.getElementById("statusDialog").style.display = "flex";
         }

@@ -4,7 +4,6 @@ from flask import Flask, session, redirect, render_template, url_for, make_respo
     send_from_directory
 from functools import wraps
 from flask_login import LoginManager
-from flask_login import login_required
 import re
 from collections import Counter
 from flask import request, jsonify, flash
@@ -90,6 +89,7 @@ cursor.execute("""
 conn3.commit()
 conn3.close()
 
+CITIES_PATH = r"C:\Users\shaha\Desktop\cities"
 UPLOAD_FOLDER = os.path.join("static", "profile_pics")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -261,7 +261,7 @@ def home():
         if serial:
             product = get_product_by_serial(serial)
 
-    cities_dir = os.path.join(app.template_folder, "cities")
+    cities_dir = CITIES_PATH
 
     cities = []
 
@@ -274,6 +274,9 @@ def home():
                 "title": folder.replace("_", " ").title(),
             })
 
+    remote_list_items = ["עיר חדשה נוספה: חיפה", "תחזוקת שרת ביום ג' בשעה: 11:30", "יש לעדכן חתימות"]
+    all_retrun_items = None
+
     return render_template(
         'index.html',
         user=user if user else None,
@@ -281,6 +284,8 @@ def home():
         global_counts=get_all_status(),
         is_admin=user.is_admin,
         gitLab_logo=gitLab_logo,
+        remote_list_items=remote_list_items,
+        all_retrun_items=all_retrun_items,
         user_photo=user_photo,
         product=product,
         show_modal=request.method == "POST",
@@ -288,11 +293,8 @@ def home():
     )
 
 def getLandType(city_name) ->str:
-    if (city_name == "עיר1" or city_name == "עיר2" or city_name == "עיר3" or city_name == "עיר4"):
-        land = "ארץ1"
-    else:
-        land = "ארץ2"
-
+    file_path = os.path.join(CITIES_PATH, city_name, "General.txt")
+    land = get_file_data(file_path, 0)
     return land
 
 def get_all_status():
@@ -399,7 +401,6 @@ def open_pdf(filepath):
 
     return send_file(filepath, as_attachment=False) # open in browser
 
-
 @app.route("/open_excel/<path:filepath>")
 @login_required
 def open_excel(filepath):
@@ -448,7 +449,6 @@ def format_date_helper(date_str):
     # הופך 20260131195545 ל- 31/01/2026 19:55
     return f"{date_str[6:8]}/{date_str[4:6]}/{date_str[0:4]} {date_str[8:10]}:{date_str[10:12]}"
 
-
 @app.route('/verify_all_tests/<serial>', methods=['POST'])
 def verify_all_tests(serial):
     try:
@@ -461,7 +461,6 @@ def verify_all_tests(serial):
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
-
 
 @app.route('/verify_single_test/<int:test_id>', methods=['POST'])
 def verify_single_test(test_id):
@@ -487,7 +486,6 @@ def open_test_file(test_id):
     # שליחת הקובץ מהתיקייה שבה שמורים קבצי הבדיקות
     return send_from_directory('path/to/test_files', file_name)
 
-
 @app.route("/update_city_info/<city_name>", methods=["POST"])
 @login_required
 def update_city_info(city_name):
@@ -508,9 +506,10 @@ def update_city_info(city_name):
     if p3 and not p3.lower().endswith('.xlsx'):
         return "Error: File 3 must be an XLSX file", 400
 
-    file_path = f"templates/cities/{city_name}/General.txt"
+    file_path = os.path.join(CITIES_PATH, city_name, "General.txt")
 
     lines = [
+        get_file_data(file_path,0),
         request.form.get("des", "").replace("\n", " "),
         request.form.get("file_title1", ""),
         request.form.get("des1", ""),
@@ -554,7 +553,7 @@ def city_page(city_name):
     # שליפת נתונים לדיאלוג הגלובלי - פותר את ה-UndefinedError
     global_counts = get_all_status()
     sync_city_files_to_db(city_name)
-    file_path = f"templates/cities/{city_name}/General.txt"
+    file_path = os.path.join(CITIES_PATH, city_name, "General.txt")
     total_codes = Codes.get_codes_by_city_list(city_name)
 
     return render_template(
@@ -564,30 +563,30 @@ def city_page(city_name):
         gray_value=gray_value,
         city_name=city_name,
         global_counts=global_counts,
-        land_type=getLandType(city_name),
+        land_type=get_file_data(file_path, 0),
         products=products,
         counts=counts,
-        des=get_file_data(file_path, 0),
+        des=get_file_data(file_path, 1),
         # File 1
-        file_title1=get_file_data(file_path, 1),
-        des1=get_file_data(file_path, 2),
-        path1=get_file_data(file_path, 3),  # New specific variable for dialog
+        file_title1=get_file_data(file_path, 2),
+        des1=get_file_data(file_path, 3),
+        path1=get_file_data(file_path, 4),  # New specific variable for dialog
 
         # File 2
-        file_title2=get_file_data(file_path, 4),
-        des2=get_file_data(file_path, 5),
-        path2=get_file_data(file_path, 6),  # New specific variable for dialog
+        file_title2=get_file_data(file_path, 5),
+        des2=get_file_data(file_path, 6),
+        path2=get_file_data(file_path, 7),  # New specific variable for dialog
 
         # File 3
-        file_title3=get_file_data(file_path, 7),
-        des3=get_file_data(file_path, 8),
-        path3=get_file_data(file_path, 9),  # New specific variable for dialog
+        file_title3=get_file_data(file_path, 8),
+        des3=get_file_data(file_path, 9),
+        path3=get_file_data(file_path, 10),  # New specific variable for dialog
 
         # This list can be used for the download links on the page
         pdf_paths=[
-            get_file_data(file_path, 3),
-            get_file_data(file_path, 6),
-            get_file_data(file_path, 9)
+            get_file_data(file_path, 4),
+            get_file_data(file_path, 7),
+            get_file_data(file_path, 10)
         ],
         all_codes=sorted(total_codes)
     )
@@ -773,7 +772,6 @@ def add_code_route():
     flash(f"הקוד {new_code} נוסף בהצלחה לעיר {city}", "success")
     return jsonify({"success": True, "message": "הקוד נוסף בהצלחה"})
 
-
 @app.route('/remove_code', methods=['POST'])
 def remove_code_route():
     data = request.json
@@ -794,7 +792,7 @@ def remove_code_route():
 def newItems():
     user = get_current_user()
 
-    cities_dir = os.path.join(app.template_folder, "cities")
+    cities_dir = CITIES_PATH
     cities = []
     for folder in os.listdir(cities_dir):
         folder_path = os.path.join(cities_dir, folder)

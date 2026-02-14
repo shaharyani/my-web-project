@@ -126,14 +126,13 @@ footer {
     border-radius: 12px;
     font-size: 0.7rem;
     border: 1px solid #e0e0e0;
-    margin-top: 50px;
     grid-template-columns: repeat(4, 0.5fr); /* 3 עמודות */
     grid-auto-rows: auto;                  /* שורות אוטומטיות */
     gap: 7px;                             /* רווח בין הכרטיסים */
     justify-content: center;                /* מרכז את כל ה־grid אופקית */
-    padding: 50px;
+    padding: 45px;
     text-align: center;
-    width: 100%;
+    width: 80%;
 }
 
 .city-title {
@@ -1408,4 +1407,146 @@ button i {
 .status-select-admin {
    padding: 6px 12px; border-radius: 6px; border: 1px solid #ced4da;
    font-weight: bold; cursor: pointer; outline: none; background-color: #f8f9fa;
+}
+
+/* Layout Positioning */
+/* 1. Expand the Wrapper to Full Width */
+.main-page-wrapper {
+    display: flex;
+    flex-direction: row-reverse;
+    /* This pushes the sidebar to the extreme right and content to the left/center */
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 100%; /* Remove limits */
+    padding: 0 40px; /* Breathing room on the edges */
+    margin: 10px 0;
+    box-sizing: border-box;
+}
+
+/* 2. Style the Sidebar to sit on the far right edge */
+.sidebar-container {
+    width: 350px; /* Slightly wider for better readability */
+    flex-shrink: 0;
+    position: sticky;
+    top: 20px;
+    margin-left: 20px; /* Space between content and sidebar */
+}
+
+/* 3. Expand the Main Content Area */
+.content-main-area {
+    flex-grow: 1;
+    /* Increased max-width for a more "wide-screen" feel */
+    max-width: calc(100% - 400px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 6. Expand Bottom Bar to match wide layout */
+.bottom-options-bar {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    padding: 20px 40px;
+}
+
+.updates-block {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    border: 1px solid #eee;
+    direction: rtl;
+}
+
+.updates-block h3 {
+    color: #2575fc;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 8px;
+}
+
+.updates-block ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 15px;
+}
+
+.updates-block li {
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    border-right: 4px solid #2575fc;
+    font-size: 0.9em;
+}
+
+/* Main Content Area Styling */
+.content-main-area {
+    flex-grow: 1;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.search-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: white;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-radius: 6px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.search-subtext {
+    background-color: #f0f0f0;
+    color: #777;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+.admin-badge {
+    background-color: #2575fc;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9em;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+/* Bottom Bar Styling */
+.bottom-options-bar {
+    background: white;
+    padding: 15px 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.icons-row {
+    display: flex;
+    gap: 15px;
+}
+
+.options-title {
+    margin-right: auto;
+    font-weight: bold;
+    color: #444;
 }
