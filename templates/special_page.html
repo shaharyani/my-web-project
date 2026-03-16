@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מיוחדים</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .close-btn {
+        color: #888;
+        transition: color 0.2s;
+    }
+    .close-btn:hover {
+        color: #ff4d4d;
+    }
+    /* הגדרת התנועה של הפסים */
+    @keyframes progress-bar-stripes {
+        from { background-position: 40px 0; }
+        to { background-position: 0 0; }
+    }
+
+    /* המחלקה שנוסיף לפס הטעינה */
+    .progress-bar-animated {
+        background-image: linear-gradient(
+            45deg,
+            rgba(255,255,255,.25) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255,255,255,.25) 50%,
+            rgba(255,255,255,.25) 75%,
+            transparent 75%,
+            transparent
+        );
+        background-size: 40px 40px; /* גודל הפסים */
+        animation: progress-bar-stripes 1s linear infinite; /* מהירות התנועה */
+    }
+</style>
+<div class="main-page-wrapper" style="justify-content: center; max-height: 1500px; margin-top: 55px; width: 100%; display: flex; direction: rtl; padding: 0px; gap: 10px; font-family: 'Rubik', sans-serif;">
+    <div class="content-main-area" style="width: 70%; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 15px;">
+
+        <h2 style="font-size: 52px; font-weight: bold; color: #B8860B; ; display: block; padding: 5px; margin-bottom: 5px">
+            בקשות מיוחדות
+        </h2>
+
+        <div style="text-align: center; margin-bottom: 1px;">
+            <span style="background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; margin: 2px; border: 1px solid #eee;">לעזרה פנו למנהל</span>
+            <span style="background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; margin: 2px; border: 1px solid #eee;">מלאו את הבקשה בהתאם</span>
+            <span style="background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; margin: 2px; border: 1px solid #eee;">מומלץ לרענן את הדף</span>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 5px;">
+            <span style="font-weight: bold; color: white; background: #cc0000; text-align: center; padding: 6px 15px; border-radius: 6px; font-size: 0.9em; margin: 2px;">
+                אין לעשות פעולות אחרות בפקודה
+            </span>
+            <span style="font-weight: bold; color: white; background: #cc0000; text-align: center; padding: 6px 15px; border-radius: 6px; font-size: 0.9em; margin: 2px;">
+                   הקפידו על גבולות הב"מ בציון המטרה
+            </span>
+        </div>
+
+        <div style="width: 50%; margin-top: 5px; justify-content: center; display: flex; gap: 15px;">
+            <div style="flex: 1; position: relative; display: flex; align-items: center;">
+                <svg style="position: absolute; right: 12px; width: 18px; height: 18px; fill: #aaa;" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+
+                <input type="text" id="reportSearch" placeholder="חפש בקשה..."
+                       oninput="filterSpecials()"
+                       style="font-family: 'Rubik', sans-serif; width: 100%; padding: 12px 40px 12px 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; transition: border-color 0.3s;">
+            </div>
+            <span onclick="document.getElementById('serialModal').style.display='flex'"
+                  style="display: inline-flex; align-items: center; gap: 8px; font-family: 'Rubik', sans-serif; background: #B8860B; color: white; padding: 8px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;"
+                  onmouseover="this.style.filter='brightness(1.1)'; this.style.transform='translateY(-2px)';"
+                  onmouseout="this.style.filter='brightness(1)'; this.style.transform='translateY(0)';"
+                  onmousedown="this.style.transform='translateY(0)'">
+
+                <svg style="width: 24px; height: 24px; fill: white;" viewBox="0 0 24 24">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                </svg>
+                חיפוש מתקדם
+            </span>
+        </div>
+
+        <div style="overflow-y: auto; width: 100%;">
+            <div style="max-height: 400px; background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #eee;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <thead style="background: #f8f9fa; border-bottom: 2px solid #eee;">
+                        <tr>
+                            <th style="padding: 15px; color: #555;">מספר</th>
+                            <th style="padding: 15px; color: #555;">כותרת</th>
+                            <th style="padding: 15px; color: #555;">מבקש</th>
+                            <th style="padding: 15px; color: #555;">מטרה</th>
+                            <th style="padding: 15px; color: #555;">תאריך בקשה</th>
+                            <th style="padding: 15px; color: #555;">תאריך סיום</th>
+                            <th style="padding: 15px; color: #555;">סטטוס</th>
+                            <th style="padding: 15px; color: #555;">אחר</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in all_special_requests %}
+                            <tr class="request-row" data-id="{{ report.id }}" style="border-bottom: 1px solid #f1f1f1;">
+                                <td style="padding: 15px; color: #555;">{{ report.id }}</td>
+                                <td style="padding: 15px;"><strong>{{ report.title }}</strong></td>
+                                <td style="padding: 15px; color: #555;">{{ report.ask_by }}</td>
+                                <td style="padding: 15px; color: #555;">{{ report.target }}</td>
+                                <td style="padding: 15px; color: #888;">{{ report.request_date }}</td>
+                                <td style="padding: 15px; color: #888;">{{ report.finish_date }}</td>
+
+                                <td style="padding: 15px;">
+                                    <span style="padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; justify-content: center;
+                                                    background: {{ '#e0e0e0' if report.status == 'ממתין'
+                                                                 else ('#fff3e0' if report.status == 'בתהליך'
+                                                                 else ('#e8f5e9' if report.status == 'טופל'
+                                                                 else '#ffebee')) }};
+                                                    color: {{ '#616161' if report.status == 'ממתין'
+                                                             else ('#ef6c00' if report.status == 'בתהליך'
+                                                             else ('#2e7d32' if report.status == 'טופל'
+                                                             else '#c62828')) }};">
+                                                    {{ report.status }}
+                                    </span>
+                                </td>
+
+                                <td style="padding: 15px; display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                    <button onclick="viewReport('{{ report.id }}')"
+                                            style="
+                                                background: #f8f9fa;
+                                                color: #555;
+                                                padding: 6px 12px;
+                                                border-radius: 6px;
+                                                border: 1px solid #ddd;
+                                                font-weight: bold;
+                                                font-size: 13px;
+                                                cursor: pointer;
+                                                transition: 0.2s;
+                                                font-family: 'Rubik', sans-serif;
+                                            "
+                                            onmouseover="this.style.background='#e9ecef'; this.style.color='#333'; this.style.borderColor='#ccc';"
+                                            onmouseout="this.style.background='#f8f9fa'; this.style.color='#555'; this.style.borderColor='#ddd';">
+                                        צפה
+                                    </button>
+                                    <button onclick="removeSpecial('{{ report.id }}')"
+                                            style="
+                                                background: #fff5f5;
+                                                color: #e03131;
+                                                padding: 6px 12px;
+                                                border-radius: 6px;
+                                                border: 1px solid #ffe3e3;
+                                                font-weight: bold;
+                                                font-size: 13px;
+                                                cursor: pointer;
+                                                transition: 0.2s;
+                                                font-family: 'Rubik', sans-serif;
+                                            "
+                                            onmouseover="this.style.background='#e03131'; this.style.color='#fff'; this.style.borderColor='#e03131';"
+                                            onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'; this.style.borderColor='#ffe3e3';">
+                                        מחק
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" style="padding: 30px; color: #999; direction: rtl;">טרם נשלחו בקשות.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="sidebar-container" style="margin-top: 50px; width: 30%">
+        <div class="updates-block" style="margin-top: 20px">
+                <h3 style="color: #B8860B; margin-top: 0;">יצירת בקשה מיוחדת</h3>
+                <p>
+                    מלאו את הבקשה בהתאם והגדירו את הצורך של כל מוצר ומוצר ותהליך הבדיקה הרצוי. רשאים למלא את הבקשה הם המשתמשים הבאים
+                </p>
+                {% for user in special_users %}
+                    <span style="background-color: white; color: #D4A017; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; margin: 2px; border: 1px solid #eee;">{{ user }}</span>
+                {% endfor %}
+                <br>
+                <br>
+                <div style="display: flex; justify-content: center; width: 100%;">
+                    <button onclick="document.getElementById('newSpecialModal').style.display='flex'"
+                        style="background: #B8860B; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.3s ease; font-family: 'Rubik', sans-serif;"
+                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 117, 252, 0.3)';"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(37, 117, 252, 0.2)';">
+                        בקשה חדשה
+                    </button>
+                </div>
+                <div style="display: flex; justify-content: center; width: 100%; margin-top: 8px">
+                    <span style="direction: rtl; text-align: center; width: 80%; display: flex; align-items: center; justify-content: center; background-color: #fff9eb; color: #5d4037; padding: 5px 15px; border-radius: 10px; font-weight: bold; font-size: 0.85em; margin: 15px auto; border: 1px solid #ffe0b2; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                        <svg style="width: 18px; height: 18px; fill: #B8860B;" viewBox="0 0 24 24">
+                            <path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                        </svg>
+                        לאחר שהבקשה טופלה - בקשו את הסריאליים
+                        <a href="{{ url_for('sign_page') }}" title="חתימות" style="color: #B8860B; text-decoration: none; background: white; padding: 3px 10px; border-radius: 5px; border: 1px solid #B8860B; transition: all 0.3s ease;"
+                           onmouseover="this.style.background='#B8860B'; this.style.color='white';"
+                           onmouseout="this.style.background='white'; this.style.color='#B8860B';">
+                           כאן
+                        </a>
+                    </span>
+                </div>
+        </div>
+        <div id="requests_container" class="updates-block" style="margin-top: 20px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); font-family: 'Rubik', sans-serif; direction: rtl;">
+            <h3 style="color: #B8860B; margin-top: 0; margin-bottom: 20px;">מעקב בקשות</h3>
+
+            <div style="max-height: 370px; overflow-y: auto;">
+                {% for report in all_special_requests | sort(attribute='finish_date') %}
+                <div style="margin-bottom: 20px; padding: 15px;
+                         border-right: 4px solid {{ '#00c853' if report.status == 'טופל'
+                         else ('#f59f00' if report.status == 'בתהליך'
+                         else ('#d32f2f' if report.status == 'סורב'
+                         else '#2575fc')) }};
+                         background: #f9f9f9; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: bold; color: #333;">{{ report.title }}</span>
+                        <span style="font-size: 12px; color: #777;">{{ report.finish_date }}</span>
+                    </div>
+
+                   {% set percentage = (report.current / report.total * 100) if report.total > 0 else 0 %}
+                    <div style="width: 100%; background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; border: 1px solid #dee2e6;">
+                        <div id="progress-bar-{{ report.id }}"
+                             data-percentage="{{ percentage | round | int }}"
+                             class="progress-bar-animated"
+                             style="height: 100%;
+                                    width: 0%;
+                                    background-color: {{ '#00c853' if percentage >= 100 else '#2575fc' }};
+                                    transition: width 1.5s ease-in-out;">
+                        </div>
+                    </div>
+                    <div style="font-size: 10px; color: #666; text-align: left; margin-top: 2px;">
+                        {{ report.current }} מתוך {{ report.total }} הושלמו ({{ percentage | round | int }}%)
+                    </div>
+
+                    <div style="margin-top: 5px; font-size: 12px; color: #555;">
+                        סטטוס: <strong>{{ report.status }}</strong>
+                    </div>
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #999;">אין בקשות פעילות כרגע.</p>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="newSpecialModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div class="modal-content" style="background-color: #fff; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); direction: rtl; text-align: right; font-family: 'Rubik', sans-serif;">
+
+        <span class="close-btn" onclick="document.getElementById('newSpecialModal').style.display='none'" style="position: absolute; left: 20px; top: 10px; font-size: 30px; cursor: pointer;">&times;</span>
+
+        <h2 style="color: #B8860B; margin-top: 0; text-align: center; margin-bottom: 20px;">יצירת בקשה מיוחדת</h2>
+
+        <div id="dialogStatusMessage" style="display: none; width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: bold; font-family: 'Rubik', sans-serif; box-sizing: border-box;"></div>
+
+        <form id="specialRequestForm" style="display: flex; flex-direction: column; gap: 20px;">
+            <div>
+                <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 8px;">כותרת</label>
+                <input type="text" name="title" placeholder="כותרת קצרה" style="font-family: 'Rubik', sans-serif; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 8px;">מטרה</label>
+                <input type="text" name="target" placeholder="יעד הבקשה..." style="font-family: 'Rubik', sans-serif; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;">
+            </div>
+
+            <div>
+                <div style="margin-bottom: 1px;">
+                    <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 8px;">תיאור | בהתאם לפורמט - כל שורה הינה בקשה</label>
+                    <span style="background-color: #f9f9f9; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; border: 1px solid #eee;">למשל - עיר1:הלבנה:2</span>
+                    <span style="background-color: #f9f9f9; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; border: 1px solid #eee;">למשל - עיר2:השחרה:4</span>
+                    <span style="background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; border: 1px solid #eee;">בקשות שלא בפורמט לא יטופלו</span>
+                </div>
+                <textarea name="description" rows="4" required placeholder="שם המוצר:תהליך:כמות" style="margin-top: 8px; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; resize: none;"></textarea>
+            </div>
+
+            <div style="background-color: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px dashed #B8860B;">
+                <label style="font-weight: bold; font-size: 13px; color: #B8860B; display: block; margin-bottom: 5px;">הערה</label>
+                <p style="margin: 0; font-size: 12px; color: #555;">הסיריאליים של המוצרים יוגדרו אוטומטית על ידי המערכת בהמשך התהליך.</p>
+            </div>
+
+            <div>
+                <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 8px;">תאריך יעד לקבלה</label>
+                <input type="date" id="finish_date_input" name="finish_date" style="cursor: pointer; font-family: 'Rubik', sans-serif; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 10px;">
+                <button type="button" onclick="submitSpecialRequest()" style="font-family: 'Rubik', sans-serif; background: #B8860B; color: white; border: none; padding: 12px 40px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.3s;">
+                    שלח בקשה
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="viewSpecialModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div class="modal-content" style="background-color: #fff; padding: 30px; border-radius: 15px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); direction: rtl; text-align: right; font-family: 'Rubik', sans-serif;">
+        <span class="close-btn" onclick="document.getElementById('viewSpecialModal').style.display='none'" style="position: absolute; left: 20px; top: 10px; font-size: 30px; cursor: pointer;">&times;</span>
+
+        <h2 id="view_title" style="color: #B8860B; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">---</h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+            <div><span style="font-weight: bold;">מבקש:</span> <span id="view_ask_by">---</span></div>
+            <div><span style="font-weight: bold;">יעד:</span> <span id="view_target">---</span></div>
+            <div><span style="font-weight: bold;">תאריך יעד:</span> <span id="view_finish_date">---</span></div>
+            <div><span style="font-weight: bold;">תאריך הגשה:</span> <span id="view_request_date">---</span></div>
+            <div>
+                <span style="font-weight: bold;">סטטוס:</span> <span id="view_status">---</span>
+            </div>
+        </div>
+
+        <div>
+            <h4 style="margin-bottom: 8px;">תיאור:</h4>
+            <div id="view_description" style="background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 8px; min-height: 80px;"></div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <h4 style="margin-bottom: 10px; color: #555; font-size: 16px;">רשימת סריאלים:</h4>
+            <div id="view_serials_list" style="background: #fdfdfd; border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; display: flex; flex-wrap: wrap; gap: 10px;">
+                </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 25px;">
+            <button onclick="document.getElementById('viewSpecialModal').style.display='none'" style="font-family: 'Rubik', sans-serif; background: #6c757d; color: white; padding: 10px 40px; border-radius: 8px; cursor: pointer;">סגור</button>
+        </div>
+    </div>
+</div>
+<div id="deleteConfirmModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); direction: rtl;">
+    <div class="modal-content" style="background-color: #fff; padding: 30px; border-radius: 15px; width: 350px; text-align: center; font-family: 'Rubik', sans-serif;">
+        <h2 style="color: #e03131; margin-top: 0;">אישור מחיקה</h2>
+        <p>האם אתה בטוח שברצונך למחוק בקשה זו?</p>
+
+        <div id="deleteErrorMessage" style="font-family: 'Rubik', sans-serif; font-size: 14px; margin-bottom: 15px; min-height: 20px;"></div>
+
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="confirmDeleteBtn" class="btn-create-land" style="background: #e03131; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Rubik', sans-serif;">מחק</button>
+            <button onclick="document.getElementById('deleteConfirmModal').style.display='none'" class="btn-create-land" style="justify-content: center; text-align: center; max-width: 30%; background: #f1f3f5; color: #495057; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; transition: 0.2s;">
+                ביטול
+            </button>
+        </div>
+    </div>
+</div>
+<div id="serialModal" class="modal"
+     style="display: {% if show_modal %}flex{% else %}none{% endif %};
+            align-items: center; justify-content: center;
+            position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; position: relative; direction: rtl; text-align: center; font-family: 'Rubik', sans-serif;">
+
+        <span class="close-btn"
+              onclick="document.getElementById('serialModal').style.display='none'">&times;</span>
+
+        <h2 style="color: #2575fc; margin-top: 0; margin-bottom: 25px; font-weight: bold;">חיפוש מתקדם</h2>
+
+        <form method="POST" action="{{ url_for('special_page') }}" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+            <input type="text" name="serialASK" placeholder="הכנס מספר סידורי..." required
+                   style="font-family: 'Rubik', sans-serif; width: 80%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; text-align: center;">
+            <button type="submit" class="btn-create-land" style="width: 30%; display: flex; justify-content: center; align-items: center; text-align: center;">חפש</button>
+        </form>
+
+
+        {% if show_modal %}
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+                {% if product %}
+                    <div style="text-align: right; background: #f8f9fa; padding: 20px; border-radius: 12px; width: 90%; margin: 0 auto; border: 1px solid #ececec;">
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px; direction: rtl;"><b> מספר סידורי:</b> {{ product.serial }}</p>
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>קוד:</b> {{ product.code }}</p>
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>סוג קרקע: </b>{{ product.land_type }}</p>
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;">
+                        <b>סטטוס:</b>
+                        {% if product.status == 'R' or product.status == 'RED' %}
+                        <span style="color: red;">אדום (תקול)</span>
+                        {% elif product.status == 'W' or product.status == 'WHITE' %}
+                        <span style="color: #555;">לבן (תקין)</span>
+                        {% elif product.status == 'B' or product.status == 'BLACK' %}
+                        <span style="color: black;">שחור (בבדיקה)</span>
+                        {% elif product.status == 'N' or product.status == 'NONE' %}
+                        <span style="color: gray;">חדש (טרם נבדק)</span>
+                        {% else %}
+                        {{ product.status }}
+                        {% endif %}
+                        </p>
+                        <p style="margin: 8px 0;"><b>חתום על-ידי: </b>{{ product.owner }}</p>
+                    </div>
+                {% else %}
+                    <div style="padding: 15px; background: #fff5f5; border-radius: 10px; width: 80%; margin: 0 auto; text-align: center;">
+                    <p style="color: #d9534f; font-weight: bold; margin: 0;">❌ מוצר לא נמצא במערכת</p>
+                    </div>
+                {% endif %}
+        {% endif %}
+    </div>
+</div>
+<script>
+    function filterSpecials() {
+        const input = document.getElementById('reportSearch');
+        const filter = input.value.toLowerCase().trim();
+
+        // בחירת כל שורות הנתונים בטבלה
+        const rows = document.querySelectorAll('.request-row');
+
+        rows.forEach(row => {
+            // הכותרת נמצאת בתא השני (index 1) בטבלה שלך
+            const titleCell = row.cells[1];
+
+            if (titleCell) {
+                // שולף את הטקסט מתוך ה-<strong> שבתוך התא
+                const titleText = titleCell.innerText.toLowerCase();
+
+                // סינון: אם החיפוש ריק או שהטקסט מופיע בכותרת
+                if (filter === "" || titleText.includes(filter)) {
+                    row.style.display = ''; // הצג
+                } else {
+                    row.style.display = 'none'; // הסתר
+                }
+            }
+        });
+
+        // במידה ויש הודעת "אין תוצאות", נעדכן אותה
+        checkEmptyFilterResults();
+    }
+
+    function checkEmptyFilterResults() {
+        const visibleRows = document.querySelectorAll('.request-row:not([style*="display: none"])');
+        const noResultsMessage = document.getElementById('noSpecialResultsMessage'); // אם קיים אלמנט כזה
+
+        if (noResultsMessage) {
+            noResultsMessage.style.display = visibleRows.length === 0 ? '' : 'none';
+        }
+    }
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // מפעיל את האנימציה על כל פסי ההתקדמות בדף
+        const progressBars = document.querySelectorAll('[id^="progress-bar-"]');
+
+        progressBars.forEach(bar => {
+            // הערך הסופי מגיע מה-Backend דרך משתנה ב-Jinja
+            // כאן אנחנו משתמשים ב-data attribute שהגדרנו מראש
+            const finalWidth = bar.getAttribute('data-percentage');
+
+            setTimeout(() => {
+                bar.style.width = finalWidth + '%';
+            }, 300); // עיכוב קטן ליצירת אפקט "פתיחה"
+        });
+    });
+
+    window.onload = function() {
+        // מרענן את כל הבקשות בטבלה
+        const allRequests = document.querySelectorAll('.request-row');
+
+        allRequests.forEach(req => {
+            const requestId = req.getAttribute('data-id');
+            const countElement = req.querySelector('.current-count-badge');
+            const statusElement = req.querySelector('.status-badge'); // נניח שזה האלמנט שמציג 'בתהליך'
+
+            fetch(`/trigger_async_refresh/${requestId}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    console.log(`Request ${requestId} refreshed: ${data.current}/${data.total}`);
+
+                    // 1. עדכון המספרים בטבלה בזמן אמת
+                    if (countElement) {
+                        countElement.innerText = `${data.current} / ${data.total}`;
+                    }
+
+                    // 2. עדכון ויזואלי של הסטטוס אם הבקשה הסתיימה
+                    if (data.current >= data.total) {
+                        req.setAttribute('data-status', 'טופל');
+                        if (statusElement) {
+                            statusElement.innerText = 'טופל';
+                            statusElement.style.backgroundColor = '#d4edda'; // ירוק בהיר
+                            statusElement.style.color = '#155724';
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error(`Error:`, err));
+        });
+    };
+
+    window.onload = function() {
+        // השתמשתי בשם משתנה עקבי
+        const allRequests = document.querySelectorAll('.request-row');
+
+        allRequests.forEach(req => {
+            const requestId = req.getAttribute('data-id');
+            const countElement = req.querySelector('.current-count-badge');
+            const statusBadge = req.querySelector('.status-badge'); // נניח שזה האלמנט שמציג 'בתהליך'
+
+            fetch(`/trigger_async_refresh/${requestId}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    console.log(`Request ${requestId} updated: ${data.current}/${data.total}`);
+
+                    // 1. עדכון המספרים ב-UI
+                    if (countElement) {
+                        countElement.innerText = `${data.current} / ${data.total}`;
+                    }
+
+                    // 2. עדכון הסטטוס ב-UI אם הסתיים
+                    if (data.current >= data.total) {
+                        req.setAttribute('data-status', 'טופל');
+                        if (statusBadge) {
+                            statusBadge.innerText = 'טופל';
+                            statusBadge.style.backgroundColor = '#d4edda'; // ירוק
+                            statusBadge.style.color = '#155724';
+                        }
+                        req.style.opacity = '0.7';
+                    }
+                }
+            })
+            .catch(err => console.error(`Error refreshing ${requestId}:`, err));
+        });
+    };
+
+    function refreshRequestsList() {
+        fetch('/get_all_requests_json') // צור Route כזה ב-Python שמחזיר JSON של כל הבקשות
+            .then(res => res.json())
+            .then(data => {
+                const container = document.getElementById('requests_list_content');
+                container.innerHTML = ''; // מנקה את הרשימה הישנה
+
+                data.requests.forEach(report => {
+                    const percentage = report.total > 0 ? (report.current / report.total * 100) : 0;
+                    container.innerHTML += `
+                        <div style="margin-bottom: 20px; padding: 15px;
+                                 border-right: 4px solid ${report.status === 'טופל' ? '#00c853' : (report.status === 'בתהליך' ? '#f59f00' : '#2575fc')};
+                                 background: #f9f9f9; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: bold; color: #333;">${report.title}</span>
+                                <span style="font-size: 12px; color: #777;">${report.finish_date}</span>
+                            </div>
+                            <div style="width: 100%; background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; border: 1px solid #dee2e6;">
+                                <div style="height: 100%; width: ${percentage}%; background: ${percentage >= 100 ? '#00c853' : '#2575fc'}; transition: width 0.5s ease-in-out;"></div>
+                            </div>
+                            <div style="font-size: 10px; color: #666; text-align: left; margin-top: 2px;">
+                                ${report.current} מתוך ${report.total} הושלמו (${Math.round(percentage)}%)
+                            </div>
+                        </div>`;
+                });
+            });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        {% if show_modal %}
+            document.getElementById('serialModal').style.display = 'flex';
+        {% endif %}
+    });
+
+    function closeAndResetModal() {
+        const modal = document.getElementById('serialModal');
+        const input = modal.querySelector('input[name="serialASK"]');
+
+        // 1. הסתרת המודל
+        modal.style.display = 'none';
+
+        // 2. איפוס השדה
+        if (input) {
+            input.value = '';
+        }
+    }
+
+    // עדכון פונקציית הסגירה בלחיצה מחוץ למודל
+    window.onclick = function(event) {
+        let serialModal = document.getElementById("serialModal");
+        if (event.target == serialModal) {
+            closeAndResetModal();
+        }
+    }
+
+    function removeSpecial(reportId) {
+        const modal = document.getElementById('deleteConfirmModal');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        const errorDiv = document.getElementById('deleteErrorMessage');
+
+        // איפוס הודעת שגיאה בכל פתיחה מחדש
+        errorDiv.innerText = '';
+
+        // הצגת המודל
+        modal.style.display = 'flex';
+        confirmBtn.dataset.reportId = reportId;
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        const reportId = this.dataset.reportId;
+        const errorDiv = document.getElementById('deleteErrorMessage');
+        const confirmBtn = this;
+
+        // חיווי טעינה למשתמש ונטרול הכפתור למניעת לחיצות כפולות
+        confirmBtn.innerText = 'מוחק...';
+        confirmBtn.disabled = true;
+        errorDiv.innerText = '';
+
+        fetch(`/delete_special/${reportId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // הצלחה: סגירת המודל ורענון
+                    document.getElementById('deleteConfirmModal').style.display = 'none';
+                    location.reload();
+                } else {
+                    // שגיאה: הצגה במודל במקום alert
+                    errorDiv.innerText = 'שגיאה במחיקה: ' + data.message;
+                    errorDiv.style.color = '#e03131';
+                    errorDiv.style.marginTop = '10px';
+                    errorDiv.style.fontFamily = "'Rubik', sans-serif";
+
+                    // החזרת הכפתור למצב פעיל
+                    confirmBtn.innerText = 'מחק';
+                    confirmBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorDiv.innerText = 'אירעה שגיאה טכנית בחיבור לשרת.';
+                errorDiv.style.color = '#e03131';
+                errorDiv.style.marginTop = '10px';
+                errorDiv.style.fontFamily = "'Rubik', sans-serif";
+
+                // החזרת הכפתור למצב פעיל
+                confirmBtn.innerText = 'מחק';
+                confirmBtn.disabled = false;
+            });
+    });
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('viewSpecialModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+    function viewReport(reportId) {
+                fetch(`/get_special_details/${reportId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            const report = data.report;
+
+                            // פונקציית עזר לעדכון בטוח
+                            const update = (id, content, isHtml = false) => {
+                                const el = document.getElementById(id);
+                                if (el) {
+                                    isHtml ? el.innerHTML = content : el.innerText = content || "---";
+                                }
+                            };
+
+                            // עדכון שדות בסיסיים
+                            update('view_title', report.title);
+                            update('view_ask_by', report.ask_by);
+                            update('view_target', report.target);
+                            update('view_finish_date', report.finish_date);
+                            update('view_request_date', report.request_date);
+                            update('view_status', report.status);
+
+                            const statusEl = document.getElementById('view_status');
+                            statusEl.innerText = report.status;
+                            statusEl.style.padding = "7px 12px";
+                            statusEl.style.borderRadius = "20px";
+                            statusEl.style.fontSize = "14px";
+                            statusEl.style.fontWeight = "bold";
+                            statusEl.style.display = "inline-block";
+                            let bgColor, textColor;
+                            if (report.status === 'ממתין') {
+                                bgColor = '#e0e0e0'; textColor = '#616161';
+                            } else if (report.status === 'בתהליך') {
+                                bgColor = '#fff3e0'; textColor = '#ef6c00';
+                            } else if (report.status === 'טופל') {
+                                bgColor = '#e8f5e9'; textColor = '#2e7d32';
+                            } else { // סורב / אחר
+                                bgColor = '#ffebee'; textColor = '#c62828';
+                            }
+
+                            // החלת העיצוב על האלמנט
+                            statusEl.style.backgroundColor = bgColor;
+                            statusEl.style.color = textColor;
+
+                            // הצגת המודל...
+                            document.getElementById('viewSpecialModal').style.display = 'flex';
+
+                            // עדכון תיאור
+                            const descContainer = document.getElementById('view_description');
+                            if (descContainer) {
+                                descContainer.innerHTML = '';
+                                let i = 0;
+                                if (report.description && report.description.trim() !== "") {
+                                    const lines = report.description.split('\n');
+                                    lines.forEach(line => {
+                                        if (line.trim()) {
+                                            const p = document.createElement('p');
+                                            p.style.margin = "0 0 5px 0";
+                                            p.innerText = "בקשה " + i + ": " + line;
+                                            i = i + 1;
+                                            descContainer.appendChild(p);
+                                        }
+                                    });
+                                } else {
+                                    descContainer.innerText = "אין תיאור זמין.";
+                                }
+                            }
+
+                            // עדכון סריאלים
+                            const serialsListDiv = document.getElementById('view_serials_list');
+                            if (serialsListDiv) {
+                                serialsListDiv.innerHTML = '';
+
+                                let serials = [];
+                                if (report.serials && report.serials.trim() !== "" && report.serials !== "[]") {
+                                    try {
+                                        serials = JSON.parse(report.serials);
+                                    } catch (e) {
+                                        console.error("JSON Parse Error:", e);
+                                    }
+                                }
+
+                                if (serials.length === 0) {
+                                    serialsListDiv.innerHTML = '<span style="color: #999; font-size: 13px;">אין סריאלים</span>';
+                                } else {
+                                    const grouped = {};
+                                    serials.forEach(item => {
+                                        if (!grouped[item.line_id]) grouped[item.line_id] = [];
+                                        grouped[item.line_id].push(item);
+                                    });
+
+                                    for (let lineId in grouped) {
+                                        const wrapper = document.createElement('div');
+                                        wrapper.style.marginBottom = "8px";
+                                        wrapper.style.width = "100%";
+                                        wrapper.innerHTML = `<strong>בקשה ${lineId}:</strong> ` +
+                                            grouped[lineId].map(item => `
+                                                <span style="background: ${item.is_green ? '#d4edda' : '#f8f9fa'};
+                                                             color: ${item.is_green ? '#155724' : '#6c757d'};
+                                                             padding: 2px 8px; border-radius: 12px; margin-right: 5px;
+                                                             border: 1px solid ${item.is_green ? '#c3e6cb' : '#dee2e6'};
+                                                             font-size: 12px; display: inline-block;">
+                                                    ${item.serial}
+                                                </span>`).join('');
+                                        serialsListDiv.appendChild(wrapper);
+                                    }
+                                }
+                            }
+
+                            // הצגת המודל
+                            document.getElementById('viewSpecialModal').style.display = 'flex';
+                        } else {
+                            console.error("שגיאה בטעינת הנתונים:", data.message || "לא ידוע");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Fetch Error:", err);
+                    });
+            }
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("finish_date_input").setAttribute('min', today);
+    });
+
+    function openViewModal(req) {
+        document.getElementById('view_title').innerText = req.title;
+        document.getElementById('view_ask_by').innerText = req.ask_by;
+        document.getElementById('view_description').innerText = req.description;
+        document.getElementById('view_serials').innerText = req.serials;
+        document.getElementById('viewSpecialModal').style.display = 'flex';
+    }
+
+    function openDeleteModal(id) {
+        document.getElementById('confirmDeleteBtn').onclick = function() { deleteRequest(id); };
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function deleteRequest(id) {
+        fetch('/delete_request/' + id, { method: 'POST' }).then(() => location.reload());
+    }
+
+    function submitSpecialRequest() {
+        const statusDiv = document.getElementById('dialogStatusMessage');
+        const form = document.getElementById('specialRequestForm');
+
+        // הצגת ה-Div
+        statusDiv.style.display = 'block';
+        statusDiv.innerText = "מעבד בקשה...";
+        statusDiv.style.backgroundColor = "#fff3cd";
+        statusDiv.style.color = "#856404";
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch("{{ url_for('create_special') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
+                statusDiv.innerText = "הבקשה נשלחה בהצלחה!";
+                statusDiv.style.backgroundColor = "#d4edda";
+                statusDiv.style.color = "#155724";
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                throw new Error(result.message || "שגיאה בשליחה");
+            }
+        })
+        .catch(err => {
+            statusDiv.innerText = "שגיאה: " + err.message;
+            statusDiv.style.backgroundColor = "#f8d7da";
+            statusDiv.style.color = "#721c24";
+        });
+    }
+</script>
+{% endblock %}
+</body>
+</html>

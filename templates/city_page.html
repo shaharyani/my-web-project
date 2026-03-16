@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ city_name }}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
-<body>
+<body style="width: 100%; height: 1000px">
 {% extends "base.html" %}
 
 {% block content %}
@@ -19,8 +20,8 @@
     </div>
 
     <div class="inline-layout">
-
         <div class="left-panel">
+            <span style="background-color: white; color: #333; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; margin-bottom: 2px; border: 1px solid #eee;">המוצרים מ{{ city_name }} שנבדקו במערכת</span>
             <div class="big-rectangle">
                 <div class="values-grid">
                     <div class="value-item black">
@@ -37,7 +38,7 @@
                     </div>
                     <div class="value-item gray">
                         <div class="label">GRAY</div>
-                        <div class="number">{{ gray_value }}</div>
+                        <div class="number">{{ counts.GRAY }}</div>
                     </div>
                 </div>
             </div>
@@ -57,6 +58,42 @@
                         <button type="submit" style="padding:10px 20px; border:none; border-radius:6px; background:#3a6b3a; color:white; font-weight:bold; cursor:pointer;">הוסף</button>
                     </div>
                 </form>
+            </div>
+            <div class="emergency-edit-section">
+                <h4 style="margin-bottom: 15px;">כמות לחירום ב{{ city_name }}</h4>
+                <p style="dir: rtl; margin-bottom: 15px;">כמות זו הינה מוגדרת לחירום ואין לאשר יותר ממנה</p>
+
+                <form method="POST" action="{{ url_for('set_eme_amount', city_name=city_name) }}" class="gray-edit-controls" style="display: flex; flex-direction: column; gap: 10px;">
+                    <input type="number" name="amount_eme" placeholder="כמות לחירום" value="{{ amount_eme }}" required style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;">
+                    <div style="display: flex; justify-content: flex-center;">
+                            <button type="submit" style="padding:10px 20px; border:none; border-radius:6px; background:#7a0000; color:white; font-weight:bold; cursor:pointer;">הגדר</button>
+                    </div>
+                </form>
+                {% set amount_current_serials = amount_current_serials | int %}
+                {% set amount_eme = amount_eme | int %}
+
+                {% set ratio = (amount_current_serials / amount_eme) if amount_eme > 0 else 0 %}
+
+                {% set bg_color = '#d4edda' if ratio >= 1 else '#f8d7da' %}
+                {% set text_color = '#155724' if ratio >= 1 else '#721c24' %}
+
+                <span style="display: block; margin: 10px auto; width: fit-content;
+                            background-color: {{ bg_color }};
+                            color: {{ text_color }};
+                            padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.95em;
+                            border: 1px solid {{ text_color }};">
+                    כמות במחסן: {{ amount_current_serials }}
+                </span>
+                <span style="display: block; margin: 5px auto; width: fit-content;
+                            background-color: {{ bg_color }};
+                            color: {{ text_color }};
+                            padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.75em;
+                            border: 1px solid {{ text_color }};">
+                    לבן: {{ amount_current_white_serials }} | שחור: {{ amount_current_serials - amount_current_white_serials }}
+                </span>
+                <p style="direction: rtl; font-size:10px; text-align: center">
+                    המוצרים שנמצאים במחסן ועברו תהליך הלבנה או השחרה בלבד.
+                </p>
             </div>
             {% endif %}
         </div>
@@ -89,14 +126,14 @@
                                 <img src="{{ url_for('static', filename='images/down-arrow.png') }}" class="view-icon" alt="view" id="icon-{{ p.serial }}">
                             </div>
                         </td>
-                        <td style="text-align: center; vertical-align: middle;">
+                        <td id="status-display-{{ p.serial }}" style="text-align: center; vertical-align: middle;">
                             {% if p.status in ['R', 'RED'] %}
                                 <span style="background-color: #ffcccc; color: #cc0000; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">תקול</span>
                             {% elif p.status in ['W', 'WHITE'] %}
                                 <span style="background-color: #e2e2e2; color: #333; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">לבן</span>
                             {% elif p.status in ['B', 'BLACK'] %}
                                 <span style="color: #333; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">שחור</span>
-                            {% else %}
+                            {% elif p.status in ['N', 'NONE'] %}
                                 <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">חדש</span>
                             {% endif %}
                         </td>
@@ -106,7 +143,7 @@
 
                     <tr id="test-row-{{ p.serial }}" style="display: none; background-color: #f1f1f1;">
                         <td colspan="4">
-                            <div id="content-{{ p.serial }}" style="padding: 15px; text-align: right;">
+                            <div id="content-{{ p.serial }}" style="max-height: 350px; overflow-y: auto; padding: 15px; text-align: right;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; direction: rtl;">
                                     <strong style="font-size: 1.1em; white-space: nowrap;">כלל הבדיקות עבור: {{ p.serial }}</strong>
 
@@ -122,14 +159,26 @@
                                                 <option value="WHITE" {% if p.status in ['W', 'WHITE'] %}selected{% endif %}>לבן</option>
                                                 <option value="NONE" {% if p.status in ['N', 'NONE', ''] %}selected{% endif %}>חדש</option>
                                             </select>
-                                            <button type="button"
-                                                    onclick="verifyAllTests('{{ p.serial }}')"
-                                                    style="font-size: 0.9em; border: none; border-radius: 8px;
-                                                           background: linear-gradient(135deg, #3a6b3a 0%, #5a915a 100%);
-                                                           color: white; font-weight: bold; cursor: pointer;
-                                                           padding: 6px 15px; font-family: 'Rubik', sans-serif;">
-                                                    אמת כלל הבדיקות
-                                            </button>
+                                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+                                                <button type="button"
+                                                        onclick="approveAllTests('{{ p.serial }}')"
+                                                        style="font-size: 0.9em; border: none; border-radius: 8px;
+                                                               border: 2.5px solid #5a915a;
+                                                               border-radius: 8px;
+                                                               background: white;
+                                                               color: #5a915a; font-weight: bold; cursor: pointer;
+                                                               padding: 6px 15px; font-family: 'Rubik', sans-serif;">
+                                                        אישור תוצאות
+                                                </button>
+                                                <button type="button"
+                                                        onclick="verifyAllTests('{{ p.serial }}')"
+                                                        style="font-size: 0.9em; border: none; border-radius: 8px;
+                                                               background: linear-gradient(135deg, #3a6b3a 0%, #5a915a 100%);
+                                                               color: white; font-weight: bold; cursor: pointer;
+                                                               padding: 6px 15px; font-family: 'Rubik', sans-serif;">
+                                                        אימות התוצאות
+                                                </button>
+                                            </div>
                                         </div>
                                     {% endif %}
                                 </div>
@@ -169,16 +218,15 @@
         </h3>
 
         <form action="{{ url_for('update_city_info', city_name=city_name) }}" method="POST">
-            <div style="display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-left: 5px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; max-height: 500px; overflow-y: auto; padding-left: 5px;">
 
                 <div class="input-group">
                     <label style="font-weight: bold; color: #333; display: block; margin-bottom: 4px; font-size: 14px;">תיאור כללי</label>
-                    <textarea name="des" rows="3"
-                        style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 14px; outline: none; box-sizing: border-box;">{{ des }}</textarea>
+                    <textarea name="des" rows="5" style="resize: none; width: 95%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 14px; outline: none; box-sizing: border-box;">{{ des }}</textarea>
                 </div>
 
-                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border-right: 4px solid #3a6b3a;">
-                    <label style="font-weight: bold; color: #3a6b3a; font-size: 13px;">קובץ 1 (PDF)</label>
+                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border-right: 4px solid #cc0000;">
+                    <label style="font-weight: bold; color: #cc0000; font-size: 13px;">קובץ 1 (PDF)</label>
                     <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
                         <div style="display: flex; gap: 8px;">
                             <input type="text" name="file_title1" value="{{ file_title1 }}" placeholder="כותרת" style="width: 20%; font-family: 'Rubik', sans-serif; flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px;">
@@ -188,8 +236,8 @@
                     </div>
                 </div>
 
-                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border-right: 4px solid #3a6b3a;">
-                    <label style="font-weight: bold; color: #3a6b3a; font-size: 13px;">קובץ 2 (PDF)</label>
+                <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; border-right: 4px solid #cc0000;">
+                    <label style="font-weight: bold; color: #cc0000; font-size: 13px;">קובץ 2 (PDF)</label>
                     <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
                         <div style="display: flex; gap: 8px;">
                             <input type="text" name="file_title2" value="{{ file_title2 }}" placeholder="כותרת" style="width: 20%; font-family: 'Rubik', sans-serif; flex: 1; padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px;">
@@ -253,27 +301,326 @@
         </div>
     </div>
 </div>
+<div id="approveDialog" class="modal-overlay" dir="rtl" style="display:none;">
+    <div id="approveConfirmBox" class="confirm-box" style="max-width: 450px; width: 95%; text-align: center; padding: 25px; border-radius: 12px; background: white;">
+
+        <h3 id="approveHeader" style="margin-bottom: 12px; color: #2575fc; font-family: 'Rubik', sans-serif; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; font-size: 22px;">
+            ניהול סטטוס בדיקות
+        </h3>
+
+        <div id="approveAlert" style="display: none; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; font-weight: bold;"></div>
+
+        <p id="approvePrompt" style="font-size: 15px; color: #555; margin-bottom: 15px;">
+            סמן בדיקות תקינות (V) והסר סימון מהשאר:
+        </p>
+
+        <div id="failedTestsList" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; max-height: 300px; overflow-y: auto; padding: 5px; border-radius: 8px;">
+            </div>
+
+        <div class="confirm-buttons" style="display: flex; justify-content: center; gap: 12px;">
+            <button id="approveSubmitBtn" type="button"
+                    style="font-family: 'Rubik', sans-serif; padding: 10px 25px; border: none; border-radius: 6px; background: #3a6b3a; color: white; font-weight: bold; cursor: pointer;">
+                עדכן סטטוסים
+            </button>
+            <button type="button" onclick="closeApproveDialog()"
+                    style="font-family: 'Rubik', sans-serif; padding: 10px 25px; border: none; border-radius: 6px; background: #6c757d; color: white; font-weight: bold; cursor: pointer;">
+                סגור
+            </button>
+        </div>
+    </div>
+</div>
+<div id="verifyDialog" class="modal-overlay" dir="rtl" style="display:none;">
+    <div class="confirm-box" style="max-width: 450px; width: 95%; text-align: center; padding: 25px; border-radius: 12px; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+
+        <h3 id="verifyHeader" style="margin-bottom: 12px; color: #2575fc; font-family: 'Rubik', sans-serif; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; font-size: 22px;">
+            אימות בדיקות סופי
+        </h3>
+
+        <div id="verifyAlert" style="display: none; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; font-weight: bold;"></div>
+
+        <div id="verifyPasscodeSection">
+            <p style="font-size: 15px; color: #555; margin-bottom: 15px;">הזן קוד אישור כדי להמשיך:</p>
+            <input type="password" id="verifyPasscode" placeholder="****" maxlength="4"
+                   style="width: 60%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; text-align: center; font-size: 20px; outline: none; margin-bottom: 20px;">
+        </div>
+
+        <div id="verifyListSection" style="display: none;">
+            <p style="font-size: 14px; color: #666; margin-bottom: 10px;">סמן את הבדיקות שברצונך לאמת (Verify):</p>
+            <div id="verifyTestsList" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; max-height: 250px; overflow-y: auto; padding: 5px;">
+                </div>
+        </div>
+
+        <div class="confirm-buttons" style="display: flex; justify-content: center; gap: 12px;">
+            <button id="verifyMainBtn" type="button" onclick="checkVerifyPasscode()"
+                    style="font-family: 'Rubik', sans-serif; padding: 10px 25px; border: none; border-radius: 6px; background: #2575fc; color: white; font-weight: bold; cursor: pointer;">
+                המשך
+            </button>
+            <button type="button" onclick="closeVerifyDialog()"
+                    style="font-family: 'Rubik', sans-serif; padding: 10px 25px; border: none; border-radius: 6px; background: #6c757d; color: white; font-weight: bold; cursor: pointer;">
+                ביטול
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
-    let currentVerifyData = null;
-
-    // --- 1. פונקציות ניהול UI כלליות ---
-    function updateSelectStyle(selectElement) {
-        if(!selectElement) return;
-        const status = selectElement.value;
-        let bgColor, textColor;
-
-        switch (status) {
-            case 'RED': bgColor = '#ffcccc'; textColor = '#cc0000'; break;
-            case 'BLACK': bgColor = '#333'; textColor = '#fff'; break;
-            case 'WHITE': bgColor = '#e2e2e2'; textColor = '#333'; break;
-            default: bgColor = '#f0f0f0'; textColor = '#777'; break;
+    function openCityDialog() {
+        const modal = document.getElementById('statusDialog');
+        if (modal) {
+            modal.style.display = 'flex';
+            // מניעת גלילה של הדף ברקע כשהמודאל פתוח
+            document.body.style.overflow = 'hidden';
         }
-        selectElement.style.backgroundColor = bgColor;
-        selectElement.style.color = textColor;
-        selectElement.style.borderColor = "#333";
     }
 
+    function closeCityDialog() {
+        const modal = document.getElementById('statusDialog');
+        if (modal) {
+            modal.style.display = 'none';
+            // החזרת הגלילה למצב תקין
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('statusDialog');
+        if (event.target == modal) {
+            closeCityDialog();
+        }
+    }
+
+    // --- 1. Global Variables & Registry ---
+    let currentVerifySerial = "";
+    let pendingStatus = { serial: null, newValue: null, selectElement: null };
+    const CORRECT_PASSCODE = "1234";
+    const testStatusRegistry = {};
+
+    // --- 2. Approval Dialog Logic (Manage Results) ---
+    function approveAllTests(serial) {
+        const dialog = document.getElementById('approveDialog');
+        const listContainer = document.getElementById('failedTestsList');
+        const header = document.getElementById('approveHeader');
+        const alertBox = document.getElementById('approveAlert');
+        const submitBtn = document.getElementById('approveSubmitBtn');
+
+        alertBox.style.display = 'none';
+        listContainer.innerHTML = '<p style="color:#888;">טוען נתונים...</p>';
+        header.innerText = "ניהול בדיקות: " + serial;
+        dialog.style.display = 'flex';
+
+        fetch(`/get_tests/${serial}`)
+            .then(res => res.json())
+            .then(data => {
+                listContainer.innerHTML = '';
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = '<p style="color:#888; padding:20px;">לא נמצאו בדיקות למוצר זה</p>';
+                    return;
+                }
+
+                data.forEach(test => {
+                    const isPassed = (test.is_passed === 1 || test.is_passed === true);
+                    const item = document.createElement('div');
+                    item.style.cssText = `
+                        display: flex; align-items: center; padding: 12px;
+                        background: #fdfdfd; border: 1px solid #eee;
+                        border-radius: 8px; cursor: pointer; direction: rtl;
+                        transition: all 0.2s ease; margin-bottom: 8px;
+                    `;
+
+                    item.innerHTML = `
+                        <input type="checkbox" class="status-check" value="${test.id}" ${isPassed ? 'checked' : ''}
+                               style="width:20px; height:20px; margin-left:15px; cursor:pointer;">
+                        <div style="text-align:right; flex-grow:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                                <span style="font-weight:bold; color:#333; font-size:15px;">${test.test_name}</span>
+                                <span class="indicator" style="font-size:1.2em;">${isPassed ? '✅' : '❌'}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:12px; color:#666;">
+                                <span>נבדק על-ידי: ${test.checked_by || 'לא ידוע'}</span>
+                                <span style="direction: ltr;">${test.formatted_date || ''}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    item.onclick = (e) => {
+                        const cb = item.querySelector('.status-check');
+                        if (e.target !== cb) cb.checked = !cb.checked;
+                        item.querySelector('.indicator').innerText = cb.checked ? '✅' : '❌';
+                    };
+                    listContainer.appendChild(item);
+                });
+                submitBtn.onclick = () => submitBatchStatusUpdate(serial);
+            });
+    }
+
+    function submitBatchStatusUpdate(serial) {
+        const alertBox = document.getElementById('approveAlert');
+        const confirmBtn = document.getElementById('approveSubmitBtn');
+        const checks = document.querySelectorAll('.status-check');
+        const passedIds = [];
+        const failedIds = [];
+
+        checks.forEach(cb => {
+            if (cb.checked) passedIds.push(parseInt(cb.value));
+            else failedIds.push(parseInt(cb.value));
+        });
+
+        // 1. Set loading state
+        confirmBtn.disabled = true;
+        confirmBtn.innerText = "מעדכן...";
+
+        fetch('/update_tests_status_bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passed_ids: passedIds, failed_ids: failedIds, serial: serial})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showApproveAlert("הסטטוסים עודכנו בהצלחה!", "success");
+                fetchTestResults(serial);
+
+                // 2. Reset the button after the success delay
+                setTimeout(() => {
+                    closeApproveDialog();
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerText = "עדכן סטטוסים";
+                }, 1500);
+
+            } else {
+                // 3. Reset the button immediately on error so user can try again
+                showApproveAlert("שגיאה: " + data.message, "error");
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = "עדכן סטטוסים";
+            }
+        })
+        .catch(err => {
+            console.error("Fetch error:", err);
+            confirmBtn.disabled = false;
+            confirmBtn.innerText = "עדכן סטטוסים";
+        });
+    }
+
+    // --- 3. Verify Dialog Logic (ONLY place to change status) ---
+    function verifyAllTests(serial) {
+        currentVerifySerial = serial;
+        const dialog = document.getElementById('verifyDialog');
+        const alertBox = document.getElementById('verifyAlert');
+        const passSection = document.getElementById('verifyPasscodeSection');
+        const listSection = document.getElementById('verifyListSection');
+        const mainBtn = document.getElementById('verifyMainBtn');
+
+        if (!dialog) return;
+
+        alertBox.style.display = 'none';
+        passSection.style.display = 'block';
+        listSection.style.display = 'none';
+        document.getElementById('verifyPasscode').value = "";
+
+        mainBtn.innerText = "המשך";
+        mainBtn.style.background = "#2575fc";
+        mainBtn.disabled = false;
+        mainBtn.onclick = checkVerifyPasscode;
+
+        dialog.style.display = 'flex';
+    }
+
+    function checkVerifyPasscode() {
+        const code = document.getElementById('verifyPasscode').value;
+        if (code === CORRECT_PASSCODE) {
+            document.getElementById('verifyAlert').style.display = 'none';
+            loadVerifyList(currentVerifySerial);
+        } else {
+            showVerifyAlert("קוד שגוי, נסה שוב", "error");
+        }
+    }
+
+    function loadVerifyList(serial) {
+        const listContainer = document.getElementById('verifyTestsList');
+        const passSection = document.getElementById('verifyPasscodeSection');
+        const listSection = document.getElementById('verifyListSection');
+        const mainBtn = document.getElementById('verifyMainBtn');
+
+        fetch(`/get_tests/${serial}`)
+            .then(res => res.json())
+            .then(data => {
+                listContainer.innerHTML = '';
+                passSection.style.display = 'none';
+                listSection.style.display = 'block';
+                mainBtn.innerText = "אמת בדיקות נבחרות";
+                mainBtn.style.background = "#3a6b3a";
+                mainBtn.onclick = () => submitVerifyBulk(serial);
+
+                data.forEach(test => {
+                    const isVerified = (test.is_verified === 1 || test.is_verified === true);
+                    const item = document.createElement('div');
+                    item.style.cssText = `
+                        display: flex; align-items: center; padding: 12px;
+                        background: #fdfdfd; border: 1px solid #eee;
+                        border-radius: 8px; cursor: pointer; direction: rtl;
+                        transition: all 0.2s ease; margin-bottom: 8px;
+                    `;
+
+                    item.innerHTML = `
+                        <input type="checkbox" class="verify-check" value="${test.id}" ${isVerified ? 'checked' : ''}
+                               style="width:20px; height:20px; margin-left:15px; cursor:pointer;">
+                        <div style="text-align:right; flex-grow:1;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
+                                <span style="font-weight:bold; color:#333; font-size:15px;">${test.test_name}</span>
+                                <span class="indicator" style="font-size:1.2em;">${isVerified ? '🛡️' : '⏳'}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:11px; color:#888;">
+                                <span>בודק: ${test.checked_by || 'לא ידוע'}</span>
+                                <span style="direction: ltr;">${test.formatted_date || ''}</span>
+                            </div>
+                        </div>
+                    `;
+
+                    item.onclick = (e) => {
+                        const cb = item.querySelector('.verify-check');
+                        if (e.target !== cb) cb.checked = !cb.checked;
+                        item.querySelector('.indicator').innerText = cb.checked ? '🛡️' : '⏳';
+                    };
+                    listContainer.appendChild(item);
+                });
+            });
+    }
+
+    function submitVerifyBulk(serial) {
+        const checks = document.querySelectorAll('.verify-check');
+        const verifiedIds = [];
+        const unverifiedIds = [];
+
+        checks.forEach(cb => {
+            if (cb.checked) verifiedIds.push(cb.value);
+            else unverifiedIds.push(cb.value);
+        });
+
+        const mainBtn = document.getElementById('verifyMainBtn');
+        mainBtn.disabled = true;
+        mainBtn.innerText = "מעדכן...";
+
+        fetch('/update_verification_bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ verified_ids: verifiedIds, unverified_ids: unverifiedIds, serial: serial })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showVerifyAlert("האימות בוצע בהצלחה!", "success");
+                fetchTestResults(serial);
+                recheckAllTestsVerified(serial);
+                setTimeout(closeVerifyDialog, 1500);
+            } else {
+                showVerifyAlert("שגיאה: " + data.message, "error");
+                mainBtn.disabled = false;
+                mainBtn.innerText = "אמת בדיקות נבחרות";
+            }
+        });
+    }
+
+    // --- 4. Main Table UI (Static Display for Verify) ---
     function toggleTests(serial) {
         const detailRow = document.getElementById('test-row-' + serial);
         const icon = document.getElementById('icon-' + serial);
@@ -287,119 +634,53 @@
         }
     }
 
-    // --- 2. לוגיקת טעינה דינמית (בדיקת קיום טסטים) ---
-    document.addEventListener('DOMContentLoaded', function() {
-        const wrappers = document.querySelectorAll('.dynamic-wrapper');
-
-        wrappers.forEach(wrapper => {
-            const serial = wrapper.id.replace('dynamic-status-wrapper-', '');
-
-            fetch(`/get_tests/${serial}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (Array.isArray(data) && data.length > 0) {
-                        wrapper.style.setProperty('display', 'flex', 'important');
-                        const select = document.getElementById('status-select-' + serial);
-                        updateSelectStyle(select);
-                    } else {
-                        wrapper.remove();
-                    }
-                })
-                .catch(err => console.error('Fetch error:', err));
-        });
-
-        // אתחול סינון טבלה
-        const filterInput = document.getElementById('tableFilter');
-        filterInput.addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            const colIdx = parseInt(document.getElementById('columnSelect').value);
-            const table = document.getElementById('propertyTable');
-            const rows = table.querySelectorAll('tbody tr:not([id^="test-row-"])');
-            rows.forEach(row => {
-                const text = row.cells[colIdx].textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
-            });
-        });
-    });
-
-    // --- 3. פעולות שרת ---
     function fetchTestResults(serial) {
         const container = document.getElementById('results-load-' + serial);
         if (!container) return;
 
-        const currentUserCode = parseInt("{{ session.get('user_type', 2) }}");
-
         fetch(`/get_tests/${serial}`)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 if (data && data.length > 0) {
-                    let html = `
-                        <table style="width:100%; border-collapse: collapse; margin-top: 10px; background: #fff; border-radius: 8px; overflow: hidden; direction: rtl;">
-                            <thead>
-                                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #eee;">
-                                    <th style="padding: 12px; text-align: center; color: #555; width: 15%;">סוג בדיקה</th>
-                                    <th style="padding: 12px; text-align: center; color: #555; width: 10%;">תוצאה</th>
-                                    <th style="padding: 12px; text-align: center; color: #555; width: 25%;">תאריך</th>
-                                    <th style="padding: 12px; text-align: center; color: #555; width: 30%;">נבדק על-ידי</th>
-                                    <th style="padding: 12px; text-align: center; color: #555; width: 10%;">מידע</th>
-                                    <th style="padding: 12px; text-align: center; color: #555; width: 20%;">אימות</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
+                    let html = `<table style="width:100%; border-collapse: collapse; margin-top: 10px; background: #fff; border-radius: 8px; overflow: hidden; direction: rtl;">
+                        <thead><tr style="background-color: #f8f9fa; border-bottom: 2px solid #eee;">
+                            <th style="padding: 12px; text-align: center;">מספר</th>
+                            <th style="padding: 12px; text-align: center;">סוג בדיקה</th>
+                            <th style="padding: 12px; text-align: center;">תוצאה</th>
+                            <th style="padding: 12px; text-align: center;">תאריך</th>
+                            <th style="padding: 12px; text-align: center;">נבדק על-ידי</th>
+                            <th style="padding: 12px; text-align: center;">מידע</th>
+                            <th style="padding: 12px; text-align: center;">אימות</th>
+                        </tr></thead><tbody>`;
 
                     data.forEach(test => {
-                        const passStatus = test.is_passed
-                            ? '<span style="font-size: 1.2em;">✅</span>'
-                            : '<span style="font-size: 1.2em;">❌</span>';
+                        const passStatus = test.is_passed ? '✅' : '❌';
+                        // PREVENT CHANGING STATUS: Show only icon, no button/onclick
+                        const verifyIcon = test.is_verified ? '🛡️' : '⏳';
 
-                        // עמודת עין בלבד
-                        let infoCell = `
-                            <a href="/open_test_file/${test.id}" target="_blank" style="text-decoration: none;">
-                                <img src="/static/images/eye.png" style="width:20px; vertical-align: middle; opacity: 0.8;" title="צפייה">
-                            </a>`;
-
-                        // עמודת אימות בלבד
-                        let verifyCell = '';
-                        if (currentUserCode === 0 || currentUserCode === 1) {
-                            verifyCell = test.is_verified
-                                ? '<span style="text-align: center; color: #333; font-weight: bold; font-size: 1.1em;">✓</span>'
-                                : `<button onclick="openVerifyModal(${test.id}, '${serial}')"
-                                           style="background: none; border: none; cursor: pointer; color: #3a6b3a; font-size: 1.2em; padding: 0;">✓</button>`;
-                        }
-
-                        html += `
-                            <tr style="border-bottom: 1px solid #eee;">
-                                <td style="padding: 12px; text-align: center; font-weight: 500;">${test.test_name}</td>
-                                <td style="padding: 12px; text-align: center;">${passStatus}</td>
-                                <td style="padding: 12px; text-align: center; color: #666; font-size: 0.9em; direction: ltr;">${test.formatted_date}</td>
-                                <td style="padding: 12px; text-align: center; color: #444;">${test.checked_by}</td>
-                                <td style="padding: 12px; text-align: center;">${infoCell}</td>
-                                <td style="padding: 12px; text-align: center;">${verifyCell}</td>
-                            </tr>`;
+                        html += `<tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 12px; text-align: center;">${test.id}</td>
+                            <td style="padding: 12px; text-align: center;">${test.test_name}</td>
+                            <td style="padding: 12px; text-align: center;">${passStatus}</td>
+                            <td style="padding: 12px; text-align: center; direction: ltr;">${test.formatted_date}</td>
+                            <td style="padding: 12px; text-align: center;">${test.checked_by}</td>
+                            <td style="padding: 12px; text-align: center;"><a href="/open_test_file/${test.id}" target="_blank"><img src="/static/images/eye.png" style="width:20px;"></a></td>
+                            <td style="padding: 12px; text-align: center; font-size: 1.2em;">${verifyIcon}</td>
+                        </tr>`;
                     });
-
                     html += '</tbody></table>';
                     container.innerHTML = html;
                 } else {
                     container.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">אין נתונים</div>';
                 }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                container.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">שגיאה בטעינת הנתונים</div>';
             });
     }
 
-    let pendingStatus = { serial: null, newValue: null, selectElement: null };
-    const CORRECT_PASSCODE = "1234";
-    const testStatusRegistry = {}; // Global cache for test verification
-
-    // --- UI Helpers ---
+    // --- 5. Status Selection Logic & Helpers ---
     function updateSelectStyle(selectElement) {
         if(!selectElement) return;
         const status = selectElement.value;
         let bgColor, textColor;
-
         switch (status) {
             case 'RED': bgColor = '#ffcccc'; textColor = '#cc0000'; break;
             case 'BLACK': bgColor = '#333'; textColor = '#fff'; break;
@@ -410,84 +691,80 @@
         selectElement.style.color = textColor;
     }
 
-    function setDialogAlert(message, type = 'error') {
-        const alertBox = document.getElementById('dialogAlert');
-        if(!alertBox) return;
-        alertBox.innerText = message;
-        alertBox.style.display = 'block';
-
-        if (type === 'warning') {
-            alertBox.style.color = '#856404';
-            alertBox.style.background = '#fff3cd';
-            alertBox.style.border = '1px solid #ffeeba';
-        } else {
-            alertBox.style.color = '#dc3545';
-            alertBox.style.background = '#ffebeb';
-            alertBox.style.border = '1px solid #f5c6cb';
-        }
-    }
-
-    // --- Status Change Logic ---
     function prepareStatusChange(serial, selectElement) {
         const oldValue = selectElement.getAttribute('data-prev');
         const newValue = selectElement.value;
-
         if (newValue === oldValue) return;
+
         pendingStatus = { serial, newValue, selectElement };
-
         const dialog = document.getElementById('passcodeDialog');
-        const input = document.getElementById('confirmPasscode');
-        const confirmBtn = document.getElementById('confirmBtn');
-        const inputSection = document.getElementById('passcodeInputSection');
-        const prompt = document.getElementById('dialogPrompt');
-        const alertBox = document.getElementById('dialogAlert');
 
-        // Reset Dialog UI
-        alertBox.style.display = 'none';
-        confirmBtn.disabled = false;
-        confirmBtn.style.opacity = "1";
-        inputSection.style.display = 'block';
-        prompt.style.display = 'block';
-        input.value = '';
-
-        // Check if tests are verified
         if (testStatusRegistry[serial] === false) {
-            setDialogAlert("שים לב: קיימות בדיקות שלא אומתו עבור מוצר זה. לא ניתן לשנות סטטוס.", "warning");
-            confirmBtn.disabled = true;
-            confirmBtn.style.opacity = "0.5";
-            inputSection.style.display = 'none';
-            prompt.style.display = 'none';
+            setDialogAlert("שים לב: קיימות בדיקות שלא אומתו עבור מוצר זה.", "warning");
+            document.getElementById('confirmBtn').disabled = true;
+        } else {
+            document.getElementById('dialogAlert').style.display = 'none';
+            document.getElementById('confirmBtn').disabled = false;
         }
-
         dialog.style.display = 'flex';
-        if (!confirmBtn.disabled) input.focus();
     }
 
     function validateAndChange() {
         const input = document.getElementById('confirmPasscode');
-        const confirmBox = document.getElementById('confirmBox');
-
         if (input.value === CORRECT_PASSCODE) {
             const { serial, newValue, selectElement } = pendingStatus;
 
-            // Update local UI
+            // 1. Update the dropdown style
             updateSelectStyle(selectElement);
             selectElement.setAttribute('data-prev', newValue);
 
-            // Call your backend update function (Ensure this is defined elsewhere)
-            if (typeof changeProductStatus === "function") {
-                changeProductStatus(serial, newValue);
-            }
+            fetch('/update_product_status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial: serial, status: newValue })
+            }).then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // --- THE FIX: Update the status span display ---
+                    updateStatusSpan(serial, newValue);
 
-            closePasscodeDialog();
+                    // Update the top summary
+                    updateBigRectangleSummary();
+                    closePasscodeDialog();
+                }
+            });
         } else {
-            setDialogAlert("קוד שגוי, נסה שוב", "error");
-            confirmBox.classList.add('apply-shake');
-            setTimeout(() => confirmBox.classList.remove('apply-shake'), 400);
-            input.value = '';
-            input.focus();
+            setDialogAlert("קוד שגוי");
         }
     }
+
+    function updateStatusSpan(serial, status) {
+        const displayTd = document.getElementById('status-display-' + serial);
+        if (!displayTd) return;
+
+        let html = '';
+        // Matching the styles exactly from your Jinja template
+        switch (status) {
+            case 'RED':
+                html = '<span style="background-color: #ffcccc; color: #cc0000; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">תקול</span>';
+                break;
+            case 'WHITE':
+                html = '<span style="background-color: #e2e2e2; color: #333; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">לבן</span>';
+                break;
+            case 'BLACK':
+                html = '<span style="color: #333; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">שחור</span>';
+                break;
+            case 'GRAY':
+            case 'NONE':
+                html = '<span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">חדש</span>';
+                break;
+        }
+        displayTd.innerHTML = html;
+    }
+
+    function closeApproveDialog() { document.getElementById('approveDialog').style.display = 'none'; }
+    function closeVerifyDialog() { document.getElementById('verifyDialog').style.display = 'none'; }
+    function closePasscodeDialog() { document.getElementById('passcodeDialog').style.display = 'none'; document.getElementById('confirmPasscode').value = ''; }
 
     function cancelStatusChange() {
         if (pendingStatus.selectElement) {
@@ -496,119 +773,94 @@
         closePasscodeDialog();
     }
 
-    function closePasscodeDialog() {
-        document.getElementById('passcodeDialog').style.display = 'none';
+    function showVerifyAlert(msg, type) {
+        const alertBox = document.getElementById('verifyAlert');
+        alertBox.innerText = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.background = type === 'success' ? '#d4edda' : '#f8d7da';
+        alertBox.style.color = type === 'success' ? '#155724' : '#721c24';
     }
 
-    // --- Initialization ---
+    function showApproveAlert(message, type) {
+        const alertBox = document.getElementById('approveAlert');
+        alertBox.innerText = message;
+        alertBox.style.display = 'block';
+        alertBox.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';
+        alertBox.style.color = type === 'success' ? '#155724' : '#721c24';
+    }
+
+    function setDialogAlert(message, type = 'error') {
+        const box = document.getElementById('dialogAlert');
+        box.innerText = message;
+        box.style.display = 'block';
+        box.style.background = type === 'warning' ? '#fff3cd' : '#ffebeb';
+    }
+
+    // --- 6. Init ---
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Fetch Tests & Setup Selects
         document.querySelectorAll('.dynamic-wrapper').forEach(wrapper => {
             const serial = wrapper.id.replace('dynamic-status-wrapper-', '');
             fetch(`/get_tests/${serial}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (Array.isArray(data) && data.length > 0) {
+                    if (data && data.length > 0) {
                         wrapper.style.setProperty('display', 'flex', 'important');
-                        // Store verification status (Assume 'is_verified' is the key from your API)
                         testStatusRegistry[serial] = data.every(t => t.is_verified);
                         updateSelectStyle(document.getElementById('status-select-' + serial));
                     } else {
                         wrapper.remove();
                         testStatusRegistry[serial] = true;
                     }
-                }).catch(() => { testStatusRegistry[serial] = false; });
+                });
         });
 
-        // 2. Table Filter
         document.getElementById('tableFilter').addEventListener('input', function() {
             const query = this.value.toLowerCase();
             const colIdx = parseInt(document.getElementById('columnSelect').value);
-            const rows = document.querySelectorAll('#propertyTable tbody tr:not([id^="test-row-"])');
-            rows.forEach(row => {
+            document.querySelectorAll('#propertyTable tbody tr:not([id^="test-row-"])').forEach(row => {
                 const text = row.cells[colIdx].textContent.toLowerCase();
                 row.style.display = text.includes(query) ? '' : 'none';
             });
         });
     });
 
-    // --- 4. דיאלוגים ---
-    function openCityDialog() { document.getElementById('statusDialog').style.display = 'flex'; }
-    function closeCityDialog() { document.getElementById('statusDialog').style.display = 'none'; }
-    window.onclick = function(e) { if(e.target.classList.contains('modal-overlay')) closeCityDialog(); }
-
-    // --- Function for "Verify All" Button ---
-    function verifyAllTests(serial) {
-        // 1. Send request to server to update "is_verified" for all tests of this serial
-        fetch(`/verify_all_tests/${serial}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                // 2. Update local registry so the Status Dialog is no longer blocked
-                testStatusRegistry[serial] = true;
-
-                // 3. Refresh the UI table for that serial
-                fetchTestResults(serial);
-
-                // 4. Show success alert ON the dialog (Optional, or just close it)
-                // We reuse our existing setDialogAlert function
-                const dialog = document.getElementById('passcodeDialog');
-                dialog.style.display = 'flex';
-                setDialogAlert("כל הבדיקות אומתו בהצלחה!", "warning"); // warning style is yellow/green-ish
-
-                // Hide the passcode input since we are just showing a success message
-                document.getElementById('passcodeInputSection').style.display = 'none';
-                document.getElementById('confirmBtn').style.display = 'none';
-                document.getElementById('dialogPrompt').innerText = "סטטוס הבדיקות עודכן.";
-            } else {
-                // Show error ON the web UI
-                const dialog = document.getElementById('passcodeDialog');
-                dialog.style.display = 'flex';
-                setDialogAlert("שגיאה בעדכון: " + (data.message || "נסה שוב מאוחר יותר"), "error");
-            }
-        })
-        .catch(err => {
-            console.error('Fetch error:', err);
-        });
-    }
-
-    // --- Function for Individual "Checkmark" Buttons ---
-    function openVerifyModal(testId, serial) {
-        fetch(`/verify_single_test/${testId}`, { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                fetchTestResults(serial); // Refresh the table
-                recheckAllTestsVerified(serial); // Update the dropdown lock status
-            } else {
-                const dialog = document.getElementById('passcodeDialog');
-                dialog.style.display = 'flex';
-                setDialogAlert("לא ניתן לאמת בדיקה בודדת כרגע", "error");
-            }
-        });
-    }
-
-    // Helper to update the registry after a single verification
     function recheckAllTestsVerified(serial) {
-        fetch(`/get_tests/${serial}`)
-            .then(res => res.json())
-            .then(data => {
-                // Check if every test in the new data is verified
-                testStatusRegistry[serial] = data.every(t => t.is_verified === true);
-            });
+        fetch(`/get_tests/${serial}`).then(res => res.json()).then(data => {
+            testStatusRegistry[serial] = data.every(t => t.is_verified === true);
+        });
     }
-    function closePasscodeDialog() {
-        document.getElementById('passcodeDialog').style.display = 'none';
 
-        // Reset components to default state for next use
-        document.getElementById('confirmBtn').style.display = 'block';
-        document.getElementById('passcodeInputSection').style.display = 'block';
-        document.getElementById('dialogPrompt').style.display = 'block';
-        document.getElementById('dialogPrompt').innerText = "על מנת לשנות את סטטוס המוצר, אנא הזן את קוד האישור:";
-        document.getElementById('dialogAlert').style.display = 'none';
+    function updateBigRectangleSummary() {
+        // Initialize counters
+        const summary = { RED: 0, WHITE: 0, BLACK: 0, GRAY: 0 };
+
+        // Scan every select element in the table
+        document.querySelectorAll('select[id^="status-select-"]').forEach(select => {
+        const val = select.value; // Get the current value (RED, WHITE, BLACK, NONE, etc.)
+
+        if (val === 'RED') {
+           summary.RED++;
+        } else if (val === 'WHITE') {
+           summary.WHITE++;
+        } else if (val === 'BLACK') {
+            summary.BLACK++;
+        } else {
+            // Treat 'NONE', 'GRAY', or any other value as the GRAY category
+            summary.GRAY++;
+        }
+        });
+
+        // Update the numbers in the HTML boxes
+        // Use optional chaining (?.) to prevent errors if a card is missing from the UI
+        const redBox = document.querySelector('.value-item.red .number');
+        const whiteBox = document.querySelector('.value-item.white .number');
+        const blackBox = document.querySelector('.value-item.black .number');
+        const grayBox = document.querySelector('.value-item.gray .number');
+
+        if (redBox) redBox.innerText = summary.RED;
+        if (whiteBox) whiteBox.innerText = summary.WHITE;
+        if (blackBox) blackBox.innerText = summary.BLACK;
+        if (grayBox) grayBox.innerText = summary.GRAY;
     }
 </script>
 

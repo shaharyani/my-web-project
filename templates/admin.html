@@ -2,119 +2,512 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" style="overflow-y: auto;">
     <title>איזור ניהול</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+<body style="width: 100%; height: 2100px">
     {% extends "base.html" %}
 {% block content %}
 
-<!-------------------- PAGE TITLE -------------------->
-<h2 style="
-    margin: 500px 0 20px;
-    direction: rtl;
-    font-size: 32px;">
-    איזור ניהול משתמשים
-</h2>
-<!-------------------- CREATE USER BUTTON -------------------->
-<div style="direction: rtl; margin-bottom: 20px;">
-    <button onclick="openModal()" class="btn-create">צור משתמש חדש</button>
-</div>
-
 <!-------------------- USERS TABLE -------------------->
-<div class="data-table-card">
-    <table>
-        <thead>
-            <tr>
-                <th>שם מלא</th>
-                <th>מדור</th>
-                <th>מספר מזהה</th>
-                <th>סוג הרשאה</th>
-                <th>מנהל</th>
-                <th>פעולות</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td class="{{ 'user-active' if user.is_active else 'user-inactive' }}">
-                    {{ user.name }}
-                </td>
-                <td>{{ user.mador }}</td>
-                <td>{{ user.id }}</td>
-                <td>{{ user.type }}</td>
-                <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+<div style="width: 100%; font-family: 'Rubik', sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px;">
+    <div style="width: 100%; display: flex; gap: 24px; align-items: flex-start; margin-bottom: 24px;">
 
-                <td style="display: flex; align-items: center;">
-                    {% if user.name != session.get('user_name') %}
-                    <button style="background-color:gray; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
-                            onclick="setPasswordModal()">
-                        אפס סיסמה
+        <div class="data-table-card" style="flex: 2; margin: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; direction: rtl; margin-bottom: 32px">
+                <h3 style="font-size: 32px; margin: 0;">ניהול משתמשים</h3>
+                <button onclick="openModal()" class="btn-create">צור משתמש חדש</button>
+            </div>
+            <div style="max-height: 235px; overflow-y: auto; overflow-x: hidden; direction: rtl; align-items: flex;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="position: sticky; top: 0; background-color: white; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);">
+                        <tr>
+                             <th>מזהה</th>
+                            <th>שם מלא</th>
+                            <th>מייל</th>
+                            <th>מדור</th>
+                            <th>סוג</th>
+                            <th>מנהל</th>
+                            <th style="text-align: center;">פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td>{{ user.id }}</td>
+                            <td class="{{ 'user-active' if user.is_active else 'user-inactive' }}">{{ user.name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.mador }}</td>
+                            <td>{{ user.type }}</td>
+                            <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+                            <td style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 0;">
+                                {% if user.name != session.get('user_name') %}
+                                    <button style="display: flex; justify-content: center; align-items: center; background-color: #f59f00; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-family: 'Rubik', sans-serif; cursor: pointer; min-width: 80px;" onclick="openSetPasswordModal('{{ user.id }}', '{{ user.name }}', '{{ user.email }}')">אפס סיסמה</button>
+                                    <button style="display: flex; justify-content: center; align-items: center; background-color:gray; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-family: 'Rubik', sans-serif; cursor: pointer; min-width: 60px;"
+                                            onclick="openEditModal('{{ user.id }}', '{{ user.name }}', '{{ user.mador }}', '{{ user.type }}', '{{ user.email }}')">
+                                        ערוך
+                                    </button>
+                                    <form id="delete-form-{{ user.id }}" action="{{ url_for('delete_user', username=user.name) }}" method="POST" style="display:inline; margin: 0;">
+                                        <button type="button"
+                                                style="display: flex; justify-content: center; align-items: center; background-color:red; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-family: 'Rubik', sans-serif; cursor: pointer; min-width: 60px;"
+                                                onclick="showDeleteModal('{{ user.name }}', 'delete-form-{{ user.id }}')">
+                                            מחק
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="data-table-card" style="flex: 1; margin: 0; direction: rtl;">
+            <h2 id="admin-title" style="font-size: 32px; margin: 0;">ניהול עדכוני מערכת</h2>
+            <form action="/admin/update_announcements" method="POST">
+                <input type="hidden" name="target_file" id="target_file" value="announcements">
+
+                <label id="textarea-label" style="display: block; margin-bottom: 10px; margin-top: 10px; font-size: 16px">הזן עדכונים (כל שורה היא עדכון חדש - סה"כ 4):</label>
+                <textarea id="main-textarea" name="updates_text" rows="4" style="height: 130px; font-family: 'Rubik', sans-serif; width: 100%; margin-top: 5px; border-radius: 10px; padding: 15px; border: 1px solid #ddd; box-sizing: border-box; resize: none;">{%- if announcements -%}{{ announcements|join('\n') }}{%- endif -%}</textarea>
+                <div style="margin-bottom: 10px; display: flex; justify-content: center; gap: 20px; align-items: center;">
+                    <button type="button" onclick="toggleMode(this)" class="admin-badge" style="background-color: #f0f0f0; color: #333; font-size: 14px; border: 1px solid #ccc; margin-top: 25px; display: flex; justify-content: center; align-items: center; padding: 12px 15px; width: 40%; cursor: pointer;">
+                             החלף לקובץ הנחיות
                     </button>
-                    {% endif %}
 
-                    {% if user.name != session.get('user_name') %}
-                    <button style="background-color:gray; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
-                            onclick="openEditModal(
-                        '{{ user.name }}',
-                        '{{ user.mador }}',
-                        '{{ user.type }}',
-                        {{ 'true' if user.is_admin else 'false' }}
-                    )">
-                        ערוך
+                    <button type="submit" class="admin-badge" style="border: none; margin-top: 25px; display: flex; justify-content: center; align-items: center; padding: 12px 15px; width: 40%; cursor: pointer;">
+                            עדכן ושמור
                     </button>
-                    {% endif %}
-
-                    {% if user.name != session.get('user_name') %}
-                    <form action="{{ url_for('delete_user', username=user.name) }}"
-                          method="POST"
-                          style="display:inline;">
-                        <button type="submit"
-                                style="background-color:red; margin: 2px; flex-direction: column; align-items: center; font-family: 'Rubik', sans-serif"
-                                onclick="return confirm('Are you sure you want to delete {{ user.name }}?');">
-                             מחק
-                        </button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-    <div class="data-table-card" style="margin-bottom: 10px">
-        <h3 style="direction: rtl; font-size: 32px; margin-bottom: 32px">הודעות התחברות</h3>
-        <ul style="list-style:none; padding:0; direction:ltr;">
-            {% if logs %}
-                {% for log in logs %}
-                    <li style="padding:10px; border-bottom:1px solid #eee;">
-                        <span style="color:gray">{{ log.timestamp }}</span>
-                        [<strong>{{ log.level }}</strong>] {{ log.message }}
-                    </li>
-                {% endfor %}
-            {% else %}
-                <li>אין פעולות להצגה</li>
-            {% endif %}
-        </ul>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="data-table-card" style="margin-bottom: 50px">
-    <h3 style="direction: rtl; font-size: 32px; margin-bottom: 32px">הודעות בדיקות</h3>
-    <ul style="list-style:none; padding:0; direction:ltr;">
-        {% if logs %}
-            {% for log in logs %}
-                <li style="padding:10px; border-bottom:1px solid #eee;">
-                    <span style="color:gray">{{ log.timestamp }}</span>
-                    [<strong>{{ log.level }}</strong>] {{ log.message }}
-                </li>
-            {% endfor %}
-        {% else %}
-            <li>אין פעולות להצגה</li>
-        {% endif %}
-    </ul>
-</div>
+    <div class="table-card" style="width: 100%; margin-bottom:20px; display: flex; gap: 24px;">
+        <div class="data-table-card" style="flex: 1; margin: 0; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; display: flex; flex-direction: column;">
+            <h2 style="font-size: 28px; margin-bottom: 20px; color: #333;">מעקב בקשות</h2>
+            <div class="logs-container" style="font-family: 'Rubik', sans-serif; min-height: 200px; max-height: 300px; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #f0f0f0;">
+                <ul style="list-style: none; padding: 0; margin: 0; direction: ltr;">
+                    {% if request_warehouse_logger %}
+                        {% for log in request_warehouse_logger %}
+                            <li style="padding: 10px; border-bottom: 1px solid #f9f9f9; direction: lrt; font-size: 13px;">
+                                <span style="color: #999; margin-right: 8px;">{{ log.timestamp }}</span>
+                                <span style="color: {% if 'APPROVED' in log.message %}#28a745{% elif 'REJECTED' in log.message %}#dc3545{% else %}#2575fc{% endif %}; font-weight: bold;">
+                                    [{{ log.level }}]
+                                </span>
+                                <span style="direction: lrt; display: inline-block;">{{ log.message }}</span>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li style="text-align: center; padding: 40px; color: gray; direction: rtl;">אין פעולות להצגה</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        <div style="flex: 2; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 8px; direction: rtl;">
+                    <h3 style="margin: 0; font-size: 28px; text-align: right; color: #2575fc;">ניהול בקשות מחסן</h3>
+                    <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
+                        שאר הבקשות הן בקשות בין משתמשים
+                    </span>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa; color: #555;">
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6;">אחר</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6;">עבור</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6;">תאריך בקשה</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6;">סריאלי</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6;">מבקש</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6;">מספר</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if all_warehouse_requests %}
+                                {% for req in all_warehouse_requests %}
+                                <tr style="border-bottom: 1px solid #eee;">
+                                    <td style="padding: 12px; text-align: center;">
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+                                            {% if req.status == 'ממתין' %}
+                                                <div style="display: flex; gap: 8px; justify-content: center;">
+                                                    <button onclick="handleRequest('{{ req.id }}', 'approve')"
+                                                            title="אשר בקשה"
+                                                            style="
+                                                                background: #f6fff9;
+                                                                color: #2f9e44;
+                                                                padding: 6px 12px;
+                                                                border-radius: 6px;
+                                                                border: 1px solid #d3f9d8;
+                                                                font-weight: bold;
+                                                                font-size: 13px;
+                                                                cursor: pointer;
+                                                                transition: 0.2s;
+                                                                font-family: 'Rubik', sans-serif;
+                                                            "
+                                                            onmouseover="this.style.background='#2f9e44'; this.style.color='#fff'; this.style.borderColor='#2b8a3e';"
+                                                            onmouseout="this.style.background='#f6fff9'; this.style.color='#2f9e44'; this.style.borderColor='#d3f9d8';">
+                                                        אשר
+                                                    </button>
 
+                                                    <button onclick="handleRequest('{{ req.id }}', 'reject')"
+                                                            title="סרב לבקשה"
+                                                            style="
+                                                                background: #fff5f5;
+                                                                color: #e03131;
+                                                                padding: 6px 12px;
+                                                                border-radius: 6px;
+                                                                border: 1px solid #ffe3e3;
+                                                                font-weight: bold;
+                                                                font-size: 13px;
+                                                                cursor: pointer;
+                                                                transition: 0.2s;
+                                                                font-family: 'Rubik', sans-serif;
+                                                            "
+                                                            onmouseover="this.style.background='#e03131'; this.style.color='#fff'; this.style.borderColor='#c92a2a';"
+                                                            onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'; this.style.borderColor='#ffe3e3';">
+                                                        סרב
+                                                    </button>
+                                                </div>
+                                            {% else %}
+                                                <span class="status-badge
+                                                    {% if req.status == 'אושר' %}status-approved
+                                                    {% elif req.status == 'סורב' %}status-rejected
+                                                    {% else %}status-waiting{% endif %}" style="font-size: 11px;">
+                                                    {{ req.status }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center; font-size: 14px; color: #666;">
+                                        {{ req.used_for }}
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center; font-size: 14px; color: #666;">
+                                        {{ req.request_date }}
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <code style="background: #f4f4f4; padding: 3px 6px; border-radius: 4px; border: 1px solid #ddd; font-family: monospace;">{{ req.serial }}</code>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <strong style="color: #333;">{{ req.user }}</strong>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <strong style="color: #333;">{{ req.id }}</strong>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: #999;">
+                                        אין בקשות ממתינות לטיפול במערכת
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </div>
+    <div class="table-card" style="width: 100%; margin-bottom:20px; display: flex; gap: 24px;">
+        <div class="data-table-card" style="flex: 1; margin: 0; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; display: flex; flex-direction: column;">
+            <h2 style="font-size: 28px; margin-bottom: 20px; color: #333;">מעקב מיוחדים</h2>
+            <div class="logs-container" style="min-height: 200px; max-height: 220px; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #f0f0f0;">
+                <ul style="list-style: none; padding: 0; margin: 0; direction: ltr;">
+                    {% if special_logger %}
+                        {% for log in special_logger %}
+                            <li style="padding: 10px; border-bottom: 1px solid #f9f9f9; text-align: left; font-size: 13px; font-family: 'Rubik', sans-serif;">
+                                <span style="color: #999; margin-right: 8px;">{{ log.timestamp }}</span>
+                                <span style="color: {% if 'אושר' in log.message %}#28a745{% elif 'סורב' in log.message %}#dc3545{% else %}#2575fc{% endif %}; font-weight: bold;">
+                                    [{{ log.level }}]
+                                </span>
+                                <span style="direction: ltr; display: inline-block;">{{ log.message }}</span>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li style="text-align: center; padding: 40px; color: gray; direction: rtl;">אין פעולות להצגה</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        <div style="flex: 2; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 8px; direction: rtl;">
+                    <h3 style="margin: 0; font-size: 28px; color: #cc0000;">ניהול בקשות מיוחדות</h3>
+                    <span style="background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
+                        נא לוודא כפילות סיריאליים בפקודה
+                    </span>
+                    <button type="button"
+                            onclick="document.getElementById('groupDialog').style.display='flex'"
+                            class="btn-create"
+                            title="רשימת האנשים לבקשה מיוחדת"
+                            style="margin: 0; background: white; color: #cc0000; border: 2px solid #cc0000; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                        הגדר מיוחדים
+                    </button>
+                </div>
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f8f9fa; color: #555;">
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 15%;">פעולות</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 15%;">סיראלים</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 25%;">פרטי הבקשה</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 15%;">התקדמות</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 20%;">תאריך סיום</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 25%;">מבקש</th>
+                                <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 25%;">מספר</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if all_special %}
+                                {% for req in all_special %}
+                                <tr style="border-bottom: 1px solid #eee; font-family: 'Rubik', sans-serif;">
+                                    <td style="padding: 12px; text-align: center;">
+                                        <div style="display: flex; justify-content: center; gap: 8px;">
+                                            {% if req.status == 'ממתין' %}
+                                                <button data-desc="{{ req.description }}"
+                                                        onclick="handleSpecial('{{ req.id }}', 'approve', this.getAttribute('data-desc'))"
+                                                        style="font-family: 'Rubik', sans-serif; background: #f0fff4; color: #2b8a3e; padding: 6px 12px; border-radius: 6px; border: 1px solid #c3e6cb; font-weight: bold; font-size: 12px; cursor: pointer; transition: background 0.2s, color 0.2s;"
+                                                        onmouseover="this.style.background='#2b8a3e'; this.style.color='#fff'; this.style.borderColor='#2b8a3e';"
+                                                        onmouseout="this.style.background='#f0fff4'; this.style.color='#2b8a3e'; this.style.borderColor='#c3e6cb';">
+                                                    הגדר
+                                                </button>
+
+                                                <button data-desc="{{ req.description }}"
+                                                        onclick="handleSpecial('{{ req.id }}', 'reject', this.getAttribute('data-desc'))"
+                                                        style="font-family: 'Rubik', sans-serif; background: #fff5f5; color: #e03131; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffe3e3; font-weight: bold; font-size: 12px; cursor: pointer; transition: background 0.2s, color 0.2s;"
+                                                        onmouseover="this.style.background='#e03131'; this.style.color='#fff'; this.style.borderColor='#e03131';"
+                                                        onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'; this.style.borderColor='#ffe3e3';">
+                                                    סרב
+                                                </button>
+                                            {% else %}
+                                                <button onclick="removeSpecialAdmin('{{ req.id }}')"
+                                                        style="
+                                                            background: #fff5f5;
+                                                            color: #e03131;
+                                                            padding: 6px 12px;
+                                                            border-radius: 6px;
+                                                            border: 1px solid #ffe3e3;
+                                                            font-weight: bold;
+                                                            font-size: 13px;
+                                                            cursor: pointer;
+                                                            transition: 0.2s;
+                                                            font-family: 'Rubik', sans-serif;
+                                                        "
+                                                        onmouseover="this.style.background='#e03131'; this.style.color='#fff'; this.style.borderColor='#e03131';"
+                                                        onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'; this.style.borderColor='#ffe3e3';">
+                                                    מחק
+                                                </button>
+                                                <span style="padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; justify-content: center;
+                                                    background: {{ '#e0e0e0' if req.status == 'ממתין'
+                                                                 else ('#fff3e0' if req.status == 'בתהליך'
+                                                                 else ('#e8f5e9' if req.status == 'טופל'
+                                                                 else '#ffebee')) }};
+                                                    color: {{ '#616161' if req.status == 'ממתין'
+                                                             else ('#ef6c00' if req.status == 'בתהליך'
+                                                             else ('#2e7d32' if req.status == 'טופל'
+                                                             else '#c62828')) }};">
+                                                    {{ req.status }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center; width: 20%">
+                                        {% set serials_list = (req.serials | from_json) if req.serials else [] %}
+                                        <div class="serials-container" style="direction: ltr; text-align: center; font-family: monospace;">
+                                            {% if req.serials %}
+                                                {% for group in serials_list | groupby("line_id") %}
+                                                    <div class="serial-group" style="margin-bottom: 8px; padding: 4px; border-bottom: 1px solid #eee;">
+                                                        <strong style="color: #333;">{{ group.grouper }} : </strong>
+                                                        <span style="color: #555;">{</span>
+                                                        {% for item in group.list %}
+                                                            <span style="color: {{ '#155724' if item.is_green else '#1971c2' }}; font-weight: bold;">
+                                                                "{{ item.serial }}"
+                                                            </span>{% if not loop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                        <span style="color: #555;">}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                {% set serials_list = [] %}
+                                                <p>טרם הוגדר</p>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <div style="font-weight: bold; color: #333; font-size: 14px;">{{ req.description }}</div>
+                                        <div style="color: #666; font-size: 12px;">יעד: {{ req.target }}</div>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <div style="font-size: 13px; font-weight: bold;">{{ req.current }} / {{ req.total }}</div>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <div style="font-size: 12px; color: #555;">{{ req.finish_date }}</div>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <div style="font-size: 12px; color: #333;">{{ req.ask_by }}</div>
+                                    </td>
+
+                                    <td style="padding: 12px; text-align: center;">
+                                        <strong style="color: #333;">{{ req.id }}</strong>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 40px; color: #999; font-family: 'Rubik', sans-serif;">
+                                        אין בקשות ממתינות לטיפול במערכת
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 24px;">
+        <div class="data-table-card" style="flex: 1; margin: 0; background-color: #f0f7ff; border: 1px solid #d0e3ff;">
+            <h3 style="direction: rtl; font-size: 28px; margin-bottom: 20px">נתוני התחברות</h3>
+            <ul style="width: 100%; list-style:none; padding:0; direction:ltr; max-height: 150px; overflow-y: auto;">
+                {% if logs %}
+                    {% for log in logs %}
+                        <li style="padding:10px; border-bottom:1px solid #eee;">
+                            <span style="color:gray">{{ log.timestamp }}</span>
+                            [<strong>{{ log.level }}</strong>] {{ log.message }}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li style="text-align: center; direction: rtl; padding: 40px">אין פעולות להצגה</li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="data-table-card" style="flex: 1; margin: 0; background-color: #fffaf0; border: 1px solid #ffecb3;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; direction: rtl;">
+                <h3 style="direction: rtl; font-size: 28px; margin-bottom: 20px">נתוני עריכה</h3>
+                <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
+                    קוד אישור ואימות תוצאות הינו: 1234
+                </span>
+            </div>
+                <ul style="width: 100%; list-style:none; padding:0; dir:ltr; max-height: 150px; overflow-y: auto;">
+                    <div class="logs-container" style="dir: rtl; text-align: left;">
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            {% if test_logs %}
+                                {% for log in test_logs %}
+                                    <li style="padding:10px; border-bottom:1px solid #eee; dir: rtl; text-align: left;">
+                                        <span style="color:gray">{{ log.timestamp }}</span>
+                                        [<strong>{{ log.level }}</strong>] {{ log.message }}
+                                    </li>
+                                {% endfor %}
+                            {% else %}
+                                <li style="text-align: center; dir: rtl; padding: 40px; color: gray;">אין פעולות להצגה</li>
+                            {% endif %}
+                        </ul>
+                </div>
+            </ul>
+        </div>
+    </div>
+    <div style="margin-top:20px; display: flex; gap: 24px;">
+        <div class="data-table-card" style="flex: 1; margin: 0; background-color: #fff0f0; border: 1px solid #ffd0d0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; direction: rtl;">
+                <h3 style="direction: rtl; font-size: 28px; margin-bottom: 20px">מעקב דוחות</h3>
+                <a href="{{ url_for('report_page') }}"
+                   style="text-decoration: none;
+                          background-color: #fff;
+                          color: #d32f2f;
+                          padding: 8px 16px;
+                          border-radius: 20px;
+                          font-weight: bold;
+                          font-size: 0.9em;
+                          border: 1px solid #d32f2f;
+                          transition: all 0.3s ease;
+                          display: inline-flex;
+                          align-items: center;
+                          gap: 5px;"
+                   onmouseover="this.style.backgroundColor='#d32f2f'; this.style.color='#fff';"
+                   onmouseout="this.style.backgroundColor='#fff'; this.style.color='#d32f2f';">
+                   מעבר אל כלל דוחות
+                </a>
+            </div>
+            <ul style="width: 100%; list-style:none; padding:0; direction:ltr; max-height: 150px; overflow-y: auto;">
+                {% if report_logs %}
+                    {% for log in report_logs %}
+                        <li style="padding:10px; border-bottom:1px solid #eee;">
+                            <span style="color:gray">{{ log.timestamp }}</span>
+                            [<strong>{{ log.level }}</strong>] {{ log.message }}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li style="text-align: center; direction: rtl; padding: 40px">אין פעולות להצגה</li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="data-table-card" style="flex: 1; margin: 0; background-color: #f0fff4; border: 1px solid #e8f5e9;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px;">
+                <h3 style="direction: rtl; font-size: 28px; margin-bottom: 20px">מעקב חתימות</h3>
+                <button onclick="document.getElementById('historyDialogSerial').style.display='flex'"
+                                title="היסטורייה"
+                                style="
+                                      flex-shrink: 0;
+                                      background: #fff9db; /* צהוב בהיר מאוד */
+                                      color: #f59f00;      /* כתום-צהוב עמוק לטקסט */
+                                      padding: 6px 12px;
+                                      border-radius: 6px;
+                                      border: 1px solid #ffe066; /* מסגרת צהובה */
+                                      font-weight: bold;
+                                      font-size: 13px;
+                                      cursor: pointer;
+                                      transition: 0.2s;
+                                      font-family: 'Rubik', sans-serif;
+                                      display: flex;
+                                      align-items: center;
+                                      gap: 5px;
+                                      "
+                                      onmouseover="this.style.background='#fcc419'; this.style.color='#fff'; this.style.borderColor='#f59f00';"
+                                      onmouseout="this.style.background='#fff9db'; this.style.color='#f59f00'; this.style.borderColor='#ffe066';">
+
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                      </svg>
+                                היסטוריה של סיראלי מסויים
+                </button>
+            </div>
+                <ul style="width: 100%; list-style:none; padding:0; dir:ltr; max-height: 150px; overflow-y: auto;">
+                    <div class="logs-container" style="dir: rtl; text-align: left;">
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            {% if sign_logs %}
+                                {% for log in sign_logs %}
+                                    <li style="padding:10px; border-bottom:1px solid #eee; dir: rtl; text-align: left;">
+                                        <span style="color:gray">{{ log.timestamp }}</span>
+                                        [<strong>{{ log.level }}</strong>] {{ log.message }}
+                                    </li>
+                                {% endfor %}
+                            {% else %}
+                                <li style="text-align: center; dir: rtl; padding: 40px; color: gray;">אין פעולות להצגה</li>
+                            {% endif %}
+                        </ul>
+                </div>
+            </ul>
+        </div>
+    </div>
+
+    <h2 onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="display: block; width: fit-content; margin: 10px auto; padding: 10px 20px;
+               font-size: 24px; font-weight: bold; color: #2575fc; background: none; cursor: pointer;
+               transition: all 0.3s ease; font-family: 'Rubik', sans-serif;">
+        חזור להתחלה
+    </h2>
+</div>
 <!-------------------- CREATE USER MODAL -------------------->
 <div id="userModal" class="modal">
     <div class="modal-content">
@@ -124,6 +517,11 @@
             <div class="form-group">
                 <label>שם מלא</label>
                 <input type="text" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label>מייל</label>
+                <input type="email" name="email" required>
             </div>
 
             <div class="form-group">
@@ -154,78 +552,747 @@
 </div>
 
 <!-------------------- EDIT USER MODAL -------------------->
-<div id="editUserModal" class="modal">
-    <div class="modal-content">
-        <h2>עריכת משתמש</h2>
+<div id="editUserModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 450px; direction: rtl; font-family: 'Rubik', sans-serif;">
+        <h2 style="margin-top: 0;">עריכת פרטי <span id="display-name" style="margin-top: 0; color: #333"></span></h2>
 
         <form action="{{ url_for('edit_user') }}" method="POST">
-            <input type="hidden" name="name" id="edit-name">
+            <input type="hidden" name="user_id" id="edit-user-id">
 
-            <div class="form-group">
-                <label>מדור</label>
-                <input type="text" name="mador" id="edit-mador" required>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">שם מלא</label>
+                <input type="text" name="name" id="edit-name" readonly style="width: 30%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
             </div>
 
-            <div class="form-group">
-                <label>סוג</label>
-                <select name="type" id="edit-type">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">מדור</label>
+                <input type="text" name="mador" id="edit-mador" required style="width: 30%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px;">מייל</label>
+                <input type="email" name="email" id="edit-mail" required style="width: 30%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 5px;">סוג הרשאה</label>
+                <select name="type" id="edit-type" style="width: 35%; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
                     <option value="0">מנהל מערכת</option>
                     <option value="1">הרשאה מרבית</option>
                     <option value="2">הרשאה מצומצמת</option>
                 </select>
             </div>
 
-            <div class="button-group">
-                <button type="submit" class="btn-create">שמור</button>
-                <button type="button" onclick="closeEditModal()" class="btn-cancel">בטל</button>
+            <div class="button-group" style="display: flex; gap: 10px; justify-content: center;">
+                <button type="submit" class="btn-create">שמור שינויים</button>
+                <button type="button" onclick="closeEditModal()" class="btn-cancel">ביטול</button>
             </div>
         </form>
     </div>
 </div>
-
 <!-------------------- SET PASSWORD 123 MODAL -------------------->
-    <div id="setPasswordModal" class="modal">
-        <div class="modal-content">
-            <h2>איפוס סיסמה</h2>
-            <p>הסיסמה מתאפסת ל <b>123</b></p>
-            <p><b>הודעה על כך נשלחה למייל</b></p>
-            <br>
-            <div class="button-group">
-                <button type="button" onclick="closeSetPasswordModal()" class="btn-cancel">סגור הודעה</button>
+<div id="setPasswordModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 400px; text-align: center; direction: rtl; font-family: 'Rubik', sans-serif;">
+        <h3 style="margin-top: 0;">איפוס סיסמה עבור: <span id="passwordUserName" style="color: #2575fc;"></span></h3>
+
+        <div id="passwordError" style="display: none; background: #fff5f5; color: #e03131; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ffa8a8;"></div>
+
+        <div id="passwordSuccessContent">
+            <div style="background: #e7f3ff; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 18px;">הסיסמה שונתה ל- <b style="color: #2b8a3e; font-size: 22px;">123</b></p>
+            </div>
+            <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;">
+                הודעת עדכון נשלחה אל: <br>
+                <span id="passwordUserEmail" style="font-weight: bold; color: #333;"></span>
+            </p>
+        </div>
+
+        <div class="button-group" style="display: flex; justify-content: center;">
+            <button type="button" onclick="closeSetPasswordModal()" class="btn-cancel" style="padding: 10px 30px; cursor: pointer;">סגור הודעה</button>
+        </div>
+    </div>
+</div>
+<!-------------------- REMOVE USER MODAL -------------------->
+    <div id="deleteConfirmModal" class="modal" style="display: none; z-index: 2000;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <h2 style="color: #e74c3c;">אישור מחיקה</h2>
+        <p>האם אתה בטוח שברצונך למחוק את המשתמש:</p>
+        <p id="delete-user-display-name" style="font-weight: bold; font-size: 20px; margin: 15px 0;"></p>
+        <p style="color: gray; font-size: 14px;">פעולה זו אינה ניתנת לביטול.</p>
+
+        <br>
+        <div class="button-group" style="display: flex; justify-content: center; gap: 10px;">
+            <button type="button" id="confirmDeleteBtn" class="btn-create" style="background-color: #e74c3c;">מחק משתמש</button>
+            <button type="button" onclick="closeDeleteModal()" class="btn-cancel">ביטול</button>
+        </div>
+    </div>
+</div>
+    <div id="customConfirmModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); direction: rtl; font-family: 'Rubik', sans-serif;">
+            <div class="modal-content" style="background: white; padding: 25px; border-radius: 15px; width: 400px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;">
+
+                <span class="close-btn" onclick="closeConfirmModal()">&times;</span>
+
+                <h2 id="confirmTitle" style="margin-top: 0; color: #2575fc;">אישור פעולה</h2>
+
+                <p id="confirmMessage" style="color: #444; font-size: 16px; margin-bottom: 25px;"></p>
+
+                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+                    <button class="btn-create" id="modalConfirmBtn" style="justify-content: center; text-align: center; font-weight: bold; font-family: 'Rubik', sans-serif; padding: 10px 25px; background: #2575fc; color: white; border: none; border-radius: 8px; cursor: pointer; min-width: 120px;">אישור</button>
+                    <button class="btn-cancel" id="modalCancelBtn" onclick="closeConfirmModal()" style="justify-content: center; text-align: center; font-weight: bold; font-family: 'Rubik', sans-serif; padding: 10px 25px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; min-width: 120px;">ביטול</button>
+                </div>
+            </div>
+        </div>
+    <div id="groupDialog" class="modal" style="display:none; align-items: center; justify-content: center; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 450px; position: relative; direction: rtl; text-align: right;" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeGroupDialog()">&times;</span>
+            <h2 style="color: #cc0000; margin-bottom: 20px;">בחירת מורשי מיוחדים</h2>
+            <div id="statusMessage" style="margin: 10px 0; padding: 10px; border-radius: 5px; display: none; text-align: center; font-weight: bold;"></div>
+            <p>משתמשים אלו יוכלו להגיש בקשות מיוחדות</p>
+
+            <div style="max-height: 120px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; direction: rtl;">
+                {% for user in users %}
+                    {% if user.type == 2 %}
+                        <label style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer;">
+                            <input type="checkbox"
+                                   name="selected_users"
+                                   value="{{ user.name }}"
+                                   style="margin-left: 15px; transform: scale(1.2);"
+                                   {% if user.name in users_group %}checked{% endif %}>
+
+                            <div>
+                                <div style="font-weight: bold; font-size: 15px; color: #333;">{{ user.name }}</div>
+                                <div style="font-size: 12px; color: #777;">מדור: {{ user.mador }}</div>
+                            </div>
+                        </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: center;">
+                <button onclick="submitGroupSelection()"
+                        style="font-family: 'Rubik', sans-serif; padding: 10px 25px; background: #cc0000; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    שמור קבוצה
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="historyDialogSerial" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; font-family: 'Rubik', sans-serif;">
+        <div class="modal-content" style="position: relative; background: white; padding: 30px; border-radius: 20px; width: 400px; max-width: 90%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+            <span class="close-btn"
+                  onclick="document.getElementById('historyDialogSerial').style.display='none'">
+                  &times;
+            </span>
+            <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold;">היסטוריית חתימות על מוצר בודד</h2>
+
+            <div style="display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                <input type="text" id="serialInput" placeholder="הכנס מספר סיראלי..."
+                       style="font-weight: bold; font-family: 'Rubik', sans-serif; width: 80%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 16px;">
+
+                <button onclick="fetchSerialHistory()" class="btn-create-land"
+                        style="align-items: center; justify-content: center; width: 30%; padding: 10px; background: #2575fc; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold;">
+                    חפש
+                </button>
+            </div>
+            <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
+            <div id="dialog-alerts" style="margin-bottom: 15px; font-weight: bold; font-family: 'Rubik', sans-serif;"></div>
+            <div id="history-content" style="direction: ltr; text-align: left; max-height: 100px; overflow-y: auto; padding: 0 10px; font-weight: bold; font-family: 'Rubik', sans-serif;"></div>
+        </div>
+    </div>
+    <div id="successModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; font-family: 'Rubik', sans-serif;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 450px; position: relative; direction: rtl;">
+
+            <span onclick="document.getElementById('successModal').style.display='none'"
+                  class="close-btn">&times;</span>
+
+            <h2 style="color: #2b8a3e; margin-top: 0;">הבקשה אושרה!</h2>
+            <p style="margin-bottom: 20px; color: #555;">כדי להמשיך, נא להזין סריאליים עבור כל בקשה:</p>
+
+            <div id="serialsContainer" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; padding: 10px;"></div>
+            <div id="statusMessageSuccess" style="margin: 10px; text-align: center; margin-top: 10px; font-weight: bold; font-family: 'Rubik', sans-serif;"></div>
+            <button onclick="submitSuccessForm()"
+                    style="align-items: center; justify-content: center; font-family: 'Rubik', sans-serif; padding: 10px 25px; background: #2b8a3e; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                עדכן בקשה מיוחדת
+            </button>
+        </div>
+    </div>
+    <div id="deleteConfirmSpecialModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); direction: rtl;">
+        <div class="modal-content" style="background-color: #fff; padding: 30px; border-radius: 15px; width: 350px; text-align: center; font-family: 'Rubik', sans-serif;">
+            <h2 style="color: #e03131; margin-top: 0;">אישור מחיקה מיוחדת</h2>
+            <p>האם אתה בטוח שברצונך למחוק בקשה זו?</p>
+
+            <div id="deleteErrorMessage" style="font-family: 'Rubik', sans-serif; font-size: 14px; margin-bottom: 15px; min-height: 20px;"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="confirmSpecialDeleteBtn" class="btn-create-land" style="background: #e03131; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Rubik', sans-serif;">מחק</button>
+                <button onclick="document.getElementById('deleteConfirmSpecialModal').style.display='none'" class="btn-create-land" style="justify-content: center; text-align: center; max-width: 30%; background: #f1f3f5; color: #495057; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; transition: 0.2s;">
+                    ביטול
+                </button>
             </div>
         </div>
     </div>
 
-<!-------------------- SCRIPTS -------------------->
+    <!-------------------- SCRIPTS -------------------->
 <script>
-function openModal() {
-    document.getElementById('userModal').style.display = 'block';
-}
-function closeModal() {
-    document.getElementById('userModal').style.display = 'none';
-}
+    let currentSpecialIdToDelete = null;
+    function removeSpecialAdmin(special_id) {
+        currentSpecialIdToDelete = special_id;
+        const modal = document.getElementById('deleteConfirmSpecialModal');
+        modal.style.display = 'flex'; // מציג את המודל
+    }
 
-function setPasswordModal() {
-    document.getElementById("setPasswordModal").style.display = "block";
-}
+    // לוגיקת המחיקה כשלוחצים על כפתור "מחק" בתוך המודל
+    document.getElementById('confirmSpecialDeleteBtn').addEventListener('click', function() {
+        if (!currentSpecialIdToDelete) return;
 
-function closeSetPasswordModal(){
-    document.getElementById("setPasswordModal").style.display = "none";
-}
+        fetch(`/delete_special/${currentSpecialIdToDelete}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // סגירת המודל ורענון הדף או הסרת השורה מהטבלה
+                document.getElementById('deleteConfirmSpecialModal').style.display = 'none';
+                location.reload();
+            } else {
+                // הצגת שגיאה במידה והמחיקה נכשלה
+                document.getElementById('deleteErrorMessage').innerText = data.message || 'שגיאה במחיקה';
+                document.getElementById('deleteErrorMessage').style.color = 'red';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
 
-function openEditModal(name, mador, type) {
-    document.getElementById("edit-name").value = name;
-    document.getElementById("edit-mador").value = mador;
-    document.getElementById("edit-type").value = type;
-    document.getElementById("editUserModal").style.display = "block";
-}
+    window.onload = function() {
+        const requestsToRefresh = document.querySelectorAll('.request-row[data-status="בתהליך"]');
 
-function closeEditModal() {
-    document.getElementById("editUserModal").style.display = "none";
-}
+        requestsToRefresh.forEach(req => {
+            const requestId = req.getAttribute('data-id');
+
+            // קריאה אסינכרונית לשרת
+            fetch(`/trigger_async_refresh/${requestId}`)
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    console.log(`Request ${requestId} updated successfully.`);
+                }
+            });
+        });
+    };
+
+    // --- שלב 2: פתיחת דיאלוג הסריאלים ---
+    let currentRequestId = null;
+    function openSuccessModal(specialLinesString, requestId) {
+        currentRequestId = requestId;
+        const container = document.getElementById('serialsContainer');
+        const modal = document.getElementById('successModal');
+        container.innerHTML = '';
+
+        const linesArray = specialLinesString.split('\n')
+            .filter(line => line.trim() !== '')
+            .map((line, index) => {
+                const parts = line.split(':');
+                const amount = parseInt(parts[parts.length - 1]) || 1; // מחלצים את המספר האחרון
+                return {
+                    id: index,
+                    text: line.trim(),
+                    amount: amount
+                };
+            });
+
+        linesArray.forEach((line) => {
+            const wrapper = document.createElement('div');
+            wrapper.style.marginBottom = '15px';
+            wrapper.style.padding = '15px';
+            wrapper.style.border = '1px solid #eee';
+            wrapper.style.borderRadius = '12px';
+            wrapper.style.backgroundColor = '#fcfcfc';
+            wrapper.style.maxHeight = '235px';
+            wrapper.style.overflowY = 'auto';
+
+            // בניית מחרוזת של שדות קלט לפי הכמות (amount)
+            let inputsHtml = '';
+            for (let i = 0; i < line.amount; i++) {
+                inputsHtml += `
+                    <input type="text" class="serial-input"
+                           data-line-id="${line.id}"
+                           placeholder="סריאלי ${i + 1}..."
+                           style="font-family: 'Rubik', sans-serif; width: 90%; padding: 8px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; text-align: center; font-size: 13px;">
+                `;
+            }
+
+            wrapper.innerHTML = `
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #555; direction: rtl; display: flex; align-items: center;">
+                    <span style="background: #eef2ff; color: #2575fc; padding: 2px 8px; border-radius: 4px; margin-left: 8px; font-size: 11px;">בקשה ${line.id +1}</span>
+                    ${line.text.replace(/:/g, ' - ')}
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    ${inputsHtml}
+                </div>
+            `;
+            container.appendChild(wrapper);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    function fetchSerialHistory() {
+        const serial = document.getElementById('serialInput').value.trim();
+        const alertDiv = document.getElementById('dialog-alerts');
+        const contentDiv = document.getElementById('history-content');
+
+        if (!serial) {
+            alertDiv.innerHTML = `<div style="background:#fff3cd; color:#856404; padding:10px; border-radius:5px;">נא להזין מספר סיראלי</div>`;
+            return;
+        }
+
+        alertDiv.innerHTML = '';
+        contentDiv.innerHTML = '<p>טוען נתונים...</p>';
+
+        fetch(`/get_serial_history/${serial}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    contentDiv.innerHTML = data.history.map(item => `
+                        <div style="padding: 10px; border-bottom: 1px solid #eee; font-size: 14px;">
+                            <span style="color: #666;">[${item.timestamp}]</span>
+                            <span style="font-weight: bold; color: ${item.level === 'ERROR' ? 'red' : 'blue'}">${item.level}:</span>
+                            ${item.message}
+                        </div>
+                    `).join('');
+                } else {
+                    alertDiv.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:10px; border-radius:5px;">${data.message}</div>`;
+                    contentDiv.innerHTML = '';
+                }
+            })
+            .catch(err => {
+                alertDiv.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:10px; border-radius:5px;">שגיאת תקשורת</div>`;
+                contentDiv.innerHTML = '';
+            });
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('customConfirmModal').style.display = 'none';
+    }
+
+    // --- שלבים 3 ו-4: שליחת הסריאלים ועדכון הסטטוס ---
+    function submitSuccessForm() {
+        const inputs = document.querySelectorAll('.serial-input');
+        const serials = [];
+        const seenSerials = new Set(); // שימוש ב-Set למניעת כפילויות
+        const statusMsg = document.getElementById('statusMessageSuccess');
+
+        if (inputs.length === 0) {
+            statusMsg.innerText = "שגיאה: לא נמצאו שדות למילוי";
+            statusMsg.style.color = "red";
+            return;
+        }
+
+        for (let input of inputs) {
+            const val = input.value.trim();
+
+            if (val === "") {
+                statusMsg.innerText = "שגיאה: ישנם שדות ריקים, נא למלא את כל הסריאליים";
+                statusMsg.style.color = "red";
+                input.focus();
+                return;
+            }
+
+            if (seenSerials.has(val)) {
+                statusMsg.innerText = `שגיאה: הסריאלי "${val}" מופיע יותר מפעם אחת`;
+                statusMsg.style.color = "red";
+                input.focus();
+                return;
+            }
+
+            seenSerials.add(val);
+            serials.push({
+                line_id: input.getAttribute('data-line-id'),
+                serial: val
+            });
+        }
+
+        if (!currentRequestId) {
+            statusMsg.innerText = "שגיאה: לא זוהה מספר בקשה";
+            statusMsg.style.color = "red";
+            return;
+        }
+
+        statusMsg.innerText = "שולח נתונים...";
+        statusMsg.style.color = "blue";
+
+        fetch('/update_serials', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                request_id: currentRequestId,
+                serials: serials
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                statusMsg.innerText = 'הסריאלים עודכנו בהצלחה!';
+                statusMsg.style.color = "green";
+                // רענון הדף יגרום לשלב 4 (הופעה בטבלה) לקרות באופן טבעי
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                statusMsg.innerText = 'שגיאה: ' + data.message;
+                statusMsg.style.color = "red";
+            }
+        })
+        .catch(err => {
+            statusMsg.innerText = 'שגיאת מערכת, אנא נסה שוב';
+            statusMsg.style.color = "red";
+        });
+    }
+
+    // --- שלב 1: אישור בקשה ראשוני מהטבלה ---
+    function handleSpecial(requestId, action, rowLines) {
+        const modal = document.getElementById('customConfirmModal');
+        const title = document.getElementById('confirmTitle');
+        const message = document.getElementById('confirmMessage');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+
+        let errorDisplay = document.getElementById('modalErrorDisplay');
+        if (!errorDisplay) {
+            errorDisplay = document.createElement('div');
+            errorDisplay.id = 'modalErrorDisplay';
+            errorDisplay.style.color = '#e03131';
+            errorDisplay.style.marginTop = '10px';
+            errorDisplay.style.fontSize = '12px';
+            confirmBtn.parentNode.appendChild(errorDisplay);
+        }
+        errorDisplay.innerText = '';
+
+        title.innerText = action === 'approve' ? 'אישור בקשה מיוחדת' : 'דחיית בקשה מיוחדת';
+        message.innerText = action === 'approve' ? 'האם אתה בטוח שברצונך לאשר בקשה זו?' : 'האם אתה בטוח שברצונך לסרב לבקשה זו?';
+
+        confirmBtn.style.background = action === 'approve' ? '#2b8a3e' : '#e03131';
+        confirmBtn.innerText = action === 'approve' ? 'המשך' : 'סרב';
+
+        confirmBtn.onclick = function() {
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = 'מעבד...';
+
+            fetch(`/handle_special/${requestId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ action: action })
+            })
+            .then(response => {
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("שגיאת שרת פנימית");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    modal.style.display = 'none';
+                    if (action === 'approve') {
+                        openSuccessModal(rowLines, requestId);
+                    } else {
+                        location.reload();
+                    }
+                } else {
+                    errorDisplay.innerText = data.message || 'אירעה שגיאה בביצוע הפעולה';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorDisplay.innerText = 'לא ניתן להתחבר לשרת';
+            })
+            .finally(() => {
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = action === 'approve' ? 'המשך' : 'סרב';
+            });
+        };
+        modal.style.display = 'flex';
+    }
+
+    // הוסרה מכאן הפונקציה הישנה והמיותרת "approveAndSetSerials"
+
+    function submitGroupSelection() {
+        const statusDiv = document.getElementById('statusMessage');
+        const selectedUsers = [];
+        const checkboxes = document.querySelectorAll('input[name="selected_users"]:checked');
+
+        checkboxes.forEach((cb) => {
+            selectedUsers.push(cb.value);
+        });
+
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#eef';
+        statusDiv.innerText = 'מעדכן נתונים...';
+
+        fetch('/update_special_users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ users: selectedUsers })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                statusDiv.style.background = '#d4edda';
+                statusDiv.style.color = '#155724';
+                statusDiv.innerText = 'הקבוצה עודכנה בהצלחה!';
+
+                setTimeout(() => {
+                    closeGroupDialog();
+                    location.reload();
+                }, 1500);
+            } else {
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+                statusDiv.innerText = 'שגיאה: ' + data.message;
+            }
+        })
+        .catch(error => {
+            statusDiv.style.background = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+            statusDiv.innerText = 'שגיאה בתקשורת עם השרת';
+        });
+    }
+
+    function openGroupDialog() {
+        document.getElementById('groupDialog').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeGroupDialog() {
+        document.getElementById('groupDialog').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    document.getElementById('groupDialog').onclick = function(e) {
+        if (e.target === this) {
+            closeGroupDialog();
+        }
+    };
+
+    function handleRequest(requestId, action) {
+        const modal = document.getElementById('customConfirmModal');
+        const title = document.getElementById('confirmTitle');
+        const message = document.getElementById('confirmMessage');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+
+        const isApprove = (action === 'approve');
+        const actionText = isApprove ? 'לאשר' : 'לסרב';
+
+        title.innerText = isApprove ? 'אישור בקשה' : 'סירוב לבקשה';
+        title.style.color = isApprove ? '#2575fc' : '#e03131';
+        message.innerText = `האם אתה בטוח שברצונך ${actionText} לבקשה זו?`;
+
+        confirmBtn.innerText = isApprove ? 'אשר בקשה' : 'סרב לבקשה';
+        confirmBtn.style.background = isApprove ? '#2575fc' : '#e03131';
+        confirmBtn.disabled = false;
+
+        modal.style.display = 'flex';
+        cancelBtn.style.display = 'block';
+
+        confirmBtn.onclick = function() {
+            confirmBtn.disabled = true;
+            confirmBtn.innerText = 'מבצע...';
+
+            fetch(`/handle_request/${requestId}/${action}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showErrorInModal('שגיאה: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorInModal('קרתה תקלה בתקשורת עם השרת');
+            });
+        };
+    }
+
+    function showErrorInModal(errorText) {
+        const title = document.getElementById('confirmTitle');
+        const message = document.getElementById('confirmMessage');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+
+        title.innerText = 'תקלה';
+        title.style.color = '#e03131';
+        message.innerText = errorText;
+
+        confirmBtn.innerText = 'הבנתי';
+        confirmBtn.style.background = '#6c757d';
+        confirmBtn.disabled = false;
+        confirmBtn.onclick = closeConfirmModal;
+
+        cancelBtn.style.display = 'none';
+    }
+
+    const extraData = {
+        'announcements': {{ (announcements | join('\n')) | tojson | safe if announcements else '""' }},
+        'warehouse_data': {{ (des_content | join('\n')) | tojson | safe if des_content else '""' }}
+    };
+
+    function toggleMode(btn) {
+        const textarea = document.getElementById('main-textarea');
+        const targetInput = document.getElementById('target_file');
+        const title = document.getElementById('admin-title');
+        const label = document.getElementById('textarea-label');
+
+        if (targetInput.value === 'announcements') {
+            targetInput.value = 'warehouse_data';
+            btn.innerText = 'החלף לעדכוני מערכת';
+            btn.style.backgroundColor = '#fff3cd';
+            title.innerText = 'ניהול הנחיות למחסן';
+            label.innerText = 'הזן הנחיות (כל שורה היא הנחיה חדשה - סה"כ 4):';
+            textarea.value = extraData['warehouse_data']
+        } else {
+            targetInput.value = 'announcements';
+            btn.innerText = 'החלף לקובץ הנחיות';
+            btn.style.backgroundColor = '#f0f0f0';
+            title.innerText = 'ניהול עדכוני מערכת';
+            label.innerText = 'הזן עדכונים (כל שורה היא עדכון חדש - סה"כ 4):';
+            textarea.value = extraData['announcements'];
+        }
+    }
+
+    let currentFormToSubmit = null;
+
+    function showDeleteModal(userName, formId) {
+        document.getElementById('delete-user-display-name').innerText = userName;
+        currentFormToSubmit = document.getElementById(formId);
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+        currentFormToSubmit = null;
+    }
+
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+        if (currentFormToSubmit) {
+            currentFormToSubmit.submit();
+        }
+    };
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteConfirmModal');
+        if (event.target == modal) {
+            closeDeleteModal();
+        }
+    };
+
+    function openModal() {
+        document.getElementById('userModal').style.display = 'block';
+    }
+    function closeModal() {
+        document.getElementById('userModal').style.display = 'none';
+    }
+
+    function openSetPasswordModal(userId, userName, userEmail) {
+        const modal = document.getElementById('setPasswordModal');
+        const errorDiv = document.getElementById('passwordError');
+        const successDiv = document.getElementById('passwordSuccessContent');
+        const userNameSpan = document.getElementById('passwordUserName');
+        const emailSpan = document.getElementById('passwordUserEmail');
+
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+        userNameSpan.innerText = userName;
+        emailSpan.innerText = (userEmail && userEmail !== 'None') ? userEmail : 'לא הוזן אימייל';
+
+        modal.style.display = 'flex';
+
+        fetch('/reset_password_to_default', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: userId,
+                new_password: '123'
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                successDiv.style.display = 'block';
+            } else {
+                errorDiv.innerText = 'שגיאה: ' + data.message;
+                errorDiv.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            errorDiv.innerText = 'חלה שגיאה בתקשורת עם השרת';
+            errorDiv.style.display = 'block';
+        });
+    }
+
+    function closeSetPasswordModal() {
+        document.getElementById('setPasswordModal').style.display = 'none';
+    }
+
+    function openEditModal(id, name, mador, type, email) {
+        const modal = document.getElementById('editUserModal');
+        document.getElementById('display-name').innerText = name;
+
+        const fields = {
+            'edit-user-id': id,
+            'edit-name': name,
+            'edit-mador': mador,
+            'edit-type': type,
+            'edit-mail': email
+        };
+
+        for (const [id, value] of Object.entries(fields)) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.value = (value === 'None' ? '' : value);
+            } else {
+                console.warn("Element with ID " + id + " not found!");
+            }
+        }
+
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeEditModal() {
+        document.getElementById("editUserModal").style.display = "none";
+    }
 </script>
 
 <style>
+    /* Targeting the scrollable area */
+    .data-table-card div::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .data-table-card div::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .data-table-card div::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 10px;
+    }
+
+    .data-table-card div::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
 /* ------------------ Users Table Card ------------------ */
 .data-table-card {
     background: white;
@@ -362,6 +1429,35 @@ function closeEditModal() {
 .btn-create:hover { background-color: #6a11cb; transform: translateY(-2px); }
 .btn-cancel { background-color: #ccc; color: #333; }
 .btn-cancel:hover { background-color: #999; transform: translateY(-2px); }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 11px;
+        display: inline-block;
+        text-align: center;
+        border: 1px solid transparent;
+    }
+
+    /* עיצובים לכל סטטוס */
+    .status-approved {
+        background-color: #d3f9d8;
+        color: #2b8a3e;
+        border-color: #b2f2bb;
+    }
+
+    .status-rejected {
+        background-color: #ffe3e3;
+        color: #c92a2a;
+        border-color: #ffc9c9;
+    }
+
+    .status-waiting {
+        background-color: #fff9db;
+        color: #f08c00;
+        border-color: #ffe066;
+    }
 </style>
 {% endblock %}
 </body>

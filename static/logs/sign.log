@@ -1,0 +1,10 @@
+[2026-03-03 13:52:38] INFO: User 'שחר יהודה יאני' returned SN-00123 to warehouse
+[2026-03-03 13:53:20] INFO: User 'שחר יהודה יאני' returned SN-00128 to warehouse
+[2026-03-08 11:55:54] INFO: User 'שחר יהודה יאני' returned SN-00123 to warehouse
+[2026-03-08 22:37:13] INFO: User 'רוני' returned SN-00128 to warehouse
+[2026-03-09 13:00:28] INFO: User 'שחר יהודה יאני' returned SN-00123 to warehouse
+[2026-03-11 22:56:09] INFO: User 'רוני' transferred the SN-00129 to שחר יהודה יאני
+[2026-03-11 22:57:08] INFO: User 'שחר יהודה יאני' transferred the SN-00129 to User 'רוני'
+[2026-03-11 22:58:21] INFO: User 'שחר יהודה יאני' returned SN-00123 to warehouse
+[2026-03-11 23:00:33] INFO: User 'שחר יהודה יאני' returned SN-00123 to warehouse
+[2026-03-11 23:00:41] INFO: User 'שחר יהודה יאני' signed for the SN-00123 from warehouse

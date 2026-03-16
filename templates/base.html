@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <!-- Top Bar -->
     <div class="topbar">
         <div class="topbar-container">
-            <img class="logo" src="{{ url_for('static', filename='images/logo.png') }}">
+            <a href="/" title="בית"><img class="logo" src="{{ url_for('static', filename='images/logo.png') }}"></a>
             <div class="nav-links">
                 {% if user %}
                     <a id="lagout-view" href="/logout">יציאה ({{session.user_name}})</a>
@@ -20,7 +20,7 @@
                     <a href="/">בית</a>
 
                 {% else %}
-                    <a href="/login">התחברות</a>
+                    <a href="/login">כניסה</a>
                 {% endif %}
             </div>
         </div>

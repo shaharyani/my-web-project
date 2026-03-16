@@ -1,11 +1,11 @@
 import sqlite3
 
 from werkzeug.security import generate_password_hash, check_password_hash
-from db import get_users_db
+from static.helper.db import get_users_db
 
 class User:
     def __init__(self, id: int, name: str, mador: str, password: str, type: int,
-                 is_active: bool, is_admin: bool, last_login: str, profile_image="user_photo.png"):
+                 is_active: bool, is_admin: bool, last_login: str, profile_image="user_photo.png", email: str = ""):
         self.id = id
         self.name = name
         self.mador = mador
@@ -15,6 +15,7 @@ class User:
         self.is_admin = is_admin
         self.last_login = last_login
         self.profile_image = profile_image
+        self.email = email
 
     def get_name(self):
         return self.name
@@ -58,7 +59,7 @@ class User:
 
     # --- Representation ---
     def __str__(self):
-        return f"User(name='{self.name}', id={self.id}, mador='{self.mador}', type={self.type}, active={self.is_active}, admin={self.is_admin}, last_login={self.last_login})"
+        return f"User(name='{self.name}', id={self.id}, mador='{self.mador}', type={self.type}, active={self.is_active}, admin={self.is_admin}, last_login={self.last_login}, email={self.email})"
 
     @classmethod
     def get_by_id(cls, user_id):
@@ -85,14 +86,14 @@ class User:
         return None
 
     @classmethod
-    def create(cls, name, mador, password, type=1, is_active=True, is_admin=False, last_login="", profile_image="user_photo.png"):
+    def create(cls, name, mador, password, type=1, is_active=True, is_admin=False, last_login="", profile_image="user_photo.png", email=""):
         hashed = generate_password_hash(password)
         conn = get_users_db()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO users (name, mador, password, type, is_active, is_admin, last_login, profile_image)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (name, mador, hashed, type, int(is_active), int(is_admin), last_login, profile_image))
+            INSERT INTO users (name, mador, password, type, is_active, is_admin, last_login, profile_image, email)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (name, mador, hashed, type, int(is_active), int(is_admin), last_login, profile_image, email))
         conn.commit()
         user_id = cursor.lastrowid
         conn.close()

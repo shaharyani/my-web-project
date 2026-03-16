@@ -4,6 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>בית</title>
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
         <style>
@@ -128,6 +129,55 @@
         }
 
         .close-btn:hover { color: #ff4d4d; }
+
+        /* עיצוב כללי לפריט הסטטוס */
+        .value-item {
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* הגדרת בועת המידע (Tooltip) */
+        .value-item::after {
+            max-height: 200px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            content: attr(data-serials); /* שואב את רשימת הסריאלים מה-HTML */
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            white-space: pre-line; /* מאפשר ירידת שורה */
+            width: 200px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: right;
+            direction: rtl;
+            font-family: 'Rubik', sans-serif;
+        }
+
+        /* הצגת הבועה במעבר עכבר */
+        .value-item:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .values-grid .value-item::-webkit-scrollbar {
+            width: 6px;
+        }
+        .values-grid .value-item::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 10px;
+        }
     </style>
 
 <a id="top"></a>
@@ -137,7 +187,7 @@
     <div class="sidebar-container">
         <div class="updates-block" style="margin-left: 60px">
             <h3>עדכונים שוטפים</h3>
-            <p>ברוכים הבאים למערכת ניהול הערים. כאן תוכלו לראות הנחיות אחרונות ועדכונים מהשטח.</p>
+            <p>כאן תוכלו לראות הנחיות אחרונות ועדכוני מערכת חשובים.</p>
 
             <ul>
                 {% if remote_list_items %}
@@ -149,22 +199,40 @@
                 {% endif %}
             </ul>
         </div>
-        {% if user_code == 1 or is_admin %}
             <div class="updates-block" style="margin-left: 60px; margin-top: 20px">
-            <h3>מוצרים שחזרו</h3>
-            <p>כאן יופיעו מוצרים שחזרו אל המחסן.</p>
-
-            <ul>
-                {% if all_retrun_items %}
-                    {% for item in all_retrun_items %}
-                        <li>{{ item }}</li>
-                    {% endfor %}
-                {% else %}
-                    <li style="background: none; border: 1px dashed #ccc; color: #999; text-align: center;">אין עדכונים חדשים</li>
-                {% endif %}
-            </ul>
-        </div>
-        {% endif %}
+                <h3>מוצרים שחזרו אל המחסן</h3>
+                <ul style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 0; list-style: none; gap: 15px;">
+                    {% if all_retrun_items %}
+                        <button onclick="document.getElementById('productModal').style.display='flex'"
+                            style="
+                                background: #2575fc;
+                                color: white;
+                                border: none;
+                                padding: 12px 25px;
+                                border-radius: 10px;
+                                font-family: 'Rubik', sans-serif;
+                                font-weight: bold;
+                                font-size: 16px;
+                                cursor: pointer;
+                                box-shadow: 0 4px 15px rgba(37, 117, 252, 0.2);
+                                transition: all 0.3s ease;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 10px;
+                                min-width: 100px;
+                            "
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 117, 252, 0.3)';"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(37, 117, 252, 0.2)';">
+                            גישה מהירה »
+                        </button>
+                    {% else %}
+                        <li style="background: none; border: 1px dashed #ccc; color: #999; text-align: center; padding: 15px; width: 80%; border-radius: 10px; list-style: none;">
+                            אין מוצרים שחזרו
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
     </div>
     <div class="content-main-area">
 
@@ -181,7 +249,7 @@
 
         <div id="noCityMessage" class="no-city-message">❌ לא נמצאו ערים מתאימות</div>
 
-        <div class="card-container2">
+        <div class="card-container2" style="max-height: 170px; overflow-y: auto;">
             {% for city in cities %}
                 <div class="city-title city-item" data-city="{{ city.title }}">
                     <a href="{{ url_for('city_page', city_name=city.name) }}">
@@ -211,7 +279,7 @@
                     <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">שם התיקייה: ירושלים</span>
                     <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">general.txt ליצירה כמפורט במדריך</span>
                 </div>
-                <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">יצירת תת־תיקיות: InitTest, AfterEarth, AfterRun</span>
+                <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">יצירת תת־תיקיות: InitTest, AfterR2, AfterHARAZA</span>
                 <label style="font-weight: bold; color: #cc0000; display: block; margin-top: 15px;">
                     מחיקה או עריכה של תיקיות או קבצים אחרים תוביל לפגיעה בתיעוד
                 </label>
@@ -231,7 +299,7 @@
         <div id="serialModal" class="modal" style="{% if show_modal %}display:flex{% else %}display:none{% endif %}; align-items: center; justify-content: center;">
             <div class="modal-content">
                 <span class="close-btn" onclick="document.getElementById('serialModal').style.display='none'">&times;</span>
-                <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold; text-align: center;">חיפוש לפי מספר סידורי</h2>
+                <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold; text-align: center;">חיפוש מתקדם</h2>
                 <form method="POST" action="{{ url_for('home') }}" class="serial-form" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
                     <input type="text" name="serial" placeholder="הכנס כאן" required style="font-family: 'Rubik', sans-serif; width: 80%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 16px;">
                     <button type="submit" class="btn-create-land" style="width: 30%; display: flex; justify-content: center; align-items: center; text-align: center;">חפש</button>
@@ -241,8 +309,8 @@
                 <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
                 {% if product %}
-                    <div style="text-align: right; background: #f8f9fa; padding: 20px; border-radius: 12px; width: 90%; margin: 0 auto; border: 1px solid #ececec;">
-                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;">{{ product.serial }}<b> :מספר סידורי</b></p>
+                    <div style="text-align: right; background: #f8f9fa; padding: 20px; border-radius: 12px; width: 90%; margin: 0 auto; border: 1px solid #ececec; direction: rtl;">
+                        <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b> מספר סידורי:</b> {{ product.serial }}</p>
                         <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>קוד:</b> {{ product.code }}</p>
                         <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;"><b>סוג קרקע: </b>{{ product.land_type }}</p>
                         <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 4px;">
@@ -259,7 +327,7 @@
                         {{ product.status }}
                         {% endif %}
                         </p>
-                        <p style="margin: 8px 0;">{{ product.owner }}<b> :חתום על-ידי</b> </p>
+                        <p style="margin: 8px 0;"><b>חתום על-ידי: </b>{{ product.owner }}</p>
                     </div>
                 {% else %}
                     <div style="padding: 15px; background: #fff5f5; border-radius: 10px; width: 80%; margin: 0 auto; text-align: center;">
@@ -269,119 +337,213 @@
             {% endif %}
         </div>
     </div>
+        <div id="productModal" class="modal" style="display: none; align-items: center; justify-content: center;">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <div style="flex: 0 0 280px; direction: rtl;">
+                    <h2 style="color: #2575fc; margin-top: 0;">מוצרים שחזרו אל המחסן</h2>
+                    <div style="margin-bottom: 15px;">
+                            <select id="cityFilter" onchange="filterProductsByCity()" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 13px; cursor: pointer; background: #fdfdfd;">
+                                <option value="all">כל הערים</option>
+                                {% for city in all_cities %}
+                                    <option value="{{ city }}">{{ city }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    <ul id="returnsList" style="list-style: none; padding: 0; font-size: 14px;">
+                            {% if all_retrun_items %}
+                                {% for item in all_retrun_items %}
+                                    <li class="return-item" data-city="{{ item.city_name }}" style="padding: 10px 8px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
+                                        <strong>{{ item.serial }}</strong>
+                                        <span style="font-size: 11px; color: #999; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">{{ item.city_name }}</span>
+                                    </li>
+                                {% endfor %}
 
+                                <li id="noResults" style="display: none; padding: 15px; border: 1px dashed #ccc; color: #999; text-align: center; border-radius: 8px; margin-top: 10px;">
+                                    אין מוצרים שחזרו מעיר זו
+                                </li>
+                            {% else %}
+                                <li style="padding: 15px; border: 1px dashed #ccc; color: #999; text-align: center; border-radius: 8px;">אין מוצרים</li>
+                            {% endif %}
+                        </ul>
+                </div>
+        </div>
+    </div>
         <div id="statusDialog" class="modal-overlay">
             <div class="modal-content">
                 <span class="close-btn" onclick="closeGlobalStatus()">&times;</span>
-                <h2 style="color: #2575fc; margin-bottom: 25px; font-weight: bold;">סטטוס מוצרים - כל המערכת</h2>
-                {# הגדרת ברירת מחדל למקרה שהמשתנה לא עבר מהשרת #}
+                <h2 style="color: #2575fc; margin-bottom: 5px; font-weight: bold;">סטטוס מוצרים - כל המערכת</h2>
+                <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                    <span style="width: 60%; background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; border: 1px solid #eee;">
+                        המוצרים אשר עברו אי-פעם בדיקה כלשהי במערכת
+                    </span>
+                    <span style="width: 50%; background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; border: 1px solid #eee;">
+                        הנתונים מבוססים על תוצאות בדיקות המוצרים
+                    </span>
+                </div>
                 {% set global_counts = global_counts | default({'RED':0, 'WHITE':0, 'BLACK':0, 'GRAY':0}) %}
 
-                <div class="values-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px;">
-                <div class="value-item black" style="padding: 15px; border-radius: 10px; background: #f8f9fa;">
-                <div class="label" style="font-weight: bold; color: #333;">BLACK</div>
-                <div class="number" style="font-size: 24px;">{{ global_counts.BLACK }}</div>
-            </div>
-            <div class="value-item red" style="padding: 15px; border-radius: 10px; background: #f8f9fa;">
-                <div class="label" style="font-weight: bold; color: #d9534f;">RED</div>
-                <div class="number" style="font-size: 24px;">{{ global_counts.RED }}</div>
-            </div>
-            <div class="value-item white" style="padding: 15px; border-radius: 10px; background: #333; border: 1px solid #ddd;">
-                <div class="label" style="font-weight: bold; color: white;">WHITE</div>
-                <div class="number" style="font-size: 24px;">{{ global_counts.WHITE }}</div>
-            </div>
-            <div class="value-item gray" style="padding: 15px; border-radius: 10px; background: #f8f9fa;">
-                <div class="label" style="font-weight: bold; color: #777;">GRAY</div>
-                <div class="number" style="font-size: 24px;">{{ global_counts.GRAY }}</div>
-            </div>
-        </div>
+                {# הכנת רשימות הסריאלים לכל צבע - מניח שקיים משתנה all_products מהשרת #}
+                {% set black_list = all_products | selectattr('status', 'equalto', 'BLACK') | map(attribute='serial') | join('\n') %}
+                {% set red_list = all_products | selectattr('status', 'equalto', 'RED') | map(attribute='serial') | join('\n') %}
+                {% set white_list = all_products | selectattr('status', 'equalto', 'WHITE') | map(attribute='serial') | join('\n') %}
+                {% set gray_list = all_products | selectattr('status', 'equalto', 'NONE') | map(attribute='serial') | join('\n') %}
 
-        <div style="margin-top: 25px; display: flex; justify-content: center; width: 100%;">
-            <button type="button" class="btn-cancel-land" onclick="closeGlobalStatus()" style="width: 20%; display: flex; justify-content: center; align-items: center; text-align: center;">
-                סגור
-            </button>
+                <div class="values-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
+
+                    {% for color, list, label, color_code in [
+                        ('black', black_list, 'BLACK', '#333'),
+                        ('red', red_list, 'RED', '#d9534f'),
+                        ('white', white_list, 'WHITE', 'white'),
+                        ('gray', gray_list, 'GRAY', '#777')
+                    ] %}
+                    <div class="value-item {{ color }}"
+                         data-serials="במצב {{ label }}:&#10;{{ list or 'אין נתונים' }}"
+                         style="
+                            padding: 15px;
+                            border-radius: 10px;
+                            background: {{ '#333' if color == 'white' else '#f8f9fa' }};
+                            border: 1px solid #ddd;
+                            cursor: pointer;
+                            position: relative; /* חובה עבור ה-Tooltip */
+                         ">
+
+                        <div class="label" style="font-weight: bold; color: {{ color_code }};">{{ label }}</div>
+                        <div class="number" style="font-size: 24px; color: {{ '#fff' if color == 'white' else '#333' }}">{{ global_counts[label] }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div style="margin-top: 25px; display: flex; justify-content: center; width: 100%;">
+                    <button type="button" class="btn-cancel-land" onclick="closeGlobalStatus()" style="width: 20%; display: flex; justify-content: center; align-items: center; text-align: center;">
+                        סגור
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
         <div class="bottom-options-bar">
+            <div class="options-title">אפשרויות נוספות</div>
             <div class="icons-row">
                 {% if is_admin %}
                     <a class="profile-btn" href="{{ url_for('newItems') }}"><img src="{{ url_for('static', filename='images/new_item.png') }}" title="ערים חדשות"></a>
                 {% endif %}
 
                 {% if user_code == 1 or is_admin %}
-                    <a class="profile-btn" onclick="openGlobalStatus()"><img src="{{ url_for('static', filename='images/status.png') }}" title="מצב כללי"></a>
-                    <a class="profile-btn" href="https://gitlab.com/" target="_blank"><img src="{{ url_for('static', filename=gitLab_logo | default('images/gitLab_logo.png')) }}" title="GITLAB"></a>
+                    <a class="profile-btn" onclick="openGlobalStatus()"><img style="transform: scale(0.7)" src="{{ url_for('static', filename='images/status.png') }}" title="מצב כללי"></a>
+                    <a class="profile-btn" href="https://gitlab.com/" target="_blank"><img style="transform: scale(0.9)" src="{{ url_for('static', filename=gitLab_logo | default('images/gitLab_logo.png')) }}" title="תיעוד המערכת"></a>
+                    <a class="profile-btn" href="https://github.com/shaharyani/my-web-project" target="_blank"><img src="{{ url_for('static', filename=logo | default('images/logo.png')) }}" title="תיעוד מצב הגלים" style="transform: scale(1.4)"></a>
+                {% endif %}
+
+                {% if is_admin or user.name in special_users %}
+                    <a class="profile-btn" href="{{ url_for('special_page') }}"><img style="transform: scale(0.8)" src="{{ url_for('static', filename='images/request.png') }}" title="בקשה"></a>
                 {% endif %}
 
                 <a class="profile-btn" onclick="document.getElementById('serialModal').style.display='flex'"><img src="{{ url_for('static', filename='images/search.png') }}" title="חיפוש מתקדם"></a>
-                <a class="profile-btn" onclick="document.getElementById('serialModal').style.display='flex'"><img src="{{ url_for('static', filename='images/signature.png') }}" title="חתימות"></a>
-                <a href="{{ url_for('user_page') }}" class="profile-btn"><img src="{{ url_for('static', filename=user_photo | default('images/user_photo.png')) }}"></a>
+                <a class="profile-btn" href="{{ url_for('sign_page') }}"><img style="transform: scale(0.7)" src="{{ url_for('static', filename='images/signature.png') }}" title="חתימות"></a>
+                <a class="profile-btn" href="{{ url_for('report_page') }}"><img style="transform: scale(0.8)" src="{{ url_for('static', filename='images/report.png') }}" title="תקלות"></a>
+                <a href="{{ url_for('user_page') }}" class="profile-btn"><img src="{{ url_for('static', filename=user_photo | default('images/user_photo.png')) }}" title="אישי"></a>
             </div>
-            <div class="options-title">אפשרויות נוספות</div>
         </div>
     </div>
 </div>
 
 <script>
-        function openGlobalStatus() {
-            document.getElementById("statusDialog").style.display = "flex";
-        }
+    function filterProductsByCity() {
+        const selectedCity = document.getElementById('cityFilter').value;
+        const items = document.querySelectorAll('.return-item');
+        const noResults = document.getElementById('noResults');
+        let hasVisibleItems = false;
 
-        function closeGlobalStatus() {
-            document.getElementById("statusDialog").style.display = "none";
-        }
+        items.forEach(item => {
+            const itemCity = item.getAttribute('data-city');
 
-        // סגירה בלחיצה מחוץ למודאלים
-        window.onclick = function(event) {
-            let statusModal = document.getElementById("statusDialog");
-            let serialModal = document.getElementById("serialModal");
-
-            if (event.target == statusModal) {
-                closeGlobalStatus();
-            }
-            if (event.target == serialModal) {
-                serialModal.style.display = "none";
-            }
-        }
-
-        function filterCities() {
-            const input = document.getElementById('citySearch');
-            const query = input.value.trim().toLowerCase();
-            const cities = document.querySelectorAll('.city-item');
-            const message = document.getElementById('noCityMessage');
-
-            let visibleCount = 0;
-
-            cities.forEach(city => {
-                const cityName = (city.getAttribute('data-city') || city.innerText).toLowerCase();
-                if (cityName.includes(query)) {
-                    city.style.display = "block";
-                    visibleCount++;
-                } else {
-                    city.style.display = "none";
-                }
-            });
-
-            message.style.display = (query.length > 0 && visibleCount === 0) ? "block" : "none";
-        }
-
-        function openNewCityDialog() {
-            document.getElementById('newCityDialog').style.display = 'flex';
-        }
-
-        function closeNewCityDialog() {
-            document.getElementById('newCityDialog').style.display = 'none';
-        }
-
-        // סגירה בלחיצה מחוץ למודאל
-        window.addEventListener('click', function(event) {
-            const modal = document.getElementById('newCityDialog');
-            if (event.target === modal) {
-                closeNewCityDialog();
+            if (selectedCity === 'all' || itemCity === selectedCity) {
+                item.style.display = 'flex';
+                hasVisibleItems = true;
+            } else {
+                item.style.display = 'none';
             }
         });
+
+        // הצגת הודעה אם אין מוצרים בעיר הנבחרת
+        if (noResults) {
+            noResults.style.display = hasVisibleItems ? 'none' : 'block';
+        }
+    }
+    function closeModal() {
+        // 1. Hide the modal
+        document.getElementById('productModal').style.display = 'none';
+    }
+
+    function resetAndCloseModal() {
+        // 1. Hide the modal
+        document.getElementById('serialModal').style.display = 'none';
+
+        // 2. Clear the input field
+        const input = document.querySelector('#serialModal input[name="serial"]');
+        if(input) input.value = '';
+
+        // 3. Remove the result data from the DOM
+        const resultArea = document.getElementById('modalResultArea');
+        if(resultArea) resultArea.innerHTML = '';
+    }
+
+    function openGlobalStatus() {
+        document.getElementById("statusDialog").style.display = "flex";
+    }
+
+    function closeGlobalStatus() {
+       document.getElementById("statusDialog").style.display = "none";
+    }
+
+        // סגירה בלחיצה מחוץ למודאלים
+    window.onclick = function(event) {
+       let statusModal = document.getElementById("statusDialog");
+       let serialModal = document.getElementById("serialModal");
+
+       if (event.target == statusModal) {
+           closeGlobalStatus();
+       }
+       if (event.target == serialModal) {
+           serialModal.style.display = "none";
+       }
+    }
+
+    function filterCities() {
+        const input = document.getElementById('citySearch');
+        const query = input.value.trim().toLowerCase();
+        const cities = document.querySelectorAll('.city-item');
+        const message = document.getElementById('noCityMessage');
+
+        let visibleCount = 0;
+        cities.forEach(city => {
+            const cityName = (city.getAttribute('data-city') || city.innerText).toLowerCase();
+            if (cityName.includes(query)) {
+                city.style.display = "block";
+                visibleCount++;
+            } else {
+                city.style.display = "none";
+            }
+        });
+        message.style.display = (query.length > 0 && visibleCount === 0) ? "block" : "none";
+    }
+
+    function openNewCityDialog() {
+        document.getElementById('newCityDialog').style.display = 'flex';
+    }
+
+    function closeNewCityDialog() {
+        document.getElementById('newCityDialog').style.display = 'none';
+    }
+
+    // סגירה בלחיצה מחוץ למודאל
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('newCityDialog');
+        if (event.target === modal) {
+            closeNewCityDialog();
+        }
+    });
     </script>
 {% endblock %}
     </body>

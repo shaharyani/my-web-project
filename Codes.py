@@ -8,7 +8,7 @@ class Codes:
         self.all_codes = all_codes if all_codes is not None else []
 
     def save_to_db(self):
-        conn = sqlite3.connect('codes.db')
+        conn = sqlite3.connect('static/db/codes.db')
         cursor = conn.cursor()
         json_codes = json.dumps(self.all_codes)
 
@@ -27,7 +27,7 @@ class Codes:
 
     @staticmethod
     def get_codes_by_city(city_name):
-        conn = sqlite3.connect('codes.db')
+        conn = sqlite3.connect('static/db/codes.db')
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT id, city_name, all_codes FROM city_codes WHERE city_name = ?", (city_name,))
@@ -42,7 +42,7 @@ class Codes:
     @staticmethod
     def get_codes_by_city_list(city_name):
         """מחזירה רשימה שטוחה של קודים עבור עיר מסוימת"""
-        conn = sqlite3.connect('codes.db')
+        conn = sqlite3.connect('static/db/codes.db')
         cursor = conn.cursor()
 
         try:
@@ -62,7 +62,7 @@ class Codes:
 
     @staticmethod
     def get_last_id():
-        conn = sqlite3.connect('codes.db')
+        conn = sqlite3.connect('static/db/codes.db')
         cursor = conn.cursor()
         cursor.execute("SELECT MAX(id) FROM city_codes")
         result = cursor.fetchone()
@@ -72,7 +72,7 @@ class Codes:
     @staticmethod
     def get_all_city_codes():
         """שולף את כל הערים והקודים מ-codes.db"""
-        conn = sqlite3.connect('codes.db')
+        conn = sqlite3.connect('static/db/codes.db')
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute("SELECT city_name, all_codes FROM city_codes")
@@ -91,7 +91,7 @@ class Codes:
     @staticmethod
     def is_code_globally_unique(code):
         """בודק אם הקוד קיים בתוך שדה ה-all_codes של עיר כלשהי"""
-        conn = sqlite3.connect('codes.db')
+        conn = sqlite3.connect('static/db/codes.db')
         cursor = conn.cursor()
         # שליפת כל רשימות הקודים
         cursor.execute("SELECT all_codes FROM city_codes")

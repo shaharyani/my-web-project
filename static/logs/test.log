@@ -1,0 +1,17 @@
+[2026-03-01 17:54:01] INFO: User 'שחר יהודה יאני' set tests [2, 3, 5, 6] to PASSED for product SN-00129
+[2026-03-01 17:54:01] INFO: User 'שחר יהודה יאני' set tests [1, 9, 10] to FAILED for product SN-00129
+[2026-03-01 17:54:56] INFO: User 'שחר יהודה יאני' set tests [1, 2, 3, 5, 6] to PASSED for product SN-00129
+[2026-03-01 17:54:56] INFO: User 'שחר יהודה יאני' set tests [9, 10] to FAILED for product SN-00129
+[2026-03-01 18:19:23] INFO: User 'שחר יהודה יאני' set tests [4] to PASSED for product SN-00128
+[2026-03-01 18:25:11] INFO: User 'שחר יהודה יאני' set tests [4] to PASSED for product SN-00128
+[2026-03-01 18:28:14] INFO: User 'שחר יהודה יאני' VERIFIED tests ['4'] for product SN-00128
+[2026-03-01 18:31:14] INFO: User 'שחר יהודה יאני' set tests [4] to PASSED for product SN-00128
+[2026-03-01 18:31:18] INFO: User 'שחר יהודה יאני' set tests [4] to PASSED for product SN-00128
+[2026-03-05 13:49:43] INFO: User 'שחר יהודה יאני' set tests [2, 3, 5, 6] to PASSED for product SN-00129
+[2026-03-05 13:49:43] INFO: User 'שחר יהודה יאני' set tests [1, 9, 10] to FAILED for product SN-00129
+[2026-03-05 13:50:07] INFO: User 'שחר יהודה יאני' VERIFIED tests ['1', '2', '3', '5', '6', '9', '10'] for product SN-00129
+[2026-03-05 15:14:07] INFO: User 'שחר יהודה יאני' set tests [1, 2, 3, 5, 6] to PASSED for product SN-00129
+[2026-03-05 15:14:07] INFO: User 'שחר יהודה יאני' set tests [9, 10] to FAILED for product SN-00129
+[2026-03-14 21:07:13] INFO: User 'שחר יהודה יאני' set tests [11] to PASSED for product SN-00123
+[2026-03-14 21:07:22] INFO: User 'שחר יהודה יאני' VERIFIED tests ['11'] for product SN-00123
+[2026-03-14 21:36:47] INFO: User 'שחר יהודה יאני' set tests [1, 2, 3, 5, 6, 9, 10] to PASSED for product SN-00129

@@ -4,145 +4,216 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ערים חדשות</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 {% extends "base.html" %}
 {% block content %}
 
-<h2 style="margin: 50px 0 10px; direction: rtl; font-size: 52px;">
-    איזור הערים החדשות
-</h2>
+<style>
+    .page-wrapper { max-width: 1000px; margin: 40px auto; font-family: 'Rubik', sans-serif; direction: rtl; }
 
-<div class="card-container1" dir="rtl">
-    <div class="buttons-container" style="margin: 0 auto;">
-        <div class="filter-section" style="width: 80%; display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <button onclick="addEntry()" id="add-land-btn">
-                <span>הוסף</span>
-            </button>
-            <input type="text" id="codeInput" class="city-search-input" placeholder="הכנס קוד" style="width: auto; margin-left: 10px;">
-            <select id="citySelect" class="city-search-input" style="width: auto; margin-left: 10px;">
-                <option value="" disabled selected>בחר עיר</option>
-                {% for c in cities %}
-                    <option value="{{ c.title }}">{{ c.title }}</option>
-                {% endfor %}
-            </select>
-            <h3 style="width: auto; color: #2575fc; margin-left: 15px;">הוספת קוד לפי עיר</h3>
+    .control-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+
+    .input-group { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 30px; border-bottom: 2px solid #f8f9fa; padding-bottom: 20px; }
+
+    .input-field { display: flex; flex-direction: column; gap: 8px; font-family: 'Rubik', sans-serif; }
+    .input-field label { font-size: 14px; color: #666; font-weight: 500; font-family: 'Rubik', sans-serif; }
+
+    .styled-input { padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; transition: border 0.3s; font-family: 'Rubik', sans-serif; }
+    .styled-input:focus { border-color: #2575fc; outline: none; }
+
+    .add-btn { font-family: 'Rubik', sans-serif; background: #2575fc; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+    .add-btn:hover { background: #1a5ecf; }
+
+    .data-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+    .data-table th { color: #888; font-weight: 400; padding: 15px; }
+    .data-table td { background: #fdfdfd; padding: 20px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
+    .data-table tr td:first-child { border-right: 1px solid #eee; border-radius: 10px 0 0 10px; font-weight: bold; width: 10%; }
+    .data-table tr td:last-child { border-left: 1px solid #eee; border-radius: 0 10px 10px 0; }
+
+    .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+        /* הגדרת הפונט והבסיס לכפתורים */
+    .btn-create, .btn-cancel {
+        font-family: 'Rubik', sans-serif;
+        padding: 10px 24px;
+        border-radius: 12px;
+        border: none;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s ease; /* אנימציה חלקה לכל השינויים */
+        outline: none;
+    }
+
+    /* כפתור מחיקה (אדום) */
+    .btn-create {
+        background-color: #ef4444; /* אדום מודרני */
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
+    }
+
+    .btn-create:hover {
+        background-color: #dc2626; /* אדום כהה יותר בסימון */
+        transform: translateY(-2px); /* קפיצה קטנה למעלה */
+        box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-create:active {
+        transform: translateY(0); /* לחיצה מחזירה למקום */
+    }
+
+    /* כפתור ביטול (אפור) */
+    .btn-cancel {
+        background-color: #f3f4f6; /* אפור בהיר מאוד */
+        color: #4b5563; /* טקסט אפור כהה */
+    }
+
+    .btn-cancel:hover {
+        background-color: #e5e7eb; /* אפור מעט כהה יותר */
+        color: #1f2937;
+        transform: translateY(-2px);
+    }
+
+    .btn-cancel:active {
+        transform: translateY(0);
+    }
+
+</style>
+
+<div class="page-wrapper">
+    <h2 style="font-size: 32px; color: #333; margin-bottom: 20px;">ניהול ערים וקודים</h2>
+
+    <div class="control-card">
+        <div class="input-group">
+            <div class="input-field">
+                <label>בחר עיר</label>
+                <select id="citySelect" class="styled-input">
+                    <option value="" disabled selected style="font-family: 'Rubik', sans-serif;">בחר עיר...</option>
+                    {% for c in cities %}
+                        <option value="{{ c.title }}" style="font-family: 'Rubik', sans-serif;">{{ c.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="input-field">
+                <label>הכנס קוד</label>
+                <input type="text" id="codeInput" class="styled-input" placeholder="לדוגמה: A123">
+            </div>
+            <button onclick="addEntry()" class="add-btn">הוסף קוד</button>
+        </div>
+
+        <table class="data-table" id="summaryTable">
+            <thead>
+                <tr>
+                    <th style="text-align: right;">עיר</th>
+                    <th style="text-align: right;">קודים פעילים</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="deleteConfirmModal" class="modal" style="display: none; z-index: 2000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h2 style="color: #e74c3c;">אישור מחיקה</h2>
+            <p>האם אתה בטוח שברצונך למחוק את הקוד:</p>
+            <p id="delete-user-display-name" style="font-weight: bold; font-size: 20px; margin: 15px 0;"></p>
+            <br>
+            <div class="button-group" style="display: flex; justify-content: center; gap: 10px;">
+                <button type="button" id="confirmDeleteBtn" class="btn-create">מחק</button>
+                <button type="button" onclick="closeDeleteModal()" class="btn-cancel">ביטול</button>
+            </div>
         </div>
     </div>
 
-    <div class="data-table-card" style="width: 80%; margin-top: 20px;">
-        <h3 style="text-align: right; color: #2575fc;">סיכום נתונים</h3>
-        <table id="summaryTable">
-            <thead style="text-align: center;">
-                <tr>
-                    <th>עיר</th>
-                    <th>קודים משויכים</th>
-                </tr>
-            </thead>
-            <tbody>
-                </tbody>
-        </table>
-    </div>
 </div>
-</div>
-
-<div id="toast-container" class="toast-container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="toast {{ 'success' if category == 'success' else 'error' }}">
-              {{ message }}
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-</div>
-
-<style>
-    .toast-container {
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .toast {
-        background: #333;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        min-width: 250px;
-        direction: rtl;
-        animation: slideIn 0.3s ease-out;
-    }
-
-    .toast.success { background: #28a745; border-right: 5px solid #1e7e34; }
-    .toast.error { background: #dc3545; border-right: 5px solid #bd2130; }
-    .toast.info { background: #2575fc; border-right: 5px solid #1a5ecf; }
-
-    @keyframes slideIn {
-        from { transform: translateX(-100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-
-    .toast.fade-out {
-        opacity: 0;
-        transition: opacity 0.5s ease;
-    }
-
-    .code-badge {
-        background-color: #f0f4f8;
-        color: #2575fc;
-        padding: 4px 10px;
-        border-radius: 15px;
-        font-size: 13px;
-        font-weight: bold;
-        margin: 2px;
-        border: 1px solid #d1d9e6;
-        display: inline-block;
-        position: relative;
-        padding-right: 25px !important; /* רווח ל-X */
-    }
-
-    .remove-btn {
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        cursor: pointer;
-        color: #ff4d4d;
-        font-weight: bold;
-        font-size: 16px;
-        padding: 0 5px;
-        transition: color 0.2s;
-    }
-
-    .remove-btn:hover {
-        color: #b30000;
-    }
-</style>
-
 <script>
-// 1. קבלת הנתונים הקיימים מ-Flask (מתוך ה-DB)
-    // 1. קבלת הנתונים (נשאר אותו דבר)
+    let pendingDeleteAction = null; // משתנה לשמירת הפעולה שצריך לבצע
+
+        // פונקציה שמציגה את הדיאלוג ושומרת את הקריאה לשרת ללחיצה על "אישור"
+    function removeCode(city, codeToRemove) {
+        const modal = document.getElementById('deleteConfirmModal');
+        modal.style.display = 'flex'; // מציג את הדיאלוג
+
+        // הגדרת פעולת האישור - אנו מעדכנים את הכפתור בתוך הדיאלוג
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+        // מנקים קליקים קודמים כדי למנוע כפילויות
+        confirmBtn.onclick = function() {
+            performServerDelete(city, codeToRemove);
+            closeDeleteModal();
+        };
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
+
+    function performServerDelete(city, code) {
+        fetch('/remove_code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city_name: city, code: code })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // עדכון ה-UI המקומי ללא רענון עמוד
+                cityData[city] = cityData[city].filter(c => c !== code);
+                renderTable();
+                // כאן תוכל להוסיף את פונקציית ה-Toast שלך
+                showToast("הקוד הוסר בהצלחה", "success");
+            } else {
+                showToast(data.message, "error");
+            }
+        })
+        .catch(err => showToast("שגיאה בתקשורת", "error"));
+    }
+
+
     const cityData = {{ (existing_codes | default({})) | tojson | safe }};
 
-    document.addEventListener('DOMContentLoaded', () => {
-        renderTable();
-        // הערה: ה-Flash מטופל אוטומטית על ידי base.html ב-window.onload
-    });
+    document.addEventListener('DOMContentLoaded', renderTable);
+
+    function renderTable() {
+        const tbody = document.querySelector('#summaryTable tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        Object.keys(cityData).sort().forEach(city => {
+            const codes = cityData[city];
+            if (!codes || codes.length === 0) return;
+
+            const row = document.createElement('tr');
+
+            // יצירת ה-Badges לקודים
+            const codesHtml = codes.map(c => `
+                <span style="background: #eef2ff; color: #2575fc; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin: 4px; display: inline-flex; align-items: center; gap: 8px;">
+                    ${c}
+                    <span onclick="removeCode('${city}', '${c}')" style="cursor: pointer; color: #ff4d4d; font-size: 18px; line-height: 1;">&times;</span>
+                </span>
+            `).join('');
+
+            row.innerHTML = `
+                <td>${city}</td>
+                <td>${codesHtml}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 
     function addEntry() {
         const city = document.getElementById('citySelect').value;
         const code = document.getElementById('codeInput').value.trim();
 
         if (!city || !code) {
-            // שימוש בפונקציה מ-base.html
             showToast("אנא בחר עיר והכנס קוד", "error");
             return;
         }
@@ -155,74 +226,70 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // עדכון מקומי
                 if (!cityData[city]) cityData[city] = [];
                 if (!cityData[city].includes(code)) {
                     cityData[city].push(code);
                     renderTable();
                 }
                 document.getElementById('codeInput').value = '';
-
-                // שימוש בפונקציה מ-base.html
                 showToast(data.message || "הקוד נוסף בהצלחה!", "success");
             } else {
                 showToast(data.message, "error");
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast("תקלה בתקשורת עם השרת", "error");
-        });
+        .catch(error => showToast("תקלה בתקשורת עם השרת", "error"));
     }
 
-function renderTable() {
-    const tbody = document.querySelector('#summaryTable tbody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+    function removeCode(city, codeToRemove) {
+        // 1. השגת האלמנטים של המודל
+        const modal = document.getElementById('deleteConfirmModal');
+        const displayElement = document.getElementById('delete-user-display-name');
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
 
-    Object.keys(cityData).sort().forEach(city => {
-        const codes = cityData[city];
-        if (codes.length === 0) return;
-
-        const row = document.createElement('tr');
-
-        // יצירת הקודים עם כפתור מחיקה (x)
-        const codesHtml = codes.map(c => `
-            <span class="code-badge">
-                ${c}
-                <span class="remove-btn" onclick="removeCode('${city}', '${c}')">&times;</span>
-            </span>
-        `).join(' ');
-
-        row.innerHTML = `
-            <td style="font-weight: bold; padding: 12px; border-bottom: 1px solid #eee;">${city}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #eee;">${codesHtml}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function removeCode(city, codeToRemove) {
-    if (!confirm(`האם אתה בטוח שברצונך למחוק את הקוד ${codeToRemove}?`)) return;
-
-    fetch('/remove_code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ city_name: city, code: codeToRemove })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // עדכון המודל המקומי
-            cityData[city] = cityData[city].filter(c => c !== codeToRemove);
-            renderTable();
-            showToast("הקוד הוסר בהצלחה", "success");
-        } else {
-            showToast("שגיאה במחיקת הקוד", "error");
+        // 2. עדכון הטקסט להצגה (נציג את הקוד והעיר)
+        if (displayElement) {
+            displayElement.innerText = `הקוד ${codeToRemove} (${city})`;
         }
-    })
-    .catch(err => showToast("תקלה בתקשורת", "error"));
-}
+
+        // 3. הצגת המודל
+        modal.style.display = 'flex'; // וודא שה-CSS שלך תומך ב-flex למרכוז, או השתמש ב-'block'
+
+        // 4. הגדרת הפעולה בלחיצה על כפתור המחיקה במודל
+        confirmBtn.onclick = function() {
+            fetch('/remove_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ city_name: city, code: codeToRemove })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // עדכון הנתונים מקומית
+                    cityData[city] = cityData[city].filter(c => c !== codeToRemove);
+                    renderTable();
+                    showToast("הקוד הוסר בהצלחה", "success");
+                } else {
+                    showToast(data.message || "שגיאה במחיקה", "error");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast("תקלה בתקשורת עם השרת", "error");
+            })
+            .finally(() => {
+                // סגירת המודל בסיום (בין אם הצליח ובין אם נכשל)
+                closeDeleteModal();
+            });
+        };
+    }
+
+    // פונקציה לסגירת המודל
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteConfirmModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
 </script>
 {% endblock %}
 </body>

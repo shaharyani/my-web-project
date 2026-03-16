@@ -1,11 +1,14 @@
 import sqlite3
 
+from static.helper.AppContns import USERS_DB, PRODUCTS_DB, TESTS_DB, CODES_DB, REPORTS_DB, REQUESTS_DB
+
+
 def get_users_db():
-    return sqlite3.connect("users.db")
+    return sqlite3.connect(USERS_DB)
 
 def get_products_db():
     conn = sqlite3.connect(
-        "products.db",
+        PRODUCTS_DB,
         timeout=10,
         check_same_thread=False
     )
@@ -15,12 +18,24 @@ def get_products_db():
 
 def get_tests_db():
     return sqlite3.connect(
-        "tests.db",
+        TESTS_DB,
         timeout=10,
     )
 
 def get_codes_db():
     return sqlite3.connect(
-        "codes.db",
+        CODES_DB,
+        timeout=10,
+    )
+
+def get_reports_db():
+    return sqlite3.connect(
+        REPORTS_DB,
+        timeout=10,
+    )
+
+def get_requests_db():
+    return sqlite3.connect(
+        REQUESTS_DB,
         timeout=10,
     )

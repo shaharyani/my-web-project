@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" style="overflow-y: auto;">
+    <title>סחבק מצב הגלים</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .close-icon {
+        position: absolute;
+        left: 15px;
+        top: 10px;
+        cursor: pointer;
+        font-size: 24px;
+        color: #666;
+        transition: color 0.3s ease;
+    }
+
+    .close-icon:hover {
+        color: #d9534f; /* אדום במעבר עכבר */
+    }
+
+    .status-badge {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    .status-waiting { background: #fff3cd; color: #856404; } /* צהוב/כתום */
+    .status-approved { background: #d4edda; color: #155724; } /* ירוק */
+    .status-rejected { background: #f8d7da; color: #721c24; } /* אדום */
+</style>
+
+<div style="padding: 0 20px; max-width: 1600px; margin: 0 auto; direction: rtl; font-family: 'Rubik', sans-serif; text-align: center;">
+
+    <h2 style="margin: 0px 0 10px; font-size: 52px; color: #2575fc; font-weight: bold; text-align: center;">
+        סחבק מצב הגלים
+    </h2>
+    <p style="font-size: 18px; color: #666; margin-bottom: 10px; text-align: center;">
+        שלום <strong>{{ user.name }}</strong>, להלן ריכוז הנתונים שלך:
+    </p>
+    <div style="margin-bottom: 10px;">
+        <span style="background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; margin: 5px">
+            המידע מתעדכן בהמשך היום
+        </span>
+        <span style="background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; margin: 5px">
+            לעזרה פנה למנהל
+        </span>
+    </div>
+    <span style="margin-bottom: 20px; font-weight: bold; color: white; background: #cc0000; text-align: center; padding: 6px 12px; border-radius: 6px; font-size: 0.9em; display: inline-block;">
+                אין לעשות פעולות אחרות בפקודה
+    </span>
+
+    <div style="display: flex; gap: 25px; align-items: flex-start; justify-content: center; text-align: right;">
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 15px; direction: rtl;">
+            <div class="updates-block" style="width: 80%; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <h3 style="color: #cc0000; margin-top: 0; font-size: 1.2em;">עדכונים שוטפים</h3>
+                <p style="color: #666; font-size: 13px;">הנחיות ועדכונים אחרונים.</p>
+                <ul style="list-style: none; padding: 0; font-size: 14px;">
+                    {% if remote_list_items %}
+                        {% for item in remote_list_items %}
+                            <li style="border-right: 4px solid #cc0000; padding: 8px; border-bottom: 1px solid #f0f0f0;">{{ item }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li style="padding: 15px; border: 1px dashed #ccc; color: #999; text-align: center; border-radius: 8px;">אין עדכונים</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="updates-block" style="width: 80%; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.05); direction: rtl;">
+                <h3 style="margin-top: 0; font-size: 1.2em;">מוצרים שחזרו למחסן</h3>
+                <div style="margin-bottom: 15px;">
+                    <select id="cityFilter" onchange="filterProductsByCity()" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 13px; cursor: pointer; background: #fdfdfd;">
+                        <option value="all">כל הערים</option>
+                        {% for city in all_cities %}
+                            <option value="{{ city }}">{{ city }}</option>
+                        {% endfor %}
+                    </select>
+            </div>
+
+            <ul id="returnsList" style="list-style: none; padding: 0; font-size: 14px;">
+                {% if all_retrun_items %}
+                    {% for item in all_retrun_items %}
+                        <li class="return-item" data-city="{{ item.city_name }}" style="padding: 10px 8px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
+                            <strong>{{ item.serial }}</strong>
+                            <span style="font-size: 11px; color: #999; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">{{ item.city_name }}</span>
+                        </li>
+                    {% endfor %}
+
+                    <li id="noResults" style="display: none; padding: 15px; border: 1px dashed #ccc; color: #999; text-align: center; border-radius: 8px; margin-top: 10px;">
+                        אין מוצרים שחזרו מעיר זו
+                    </li>
+                {% else %}
+                    <li style="padding: 15px; border: 1px dashed #ccc; color: #999; text-align: center; border-radius: 8px;">אין מוצרים</li>
+                {% endif %}
+            </ul>
+        </div>
+        </div>
+
+        <div style="min-width:550px; overflow-y: auto; flex: 1; max-width: 800px; background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #eee;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #eee;">
+                        <th style="padding: 15px; color: #444;">מספר סידורי</th>
+                        <th style="padding: 15px; color: #444;">עיר</th>
+                        <th style="padding: 15px; color: #444;">סטטוס</th>
+                        <th style="padding: 15px; color: #444;">פעולות</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if products %}
+                        {% for p in products %}
+                        <tr style="border-bottom: 1px solid #eee; transition: background 0.2s;" onmouseover="this.style.background='#fcfcfc'" onmouseout="this.style.background='white'">
+
+                            <td style="padding: 12px; font-weight: bold;">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                    <strong>{{ p.serial }}</strong>
+
+                                    {% for req in pending_requests %}
+                                        {% if req.serial == p.serial %}
+                                            <span style="color: red; font-size: 10px;">
+                                                (ממתין לאישור של {{ req.to_user }})
+
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </td>
+
+                            <td style="padding: 12px;">{{ p.city_name }}</td>
+
+                            <td style="padding: 12px;">
+                                {% if p.status == 'RED' %}
+                                    <span style="background: #ffcccc; color: #cc0000; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 60px;">תקול</span>
+                                {% elif p.status == 'WHITE' %}
+                                    <span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 60px;">לבן</span>
+                                {% elif p.status == 'BLACK' %}
+                                    <span style="background: #333333; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 60px;">שחור</span>
+                                {% else %}
+                                    <span style="background: #f0f0f0; color: #777777; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 60px;">חדש</span>
+                                {% endif %}
+                            </td>
+
+                            <td style="padding: 12px; white-space: nowrap;">
+                                <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                    <a href="/city_page/{{ p.city_name }}"
+                                       title="צפה בפרטים"
+                                       style="background: #f0f7ff; color: #2575fc; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #d0e7ff; transition: 0.2s;"
+                                       onmouseover="this.style.background='#2575fc'; this.style.color='#fff'"
+                                       onmouseout="this.style.background='#f0f7ff'; this.style.color='#2575fc'">
+                                       צפה
+                                    </a>
+
+                                    <a id="btn-warehouse-{{ p.serial }}"
+                                       onclick="confirmWarehouseTransfer('{{ p.serial }}')"
+                                       title="החזר למחסן"
+                                       style="background: #f8f9fa; color: #555; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #ddd; cursor: pointer; transition: 0.2s;"
+                                       onmouseover="this.style.background='#e9ecef'; this.style.borderColor='#bbb'"
+                                       onmouseout="this.style.background='#f8f9fa'; this.style.borderColor='#ddd'">
+                                       למחסן
+                                    </a>
+
+                                    <a id="btn-transfer-{{ p.serial }}"
+                                       onclick="sendProduct('{{ p.serial }}', {{ available_names }})"
+                                       title="העבר למשתמש אחר"
+                                       style="cursor: pointer; background: #fff5f5; color: #e03131; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #ffe3e3; transition: 0.2s;"
+                                       onmouseover="this.style.background='#e03131'; this.style.color='#fff'"
+                                       onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'">
+                                       העבר אל
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="4" style="padding: 40px; text-align: center; color: #999;">אין מוצרים ברשימה</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 15px; direction: rtl;">
+            <div class="updates-block" style="justify-content: center; width: 100%; display: flex; gap: 15px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.05); direction: rtl;">
+                <button onclick="document.getElementById('requestFromWarehouse').style.display='flex'"
+                            style="
+                                background: #2575fc;
+                                color: white;
+                                border: none;
+                                padding: 12px 25px;
+                                border-radius: 10px;
+                                font-family: 'Rubik', sans-serif;
+                                font-weight: bold;
+                                font-size: 16px;
+                                cursor: pointer;
+                                box-shadow: 0 4px 15px rgba(37, 117, 252, 0.2);
+                                transition: all 0.3s ease;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 10px;
+                                min-width: 100px;
+                            "
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 117, 252, 0.3)';"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(37, 117, 252, 0.2)';">
+                            בקשה לחתימה
+                </button>
+            </div>
+            <div class="updates-block" style="width: 100%; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 1.2em; line-height: 1; border-bottom: 0px solid #f0f0f0;">הבקשות שלי מהמחסן</h3>
+                    <button onclick="document.getElementById('historyDialogWarehouse').style.display='flex'"
+                            title="היסטוריית בקשות"
+                            style="
+                                  flex-shrink: 0;
+                                  background: #fff9db; /* צהוב בהיר מאוד */
+                                  color: #f59f00;      /* כתום-צהוב עמוק לטקסט */
+                                  padding: 6px 12px;
+                                  border-radius: 6px;
+                                  border: 1px solid #ffe066; /* מסגרת צהובה */
+                                  font-weight: bold;
+                                  font-size: 13px;
+                                  cursor: pointer;
+                                  transition: 0.2s;
+                                  font-family: 'Rubik', sans-serif;
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 5px;
+                                  "
+                                  onmouseover="this.style.background='#fcc419'; this.style.color='#fff'; this.style.borderColor='#f59f00';"
+                                  onmouseout="this.style.background='#fff9db'; this.style.color='#f59f00'; this.style.borderColor='#ffe066';">
+
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                    </button>
+                </div>
+                <p style="color: #666; font-size: 13px;">כל הבקשות הממתינות מהמחסן מופעות כאן.</p>
+                <ul style="list-style: none; padding: 0; font-size: 14px;">
+                    {% if user_product_requests | selectattr('status', 'equalto', 'ממתין') | list | length > 0 %}
+                        {% for pr in user_product_requests | selectattr('status', 'equalto', 'ממתין') %}
+                            <li class="return-item" data-city="{{ pr.status }}" style="padding: 10px 8px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
+
+                                <strong>{{ pr.serial }}</strong>
+
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span class="status-badge
+                                        {% if pr.status == 'אושר' %}status-approved
+                                        {% elif pr.status == 'סורב' %}status-rejected
+                                        {% else %}status-waiting{% endif %}">
+                                        {{ pr.status }}
+                                    </span>
+                                    {% if pr.status == 'ממתין' %}
+                                        <button onclick="removeRequest('{{ pr.id }}', 'reject')"
+                                                title="מחק בקשה"
+                                                style="
+                                                    background: #fff5f5;
+                                                    color: #e03131;
+                                                    padding: 6px 12px;
+                                                    border-radius: 6px;
+                                                    border: 1px solid #ffe3e3;
+                                                    font-weight: bold;
+                                                    font-size: 13px;
+                                                    cursor: pointer;
+                                                    transition: 0.2s;
+                                                    font-family: 'Rubik', sans-serif;
+                                                "
+                                                onmouseover="this.style.background='#e03131'; this.style.color='#fff'; this.style.borderColor='#c92a2a';"
+                                                onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'; this.style.borderColor='#ffe3e3';">
+                                            מחק
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li style="display: block; padding: 15px; border: 1px dashed #ccc; color: #999; text-align: center; border-radius: 8px; margin-top: 10px;">
+                           אין בקשות שלך במערכת.
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="updates-block" style="width: 100%; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+               <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 1.2em; line-height: 1; border-bottom: 0px solid #f0f0f0;">הבקשות ממני</h3>
+                    <button onclick="document.getElementById('historyDialogMe').style.display='flex'"
+                            title="היסטוריית בקשות"
+                            style="
+                                  flex-shrink: 0;
+                                  background: #fff9db; /* צהוב בהיר מאוד */
+                                  color: #f59f00;      /* כתום-צהוב עמוק לטקסט */
+                                  padding: 6px 12px;
+                                  border-radius: 6px;
+                                  border: 1px solid #ffe066; /* מסגרת צהובה */
+                                  font-weight: bold;
+                                  font-size: 13px;
+                                  cursor: pointer;
+                                  transition: 0.2s;
+                                  font-family: 'Rubik', sans-serif;
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 5px;
+                                  "
+                                  onmouseover="this.style.background='#fcc419'; this.style.color='#fff'; this.style.borderColor='#f59f00';"
+                                  onmouseout="this.style.background='#fff9db'; this.style.color='#f59f00'; this.style.borderColor='#ffe066';">
+
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                    </button>
+                </div>
+                <p style="color: #666; font-size: 13px;">כל הבקשות שאחרים רוצים להעביר אליך.</p>
+                <ul style="list-style: none; padding: 0; font-size: 14px;">
+                    {% if to_user_product_requests | selectattr('status', 'equalto', 'ממתין') | list | length > 0 %}
+                        {% for pr in to_user_product_requests | selectattr('status', 'equalto', 'ממתין') %}
+                            <li class="return-item" style="padding: 10px 8px; border-bottom: 1px solid #f0f0f0; display: flex; flex-direction: column; align-items: flex-start;">
+                                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                    <strong>{{ pr.serial }}</strong>
+                                    <span class="status-badge
+                                        {% if pr.status == 'אושר' %}status-approved
+                                        {% elif pr.status == 'סורב' %}status-rejected
+                                        {% else %}status-waiting{% endif %}">
+                                        {{ pr.status }}
+                                    </span>
+                                    {% if pr.status == 'ממתין' %}
+                                        <button onclick="removeRequest('{{ pr.id }}', 'reject')"
+                                                title="מחק בקשה"
+                                                style="
+                                                    background: #fff5f5;
+                                                    color: #e03131;
+                                                    padding: 6px 12px;
+                                                    border-radius: 6px;
+                                                    border: 1px solid #ffe3e3;
+                                                    font-weight: bold;
+                                                    font-size: 13px;
+                                                    cursor: pointer;
+                                                    transition: 0.2s;
+                                                    font-family: 'Rubik', sans-serif;
+                                                "
+                                                onmouseover="this.style.background='#e03131'; this.style.color='#fff'; this.style.borderColor='#c92a2a';"
+                                                onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'; this.style.borderColor='#ffe3e3';">
+                                            סרב
+                                        </button>
+                                        <button onclick="removeRequest('{{ pr.id }}', 'approve')"
+                                                title="אשר בקשה"
+                                                style="
+                                                    background: #f0fff4;
+                                                    color: #2b8a3e;
+                                                    padding: 6px 12px;
+                                                    border-radius: 6px;
+                                                    border: 1px solid #c3e6cb;
+                                                    font-weight: bold;
+                                                    font-size: 13px;
+                                                    cursor: pointer;
+                                                    transition: 0.2s;
+                                                    font-family: 'Rubik', sans-serif;
+                                                "
+                                                onmouseover="this.style.background='#2b8a3e'; this.style.color='#fff'; this.style.borderColor='#2b8a3e';"
+                                                onmouseout="this.style.background='#f0fff4'; this.style.color='#2b8a3e'; this.style.borderColor='#c3e6cb';">
+                                            אשר
+                                        </button>
+                                {% endif %}
+                                </div>
+                                <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">
+                                    {{ pr.user }}
+                                </p>
+
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li style="display: block; padding: 15px; border: 1px dashed #ccc; color: #999; text-align: center; border-radius: 8px; margin-top: 10px;">
+                           איזה כיף! אין בקשות ממך במערכת
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div id="approveDialog" class="modal" style="display:none; align-items: center; justify-content: center; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+            <div class="modal-content" style="background: white; padding: 25px; border-radius: 15px; width: 400px; position: relative;">
+                <span class="close-btn" onclick="document.getElementById('approveDialog').style.display='none'" style="position: absolute; left: 15px; top: 10px; cursor: pointer; font-size: 24px;">&times;</span>
+
+                <h2 id="approveHeader" style="text-align: center; margin-top: 0;"></h2>
+
+                <div id="failedTestsList">
+                    </div>
+
+                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+                    <button id="approveSubmitBtn" class="btn-create-land" style="padding: 10px 25px;">אשר</button>
+                    <button id="cancelBtn" onclick="document.getElementById('approveDialog').style.display='none'" class="btn-create-land" style="padding: 10px 25px;">ביטול</button>
+                </div>
+            </div>
+        </div>
+        <div id="requestFromWarehouse" class="modal" style="display:none; align-items: center; justify-content: center; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; font-family: 'Rubik', sans-serif;">
+            <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 400px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                <span class="close-btn" onclick="document.getElementById('requestFromWarehouse').style.display='none'" style="cursor: pointer; font-size: 28px; transition: color 0.3s ease;">
+                    &times;
+                </span>
+                <h2 style="text-align: center; margin-top: 0; color: #2575fc; font-weight: bold;">בקשה מהמחסן</h2>
+
+                <form id="warehouseForm" style="text-align: right; direction: rtl;">
+                    <div style="padding: 10px 0;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">מספר סידורי:</label>
+                        <input type="text" id="req_serial" placeholder="הקש מספר סידורי" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Rubik', sans-serif;">
+
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">סיבה / שימוש:</label>
+                        <input type="text" id="req_used_for" placeholder="ציין את סיבת הבקשה" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Rubik', sans-serif;">
+                    </div>
+
+                    <div id="warehouseAlert"
+                         style="display:none;
+                                color: #c92a2a;
+                                background: #fff5f5;
+                                border: 1px solid #ffcccc;
+                                padding: 10px;
+                                text-align: center;
+                                margin-bottom: 15px;
+                                border-radius: 8px;
+                                font-weight: bold;
+                                font-size: 14px;">
+                    </div>
+                    <div style="display: flex; justify-content: center;">
+                        <button type="button" onclick="submitWarehouseRequest()" style="padding: 12px 40px; background: #2575fc; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Rubik', sans-serif; font-weight: bold; font-size: 16px; transition: background 0.3s;">
+                            שלח בקשה
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div id="transferDialog" class="modal" style="display:none; align-items: center; justify-content: center; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; font-family: 'Rubik', sans-serif;">
+            <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 450px; position: relative; font-family: 'Rubik', sans-serif;">
+                <span class="close-btn" onclick="document.getElementById('transferDialog').style.display='none'">&times;</span>
+
+                <h2 id="transferHeader" style="text-align: center; color: #2575fc; font-weight: bold; margin-bottom: 25px;">העברת מוצר למשתמש</h2>
+
+                <div id="transferContainer" style="font-family: 'Rubik', sans-serif;">
+                    </div>
+
+                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 25px;">
+                    <button id="transferSubmitBtn" style="padding: 12px 25px; background: #2575fc; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Rubik', sans-serif;">שלח בקשה</button>
+                    <button onclick="document.getElementById('transferDialog').style.display='none'" style="padding: 12px 25px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Rubik', sans-serif;">ביטול</button>
+                </div>
+            </div>
+        </div>
+        <div id="historyDialogWarehouse" class="modal" style="display:none; align-items: center; justify-content: center; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; direction: rtl;">
+            <div class="modal-content" style="background: white; padding: 25px; border-radius: 15px; width: 400px; position: relative; font-family: 'Rubik', sans-serif;">
+
+                <span class="close-btn" onclick="document.getElementById('historyDialogWarehouse').style.display='none'" style="position: absolute; left: 15px; top: 10px; cursor: pointer; font-size: 24px;">&times;</span>
+
+                <h2 style="text-align: center; margin-top: 0; font-size: 1.4em;">היסטוריית בקשות</h2>
+
+                <div style="max-height: 300px; overflow-y: auto; margin-top: 15px;">
+                    <ul style="list-style: none; padding: 0;">
+                        {% if user_product_requests %}
+                            {% for pr in user_product_requests | rejectattr('status', 'equalto', 'ממתין') %}
+                                <li style="padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; background: #fafafa; border-radius: 8px; margin-bottom: 5px;">
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <strong style="font-size: 15px; color: #333;">{{ pr.serial }}</strong>
+                                        <span style="font-size: 13px; color: #555;">שימוש עבור: {{ pr.used_for }}</span>
+                                        <span style="font-size: 12px; color: #999;">תאריך: {{ pr.request_date }}</span>
+                                    </div>
+
+                                    <span style="
+                                        font-size: 11px;
+                                        font-weight: bold;
+                                        padding: 4px 10px;
+                                        border-radius: 12px;
+                                        {% if pr.status == 'אושר' %}background-color: #d3f9d8; color: #2b8a3e; border: 1px solid #b2f2bb;
+                                        {% elif pr.status == 'סורב' %}background-color: #ffe3e3; color: #c92a2a; border: 1px solid #ffc9c9;
+                                        {% else %}background-color: #fff9db; color: #f08c00; border: 1px solid #ffe066;
+                                        {% endif %}
+                                    ">
+                                        {{ pr.status }}
+                                    </span>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li style="text-align: center; color: #888; padding: 20px;">אין היסטוריית בקשות זמינה.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div style="display: flex; justify-content: center; margin-top: 20px;">
+                    <button onclick="document.getElementById('historyDialogWarehouse').style.display='none'" class="btn-create-land" style="padding: 10px 25px; cursor: pointer;">סגור</button>
+                </div>
+            </div>
+        </div>
+        <div id="historyDialogMe" class="modal" style="display:none; align-items: center; justify-content: center; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; direction: rtl;">
+            <div class="modal-content" style="background: white; padding: 25px; border-radius: 15px; width: 400px; position: relative; font-family: 'Rubik', sans-serif;">
+
+                <span class="close-btn" onclick="document.getElementById('historyDialogMe').style.display='none'" style="position: absolute; left: 15px; top: 10px; cursor: pointer; font-size: 24px;">&times;</span>
+
+                <h2 style="text-align: center; margin-top: 0; font-size: 1.4em;">היסטוריית בקשות</h2>
+
+                <div style="max-height: 300px; overflow-y: auto; margin-top: 15px;">
+                    <ul style="list-style: none; padding: 0;">
+                        {% if to_user_product_requests %}
+                            {% for pr in to_user_product_requests | rejectattr('status', 'equalto', 'ממתין') %}
+                                <li style="padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start; background: #fafafa; border-radius: 8px; margin-bottom: 5px;">
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <strong style="font-size: 15px; color: #333;">{{ pr.serial }}</strong>
+                                        <span style="font-size: 13px; color: #555;">{{ pr.used_for }}</span>
+                                        <span style="font-size: 13px; color: #555;">בקשת מאת: {{ pr.user }}</span>
+                                        <span style="font-size: 12px; color: #999;">תאריך: {{ pr.request_date }}</span>
+                                    </div>
+
+                                    <span style="
+                                        font-size: 11px;
+                                        font-weight: bold;
+                                        padding: 4px 10px;
+                                        border-radius: 12px;
+                                        {% if pr.status == 'אושר' %}background-color: #d3f9d8; color: #2b8a3e; border: 1px solid #b2f2bb;
+                                        {% elif pr.status == 'סורב' %}background-color: #ffe3e3; color: #c92a2a; border: 1px solid #ffc9c9;
+                                        {% else %}background-color: #fff9db; color: #f08c00; border: 1px solid #ffe066;
+                                        {% endif %}
+                                    ">
+                                        {{ pr.status }}
+                                    </span>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li style="text-align: center; color: #888; padding: 20px;">אין היסטוריית בקשות זמינה.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <div style="display: flex; justify-content: center; margin-top: 20px;">
+                    <button onclick="document.getElementById('historyDialogMe').style.display='none'" class="btn-create-land" style="padding: 10px 25px; cursor: pointer;">סגור</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) { location.reload(); }
+    });
+    window.addEventListener('pageshow', function(event) {
+        // בודק אם הדף נטען מה-Cache (למשל בלחיצה על כפתור "חזור")
+        if (event.persisted) {
+            console.log("דף נטען מה-Cache, מרענן נתונים...");
+            location.reload(); // רענון הדף כדי לקבל נתונים עדכניים מהשרת
+        }
+    });
+
+    function updateButtonStates() {
+        // משיכת רשימת כל הבקשות שממתינות לאישור מה-DOM
+        // אנחנו מניחים שה-HTML כבר מכיל את המידע הזה בתוך ה-pending_requests בטבלה
+        const pendingSerials = [];
+        {% for req in pending_requests %}
+            pendingSerials.push("{{ req.serial }}");
+        {% endfor %}
+
+        pendingSerials.forEach(serial => {
+            const transferBtn = document.getElementById(`btn-transfer-${serial}`);
+            const warehouseBtn = document.getElementById(`btn-warehouse-${serial}`);
+
+            if (transferBtn) transferBtn.classList.add('btn-disabled');
+            if (warehouseBtn) warehouseBtn.classList.add('btn-disabled');
+        });
+    }
+
+    // קריאה לפונקציה מיד בטעינת הדף
+    window.onload = updateButtonStates;
+
+    function sendProduct(serial, usersList) {
+        const dialog = document.getElementById('transferDialog');
+        const container = document.getElementById('transferContainer');
+        const submitBtn = document.getElementById('transferSubmitBtn');
+
+        let options = usersList.map(u => `<option value="${u}">${u}</option>`).join('');
+
+        container.innerHTML = `
+            <div style="text-align: right; direction: rtl; padding: 10px 0; font-family: 'Rubik', sans-serif;">
+                <p style="margin-bottom: 15px;">מוצר להעברה: <strong>${serial}</strong></p>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label style="font-weight: bold; color: #555; white-space: nowrap;">בחר משתמש:</label>
+                    <select id="targetUser" style="width: 30%; padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif;">
+                        ${options}
+                    </select>
+                </div>
+            </div>
+        `;
+
+        dialog.style.display = 'flex';
+
+        // לוגיקת שליחה
+        submitBtn.onclick = function() {
+            const selectedUser = document.getElementById('targetUser').value;
+            submitBtn.disabled = true;
+
+            fetch('/send_product_to_user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ serial: serial, target_user: selectedUser })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(() => {
+                submitBtn.disabled = false;
+            });
+        };
+    }
+
+    function removeRequest(requestId, action) {
+        const dialog = document.getElementById('approveDialog');
+        const header = document.getElementById('approveHeader');
+        const container = document.getElementById('failedTestsList');
+        const submitBtn = document.getElementById('approveSubmitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        // הגדרת משתני תצוגה לפי סוג הפעולה
+        const isApprove = action === 'approve';
+        const title = isApprove ? "אישור בקשת העברה" : "סירוב ומחיקת בקשה";
+        const color = isApprove ? "#2b8a3e" : "#e03131";
+        const btnText = isApprove ? "אשר בקשה" : "סרב ומחק";
+        const msg = isApprove
+            ? "אישור פעולה זו יעביר את המוצר למשתמש המבקש."
+            : "פעולה זו תסרב את הבקשה ותסיר אותה מהרשימה לצמיתות.";
+
+        // 1. עיצוב המודאל
+        header.innerText = title;
+        header.style.color = color;
+        header.style.fontWeight = "bold";
+
+        // 2. בניית התוכן
+        container.innerHTML = `
+            <div style="text-align: right; background: ${isApprove ? '#f0fff4' : '#fff5f5'}; padding: 20px; border-radius: 12px; width: 90%; margin: 15px auto; border: 1px solid ${isApprove ? '#c3e6cb' : '#ffe3e3'}; direction: rtl;">
+                <p style="margin: 0; color: #555; font-size: 14px; line-height: 1.5;">
+                    ${msg}
+                    <br>
+                    <strong>האם אתה בטוח שברצונך להמשיך?</strong>
+                </p>
+            </div>
+        `;
+
+        // 3. עיצוב הכפתורים
+        submitBtn.innerText = btnText;
+        submitBtn.style.background = color;
+
+        if(cancelBtn) {
+            cancelBtn.style.background = "#6c757d";
+            cancelBtn.style.color = "white";
+            cancelBtn.style.border = "none";
+        }
+
+        dialog.style.display = 'flex';
+
+        // 4. לוגיקת הלחיצה על אישור
+        submitBtn.onclick = function() {
+            submitBtn.disabled = true; // מניעת לחיצות כפולות
+
+            // שליחת הפעולה לשרת יחד עם ה-action
+            fetch(`/remove_request/${requestId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action }) // שליחת ה-action לשרת
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert("שגיאה: " + data.message);
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                submitBtn.disabled = false;
+            });
+        };
+    }
+
+    function closeWarehouseDialog() {
+        document.getElementById('requestFromWarehouse').style.display = 'none';
+        document.getElementById('warehouseForm').reset();
+        const alertBox = document.getElementById('warehouseAlert');
+        alertBox.style.display = 'none';
+        alertBox.innerText = '';
+    }
+
+    function submitWarehouseRequest() {
+        const alertBox = document.getElementById('warehouseAlert');
+        const dialog = document.getElementById('requestFromWarehouse'); // תיקון: הפניה למודאל הנכון
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        const data = {
+            serial: document.getElementById('req_serial').value,
+            used_for: document.getElementById('req_used_for').value
+        };
+
+        // טיפול בביטול - סגירת המודאל
+        if (cancelBtn) {
+            cancelBtn.onclick = function() {
+                dialog.style.display = 'none';
+            };
+        }
+
+        fetch('/request_product', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alertBox.innerText = data.message;
+                alertBox.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+        });
+    }
+
+    function showAlert(msg, bg, color) {
+        const alertBox = document.getElementById('warehouseAlert');
+        alertBox.innerText = msg;
+        alertBox.style.display = 'block';
+        alertBox.style.backgroundColor = bg;
+        alertBox.style.color = color;
+    }
+
+    function confirmWarehouseTransfer(serial) {
+        const dialog = document.getElementById('approveDialog');
+        const container = document.getElementById('failedTestsList');
+        const header = document.getElementById('approveHeader');
+        const submitBtn = document.getElementById('approveSubmitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+
+        header.style.color = "#2575fc";
+        header.style.fontWeight = "bold";
+        header.innerText = "אישור העברה למחסן";
+
+        container.innerHTML = `
+            <div style="text-align: right; background: #f8f9fa; padding: 20px; border-radius: 12px; width: 90%; margin: 15px auto; border: 1px solid #ececec; direction: rtl;">
+                <p style="margin: 8px 0; border-bottom: 0.5px solid #eee; padding-bottom: 8px;"><b>מספר סידורי:</b> ${serial}</p>
+                <p style="margin: 8px 0; color: #555; font-size: 16px;">האם אתה בטוח שברצונך להעביר את המוצר לבעלות המחסן?</p>
+            </div>
+        `;
+
+        dialog.style.display = 'flex';
+
+        if(cancelBtn) {
+            cancelBtn.style.background = "#6c757d";
+            cancelBtn.style.color = "white";
+            cancelBtn.style.border = "none";
+            cancelBtn.onclick = function() {
+                dialog.style.display = 'none';
+            };
+        }
+
+        submitBtn.innerText = "אשר והעבר";
+        submitBtn.style.background = "#669d67";
+
+        submitBtn.onclick = function() {
+            submitBtn.disabled = true; // מניעת לחיצה כפולה
+
+            fetch(`/transfer_to_warehouse/${serial}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(() => {
+                    submitBtn.disabled = false;
+                });
+        };
+    }
+function filterProductsByCity() {
+    const selectedCity = document.getElementById('cityFilter').value;
+    const items = document.querySelectorAll('.return-item');
+    const noResults = document.getElementById('noResults');
+    let hasVisibleItems = false;
+
+    items.forEach(item => {
+        const itemCity = item.getAttribute('data-city');
+
+        if (selectedCity === 'all' || itemCity === selectedCity) {
+            item.style.display = 'flex';
+            hasVisibleItems = true;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    // הצגת הודעה אם אין מוצרים בעיר הנבחרת
+    if (noResults) {
+        noResults.style.display = hasVisibleItems ? 'none' : 'block';
+    }
+}
+</script>
+
+{% endblock %}
+</body>
+</html>

@@ -1,0 +1,34 @@
+[2026-03-08 15:20:35] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 0
+[2026-03-08 15:20:44] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 2
+[2026-03-08 15:23:57] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 2
+[2026-03-08 15:29:35] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 1
+[2026-03-08 15:29:50] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 2
+[2026-03-09 18:37:36] INFO: USER 'שחר יהודה יאני' CREATED a special request 'בקשה'
+[2026-03-14 00:28:24] INFO: ADMIN 'שחר יהודה יאני' UPDATED serials for request '1'
+[2026-03-14 01:44:48] INFO: Request ID:'1' is NOW 1/4 finished
+[2026-03-14 01:48:22] INFO: Request ID:'1' is NOW 1/4 finished
+[2026-03-14 01:48:22] INFO: Request ID:'1' is NOW 2/4 finished
+[2026-03-14 01:48:30] INFO: Request ID:'1' is NOW 1/4 finished
+[2026-03-14 01:48:30] INFO: Request ID:'1' is NOW 2/4 finished
+[2026-03-14 01:55:26] INFO: Request ID:'1' is NOW 1/4 finished
+[2026-03-14 01:55:26] INFO: Request ID:'1' is NOW 2/4 finished
+[2026-03-14 01:57:08] INFO: Request ID:'1' is NOW 1/4 finished
+[2026-03-14 01:57:14] INFO: Request ID:'1' is NOW 1/4 finished
+[2026-03-14 02:00:10] INFO: Request ID:'1' is NOW 1/4 finished
+[2026-03-14 12:53:38] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 1
+[2026-03-14 12:54:37] INFO: Request 'בקשה' is NOW 1/4 finished
+[2026-03-14 12:56:54] INFO: Request '1' is NOW 0/4 finished
+[2026-03-14 13:08:17] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 2
+[2026-03-14 13:08:41] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 0
+[2026-03-14 13:08:48] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 1
+[2026-03-14 17:06:05] INFO: USER 'שחר יהודה יאני' CREATED a special request 'בקשה'
+[2026-03-14 17:21:08] INFO: USER 'שחר יהודה יאני' CREATED a special request 'בקשה1'
+[2026-03-14 18:47:01] INFO: ADMIN 'שחר יהודה יאני' UPDATED the special users to 2
+[2026-03-14 21:02:35] INFO: ADMIN 'שחר יהודה יאני' UPDATED serials for request '3'
+[2026-03-14 21:03:18] INFO: ADMIN 'שחר יהודה יאני' UPDATED serials for request '2'
+[2026-03-14 21:04:06] INFO: USER 'שחר יהודה יאני' CREATED a special request 'בקשה לתצוגה'
+[2026-03-14 21:07:41] INFO: Request '3' is NOW 1/1 finished
+[2026-03-14 21:36:04] INFO: Request '1' is NOW 2/4 finished
+[2026-03-14 21:37:44] INFO: Request '1' is NOW 1/4 finished
+[2026-03-14 21:38:50] INFO: Request '1' is NOW 2/4 finished
+[2026-03-14 21:42:04] INFO: Request '1' is NOW 1/4 finished

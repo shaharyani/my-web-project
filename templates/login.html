@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>כניסה</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
@@ -38,6 +39,17 @@
             </div><br>
 
             <button type="submit" class="buttons-container">התחבר</button>
+            <button type="button" id="sso-button" class="buttons-container">
+                התחבר באמצעות SSO
+            </button>
+
+            <div id="sso-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+                <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); direction: rtl; font-family: 'Rubik', sans-serif;">
+                    <img class="logo" src="{{ url_for('static', filename='images/logo.png') }}" style="margin-top: 25px; font-size: 50px; margin-bottom: 25px; display: inline-block; transform: scale(2.5)">
+                    <h3 style="margin: 0; color: #333;">מתחבר באופן מאובטח...</h3>
+                    <p style="color: #666; margin-top: 10px;">אנא המתן בזמן שאנו מאמתים את פרטיך</p>
+                </div>
+            </div>
         </form>
 
         <br>
@@ -102,7 +114,46 @@
             closeNewUserDialog();
         }
     });
+
+    document.getElementById('sso-button').addEventListener('click', function() {
+        // הצגת הדיאלוג
+        const modal = document.getElementById('sso-modal');
+        modal.classList.add('active');
+
+        // סימולציה של מעבר לדף ה-SSO אחרי 2 שניות
+        // במציאות, כאן תגיע הפקודה window.location.href = "/sso_login_url";
+        setTimeout(function() {
+            // כאן תוכל להוסיף את הקישור האמיתי להתחברות
+            // window.location.href = "{{ url_for('login') }}";
+            alert("מבצע הפניה לשרת האימות...");
+        }, 2000);
+    });
 </script>
+
+<style>
+    /* מוודא שהדיאלוג מוצג כ-flex כשהוא פעיל */
+    #sso-modal.active {
+        display: flex !important;
+    }
+
+    #sso-button {
+        color: #2563eb;
+        background-color: white;
+        cursor: pointer;
+        border: 1px solid #2563eb;
+        border-radius: 8px;
+        font-weight: bold;
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        font-family: 'Rubik';
+        transition: all 0.3s ease;
+    }
+
+    #sso-button:hover {
+        transform: translateY(-2px);
+    }
+</style>
 
 {% endblock %}
 
