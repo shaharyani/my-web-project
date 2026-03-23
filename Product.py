@@ -1,7 +1,7 @@
 from typing import List
 
 class Product:
-    def __init__(self, id: int, serial: str, code: str, land_type: str, city_name: str, status: str, owner: str, notes: List[str]):
+    def __init__(self, id: int, serial: str, code: str, land_type: str, city_name: str, status: str, owner: str, notes: List[str], reports: int):
         self.id = id
         self.serial = serial
         self.code = code
@@ -10,7 +10,8 @@ class Product:
         self.status = status  # R | B | W | N
         self.owner = owner
         self.notes = notes or []
+        self.reports = reports
 
     def __str__(self):
         return (f"Product(id={self.id}, serial='{self.serial}', city='{self.city_name}', "
-                f"status='{self.status}', current_code='{self.code}', notes={self.notes})")
+                f"status='{self.status}', current_code='{self.code}', notes={self.notes}), reports={self.reports})")

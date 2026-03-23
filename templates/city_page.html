@@ -113,6 +113,7 @@
                 <thead>
                     <tr>
                         <th>תוצאות</th>
+                        <th>כלל התקלות</th>
                         <th>מצב</th>
                         <th>קוד אישי</th>
                         <th>מספר סידורי</th>
@@ -125,6 +126,17 @@
                             <div onclick="toggleTests('{{ p.serial }}')" style="cursor:pointer;">
                                 <img src="{{ url_for('static', filename='images/down-arrow.png') }}" class="view-icon" alt="view" id="icon-{{ p.serial }}">
                             </div>
+                        </td>
+                        <td class="view-cell">
+                            {% if p.reports == 0 %}
+                                <span style="background-color: #28a745; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
+                                    {{ p.reports }}
+                                </span>
+                            {% else %}
+                                <span style="background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
+                                    {{ p.reports }}
+                                </span>
+                            {% endif %}
                         </td>
                         <td id="status-display-{{ p.serial }}" style="text-align: center; vertical-align: middle;">
                             {% if p.status in ['R', 'RED'] %}
@@ -142,7 +154,7 @@
                     </tr>
 
                     <tr id="test-row-{{ p.serial }}" style="display: none; background-color: #f1f1f1;">
-                        <td colspan="4">
+                        <td colspan="5">
                             <div id="content-{{ p.serial }}" style="max-height: 350px; overflow-y: auto; padding: 15px; text-align: right;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; direction: rtl;">
                                     <strong style="font-size: 1.1em; white-space: nowrap;">כלל הבדיקות עבור: {{ p.serial }}</strong>
@@ -392,7 +404,7 @@
     // --- 1. Global Variables & Registry ---
     let currentVerifySerial = "";
     let pendingStatus = { serial: null, newValue: null, selectElement: null };
-    const CORRECT_PASSCODE = "1234";
+    const PASSCODE = 1234;
     const testStatusRegistry = {};
 
     // --- 2. Approval Dialog Logic (Manage Results) ---
@@ -527,7 +539,7 @@
 
     function checkVerifyPasscode() {
         const code = document.getElementById('verifyPasscode').value;
-        if (code === CORRECT_PASSCODE) {
+        if (code === PASSCODE) {
             document.getElementById('verifyAlert').style.display = 'none';
             loadVerifyList(currentVerifySerial);
         } else {
@@ -711,7 +723,7 @@
 
     function validateAndChange() {
         const input = document.getElementById('confirmPasscode');
-        if (input.value === CORRECT_PASSCODE) {
+        if (input.value === PASSCODE) {
             const { serial, newValue, selectElement } = pendingStatus;
 
             // 1. Update the dropdown style

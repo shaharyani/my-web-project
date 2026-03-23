@@ -279,7 +279,7 @@ def load_product_by_city(city_name):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, serial, code, land_type, city_name, status, owner, notes
+        SELECT id, serial, code, land_type, city_name, status, owner, notes, report
         FROM products
         WHERE city_name = ?
         ORDER BY id DESC
@@ -299,7 +299,8 @@ def load_product_by_city(city_name):
             city_name=row[4],
             status=STATUS_MAP.get(row[5], row[5]),
             owner=row[6],
-            notes=notes_list
+            notes=notes_list,
+            reports=row[8]
         )
 
         products.append(p)
@@ -320,9 +321,9 @@ def add_product(city_name):
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO products (serial, code, land_type, city_name, status, owner, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (serial, code, getLandType(city_name), city_name, "N", "מחסן", ""))
+            INSERT INTO products (serial, code, land_type, city_name, status, owner, notes, report)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (serial, code, getLandType(city_name), city_name, "N", "מחסן", ""), 0)
         conn.commit()
         flash("מוצר נוסף בהצלחה", "success")
     except sqlite3.IntegrityError as e:
@@ -1184,7 +1185,7 @@ def get_all_products_from_db():
 
     # Selecting the columns required by the Product class constructor
     cursor.execute("""
-        SELECT id, serial, code, land_type, city_name, status, owner, notes 
+        SELECT id, serial, code, land_type, city_name, status, owner, notes, report 
         FROM products
     """)
 
@@ -1212,7 +1213,8 @@ def get_all_products_from_db():
             city_name=row[4],
             status=STATUS_MAP.get(row[5], row[5]),
             owner=row[6],
-            notes=notes_list
+            notes=notes_list,
+            reports=row[8]
         )
         products.append(p)
 

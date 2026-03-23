@@ -30,3 +30,5 @@ LOG_SIGN_FILE = os.path.join(LOG_FOLDER, "sign.log")
 LOG_REPORT_FILE = os.path.join(LOG_FOLDER, "report.log")
 LOG_REQ_WAREHOUSE_FILE = os.path.join(LOG_FOLDER, "request_warehouse.log")
 LOG_SPECIAL_FILE = os.path.join(LOG_FOLDER, "special.log")
+
+PASSCODE = 1234

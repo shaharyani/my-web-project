@@ -32,7 +32,8 @@ def create_all_dbs():
             status TEXT CHECK(status IN ('R','W','B','N')) DEFAULT 'N',
             owner TEXT,
             notes TEXT,          -- רשימת הערות בפורמט JSON
-            all_codes TEXT       -- רשימת כל הקודים בפורמט JSON
+            all_codes TEXT,      -- רשימת כל הקודים בפורמט JSON
+            report INTEGER
         )
     """)
     conn1.commit()
