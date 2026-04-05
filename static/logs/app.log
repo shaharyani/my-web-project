@@ -188,3 +188,100 @@
 [2026-03-16 17:58:16,740] INFO: User 'שחר יהודה יאני' logged in.
 [2026-03-16 17:58:18,052] INFO: User 'שחר יהודה יאני' logged out successfully.
 [2026-03-23 12:24:12,509] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-24 18:19:23,302] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-24 23:13:41,760] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 10:54:49,100] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 11:20:31,047] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 11:20:36,428] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 11:45:48,690] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 11:45:55,786] INFO: User 'רוני' logged in.
+[2026-03-29 12:10:55,304] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:10:58,556] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 12:13:19,919] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 12:13:24,110] INFO: User 'רוני' logged in.
+[2026-03-29 12:20:37,549] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:20:42,952] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 12:30:45,650] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 12:30:48,789] INFO: User 'רוני' logged in.
+[2026-03-29 12:31:17,674] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:31:20,533] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 12:35:34,085] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 12:35:37,098] INFO: User 'רוני' logged in.
+[2026-03-29 12:35:59,614] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:36:05,295] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 12:36:37,673] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 12:36:41,197] INFO: User 'רוני' logged in.
+[2026-03-29 12:37:46,423] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:37:50,547] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 12:42:55,790] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 12:42:58,393] INFO: User 'רוני' logged in.
+[2026-03-29 12:43:14,695] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:43:18,996] WARNING: Login failed for 'שחר יהודה יאני'.
+[2026-03-29 12:43:21,565] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 12:44:38,686] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 12:44:42,057] INFO: User 'רוני' logged in.
+[2026-03-29 12:46:19,808] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:46:23,470] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 12:49:45,218] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 12:49:48,166] INFO: User 'רוני' logged in.
+[2026-03-29 12:49:48,221] INFO: User 'רוני' logged in.
+[2026-03-29 12:49:53,806] INFO: User 'רוני' logged out successfully.
+[2026-03-29 12:49:57,237] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 13:55:49,098] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 14:54:36,617] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 15:57:15,620] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 15:57:18,757] INFO: User 'רוני' logged in.
+[2026-03-29 15:59:09,908] INFO: User 'רוני' logged out successfully.
+[2026-03-29 15:59:13,495] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 16:00:05,911] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 16:00:09,755] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 16:00:13,264] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 16:00:16,589] INFO: User 'איתי' logged in.
+[2026-03-29 16:01:19,044] INFO: User 'איתי' logged out successfully.
+[2026-03-29 16:01:22,075] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 16:02:45,877] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 16:02:49,465] INFO: User 'איתי' logged in.
+[2026-03-29 16:27:03,213] INFO: User 'איתי' logged out successfully.
+[2026-03-29 16:27:06,802] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 17:31:48,036] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 17:31:54,108] INFO: User 'יוסי' logged in.
+[2026-03-29 18:00:58,050] INFO: User 'יוסי' logged out successfully.
+[2026-03-29 18:01:01,033] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 18:01:59,988] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 18:02:05,846] INFO: User 'יוסי' logged in.
+[2026-03-29 18:07:14,724] INFO: User 'יוסי' logged out successfully.
+[2026-03-29 18:07:18,507] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-29 18:07:57,368] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-29 18:08:01,241] INFO: User 'יוסי' logged in.
+[2026-03-29 18:17:04,726] INFO: User 'יוסי' logged out successfully.
+[2026-03-29 18:17:07,445] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-30 01:01:13,121] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-30 12:00:59,580] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-30 12:28:16,646] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-30 15:57:57,441] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-30 18:36:56,535] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-30 18:37:00,623] INFO: User 'רוני' logged in.
+[2026-03-30 18:40:12,405] INFO: User 'רוני' logged out successfully.
+[2026-03-30 18:40:21,949] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-30 18:49:26,299] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-03-30 18:49:57,071] INFO: User 'שחר יהודה יאני' logged in.
+[2026-03-30 19:00:51,743] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-02 11:54:50,913] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-02 13:12:01,197] INFO: User 'יובל' (ID: 2) updated: type=0, admin=True by שחר יהודה יאני.
+[2026-04-02 13:15:26,509] INFO: User 'יובל' (ID: 2) updated: type=0, admin=True by שחר יהודה יאני.
+[2026-04-02 13:17:56,309] INFO: User 'יובל' (ID: 2) updated: type=0, admin=True by שחר יהודה יאני.
+[2026-04-02 13:23:47,082] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-02 13:41:22,172] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-02 14:20:36,601] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-02 14:20:50,907] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-02 14:23:29,883] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-04 19:48:45,412] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-04 20:04:09,958] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-04 20:10:24,451] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-04 20:10:54,041] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-04 20:12:15,615] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-04 20:12:19,303] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-04 20:58:39,585] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-05 00:54:25,594] INFO: User 'שחר יהודה יאני' logged in.
+[2026-04-05 01:56:30,231] INFO: User 'שחר יהודה יאני' logged out successfully.
+[2026-04-05 11:43:31,726] INFO: User 'שחר יהודה יאני' logged in.

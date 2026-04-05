@@ -47,13 +47,15 @@
                 <div style="background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); direction: rtl; font-family: 'Rubik', sans-serif;">
                     <img class="logo" src="{{ url_for('static', filename='images/logo.png') }}" style="margin-top: 25px; font-size: 50px; margin-bottom: 25px; display: inline-block; transform: scale(2.5)">
                     <h3 style="margin: 0; color: #333;">מתחבר באופן מאובטח...</h3>
-                    <p style="color: #666; margin-top: 10px;">אנא המתן בזמן שאנו מאמתים את פרטיך</p>
+                    <p id="sso-status-text" style="color: #666; margin-top: 10px;">אנא המתן בזמן שאנו מאמתים את פרטיך</p>
+                    <div id="sso-loader" class="loader" style="margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #495057; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+                    <button id="sso-close-btn" onclick="closeSsoModal()" style="display:none; width: 100%; background:#f0f0f0; color:#444; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; font-family:'Rubik';">סגור</button>
                 </div>
             </div>
         </form>
 
         <br>
-        <p>גרסה 15.2.0/10</p>
+        <p>גרסה 29.5.1/14</p>
         <p>כל הזכויות שמורות ©</p>
 
         <a href="javascript:void(0)" onclick="openNewUserDialog()" style="text-decoration: none; margin-right: 10px;">
@@ -115,19 +117,55 @@
         }
     });
 
-    document.getElementById('sso-button').addEventListener('click', function() {
-        // הצגת הדיאלוג
+    document.getElementById('sso-button').addEventListener('click', async function() {
         const modal = document.getElementById('sso-modal');
-        modal.classList.add('active');
+        const statusText = document.getElementById('sso-status-text');
+        const closeBtn = document.getElementById('sso-close-btn');
+        const loader = document.getElementById('sso-loader');
 
-        // סימולציה של מעבר לדף ה-SSO אחרי 2 שניות
-        // במציאות, כאן תגיע הפקודה window.location.href = "/sso_login_url";
-        setTimeout(function() {
-            // כאן תוכל להוסיף את הקישור האמיתי להתחברות
-            // window.location.href = "{{ url_for('login') }}";
-            alert("מבצע הפניה לשרת האימות...");
-        }, 2000);
+        // איפוס והצגת הדיאלוג
+        modal.style.display = 'flex';
+        statusText.innerText = "מתחבר לשרת האימות...";
+        statusText.style.color = "#666";
+
+        if (loader) loader.style.display = "block";
+        if (closeBtn) closeBtn.style.display = "none";
+
+        try {
+            // שליחת בקשה לנתיב ה-SSO ב-Flask
+            const response = await fetch('/login/sso_process');
+            const data = await response.json();
+
+            if (data.success) {
+                if (loader) loader.style.display = "none";
+                statusText.innerText = "האימות הצליח! מעביר אותך...";
+                statusText.style.color = "#2b8a3e";
+
+                // הפניה לדף הניהול
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1000);
+            } else {
+                // טיפול בשגיאה לוגית מהשרת
+                statusText.innerText = "שגיאה: " + data.message;
+                statusText.style.color = "#c62828";
+                if (loader) loader.style.display = "none";
+                if (closeBtn) closeBtn.style.display = "block";
+            }
+        } catch (error) {
+            // טיפול בשגיאת תקשורת (Network error)
+            console.error("SSO Error:", error);
+            statusText.innerText = "שגיאת תקשורת עם שרת האימות";
+            statusText.style.color = "#c62828";
+            if (loader) loader.style.display = "none";
+            if (closeBtn) closeBtn.style.display = "block";
+        }
     });
+
+    function closeSsoModal() {
+        const modal = document.getElementById('sso-modal');
+        modal.style.display = 'none';
+    }
 </script>
 
 <style>
@@ -153,6 +191,12 @@
     #sso-button:hover {
         transform: translateY(-2px);
     }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .modal.active { display: flex; }
 </style>
 
 {% endblock %}

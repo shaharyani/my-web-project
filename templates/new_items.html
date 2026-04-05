@@ -91,7 +91,7 @@
 <div class="page-wrapper">
     <h2 style="font-size: 32px; color: #333; margin-bottom: 20px;">ניהול ערים וקודים</h2>
 
-    <div class="control-card">
+    <div class="control-card" style="overflow-y: auto; max-height: 450px">
         <div class="input-group">
             <div class="input-field">
                 <label>בחר עיר</label>
@@ -107,6 +107,9 @@
                 <input type="text" id="codeInput" class="styled-input" placeholder="לדוגמה: A123">
             </div>
             <button onclick="addEntry()" class="add-btn">הוסף קוד</button>
+            <button onclick="manualValidationCheck()" class="add-btn">
+                בדוק זמינות
+            </button>
         </div>
 
         <table class="data-table" id="summaryTable">
@@ -133,8 +136,146 @@
         </div>
     </div>
 
-</div>
+    <div id="search-check-modal" class="modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+
+        <div style="background:white; padding:35px; border-radius:24px; width:400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); direction: rtl; font-family: 'Rubik'; position: relative;">
+
+            <span class="close-btn" onclick="closeSearchModal()">&times;</span>
+
+            <h2 style="margin: 0 0 10px 0; color: #2575fc; text-align: center; font-size: 1.6em;">בדיקת נתונים</h2>
+            <p style="color:#777; font-size: 0.9em; text-align: center; margin-bottom: 25px;">בחר סוג חיפוש והזן את הנתון לבדיקה</p>
+
+            <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+                <div style="display: flex; background: #f1f3f5; padding: 4px; border-radius: 14px; width: 100%; position: relative; cursor: pointer; user-select: none;" onclick="toggleSearchType()">
+                    <div id="switch-bg" style="position: absolute; width: calc(50% - 4px); height: calc(100% - 8px); background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(0);"></div>
+
+                    <div id="label-city" style="flex: 1; text-align: center; padding: 10px; font-weight: bold; position: relative; z-index: 1; transition: color 0.3s; color: #2575fc;">עיר</div>
+                    <div id="label-code" style="flex: 1; text-align: center; padding: 10px; font-weight: bold; position: relative; z-index: 1; transition: color 0.3s; color: #495057;">קוד</div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div id="city-field-wrapper">
+                    <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">שם עיר לבדיקה</label>
+                    <input type="text" id="checkCityInput" placeholder="למשל: תל אביב" style="width:100%; padding:12px; border:1.5px solid #eee; border-radius:12px; font-family: 'Rubik'; box-sizing: border-box; outline: none;">
+                </div>
+
+                <div id="code-field-wrapper" style="display: none;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">קוד לבדיקה</label>
+                    <input type="text" id="checkCodeInput" placeholder="למשל: A123" style="width:100%; padding:12px; border:1.5px solid #eee; border-radius:12px; font-family: 'Rubik'; box-sizing: border-box; outline: none;">
+                </div>
+
+                <div id="check-result-area" style="padding: 15px; border-radius: 12px; display: none; font-weight: bold; text-align: center; font-size: 0.95em;"></div>
+
+                <div style="display: flex; gap: 12px; margin-top: 10px;">
+                    <button onclick="executeDbCheck()" style="background: #2575fc; color: white; border: none; padding: 14px; border-radius: 12px; flex: 2; cursor: pointer; font-weight: bold; font-family: 'Rubik';">בצע בדיקה</button>
+                    <button onclick="closeSearchModal()" style="background: #f8f9fa; color: #495057; border: none; padding: 14px; border-radius: 12px; flex: 1; cursor: pointer; font-family: 'Rubik';">ביטול</button>
+                </div>
+            </div>
+        </div>
+    </div>
 <script>
+    let currentSearchType = 'city'; // ברירת מחדל
+
+    function toggleSearchType() {
+        const cityWrapper = document.getElementById('city-field-wrapper');
+        const codeWrapper = document.getElementById('code-field-wrapper');
+        const switchBg = document.getElementById('switch-bg');
+        const labelCity = document.getElementById('label-city');
+        const labelCode = document.getElementById('label-code');
+        const resultArea = document.getElementById('check-result-area');
+
+        // איפוס תוצאות קודמות
+        resultArea.style.display = 'none';
+
+        if (currentSearchType === 'city') {
+            // מעבר לקוד
+            currentSearchType = 'code';
+            cityWrapper.style.display = 'none';
+            codeWrapper.style.display = 'block';
+
+            // אנימציית המתג
+            switchBg.style.transform = 'translateX(-100%)'; // מזיז שמאלה (לכיוון הקוד)
+            labelCode.style.color = '#2575fc';
+            labelCity.style.color = '#495057';
+        } else {
+            // מעבר לעיר
+            currentSearchType = 'city';
+            cityWrapper.style.display = 'block';
+            codeWrapper.style.display = 'none';
+
+            // אנימציית המתג
+            switchBg.style.transform = 'translateX(0)'; // חוזר לימין
+            labelCity.style.color = '#2575fc';
+            labelCode.style.color = '#495057';
+        }
+    }
+
+    // 1. פתיחת המודל הריק
+    function manualValidationCheck() {
+        // איפוס שדות ושטח תוצאה לפני הפתיחה
+        document.getElementById('checkCityInput').value = '';
+        document.getElementById('checkCodeInput').value = '';
+        const resultArea = document.getElementById('check-result-area');
+        resultArea.style.display = 'none';
+
+        document.getElementById('search-check-modal').style.display = 'flex';
+    }
+
+    // 2. סגירת המודל
+    function closeSearchModal() {
+        document.getElementById('search-check-modal').style.display = 'none';
+    }
+
+    async function executeDbCheck() {
+        const city = document.getElementById('checkCityInput').value.trim();
+        const code = document.getElementById('checkCodeInput').value.trim();
+        const resultArea = document.getElementById('check-result-area');
+
+        const payload = {
+            city_name: currentSearchType === 'city' ? city : "",
+            code: currentSearchType === 'code' ? code : ""
+        };
+
+        if ((currentSearchType === 'city' && !city) || (currentSearchType === 'code' && !code)) {
+            resultArea.style.display = 'block';
+            resultArea.style.background = '#fff3cd';
+            resultArea.style.color = '#856404';
+             resultArea.style.border = '1px solid #ffecb3';
+            resultArea.innerText = "נא להזין ערך לבדיקה";
+            return;
+        }
+
+        try {
+            const response = await fetch('/check_availability', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+
+            resultArea.style.display = 'block';
+
+            if ((currentSearchType === 'city' && data.city_exists) || (currentSearchType === 'code' && data.code_exists)) {
+                resultArea.style.background = '#fff5f5';
+                resultArea.style.color = '#c92a2a';
+                resultArea.style.border = '1px solid #ffc9c9';
+                resultArea.innerText = data.city_exists ?
+                    `העיר "${city}" כבר קיימת במערכת.` :
+                    `הקוד "${code}" תפוס בעיר ${data.existing_city}.`;
+            } else {
+                resultArea.style.background = '#ebfbee';
+                resultArea.style.color = '#2b8a3e';
+                resultArea.style.border = '1px solid #b2f2bb';
+                resultArea.innerText = "✅ הנתון פנוי לשימוש!";
+            }
+        } catch (e) {
+            resultArea.style.display = 'block';
+            resultArea.style.background = '#f8d7da';
+            resultArea.innerText = "שגיאת תקשורת עם השרת";
+        }
+    }
+
     let pendingDeleteAction = null; // משתנה לשמירת הפעולה שצריך לבצע
 
         // פונקציה שמציגה את הדיאלוג ושומרת את הקריאה לשרת ללחיצה על "אישור"

@@ -1,5 +1,5 @@
 class Report:
-    def __init__(self, id, written_by, error_date, report_date, report_title, notes, report_status, reply_notes, report_files):
+    def __init__(self, id, written_by, error_date, report_date, report_title, notes, report_status, reply_notes, report_files, report_serials):
         self.id = id
         self.written_by = written_by
         self.error_date = error_date
@@ -9,3 +9,4 @@ class Report:
         self.report_status = report_status if report_status else "ממתין" # ממתין | טופל
         self.reply_notes = reply_notes if reply_notes else None
         self.report_files = report_files
+        self.report_serials = report_serials

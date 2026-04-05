@@ -7,10 +7,16 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body style="width: 100%; height: 2100px">
+<body style="width: 100%; height: 3300px">
     {% extends "base.html" %}
 {% block content %}
 
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 <!-------------------- USERS TABLE -------------------->
 <div style="width: 100%; font-family: 'Rubik', sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px;">
     <div style="width: 100%; display: flex; gap: 24px; align-items: flex-start; margin-bottom: 24px;">
@@ -73,7 +79,7 @@
                 <label id="textarea-label" style="display: block; margin-bottom: 10px; margin-top: 10px; font-size: 16px">הזן עדכונים (כל שורה היא עדכון חדש - סה"כ 4):</label>
                 <textarea id="main-textarea" name="updates_text" rows="4" style="height: 130px; font-family: 'Rubik', sans-serif; width: 100%; margin-top: 5px; border-radius: 10px; padding: 15px; border: 1px solid #ddd; box-sizing: border-box; resize: none;">{%- if announcements -%}{{ announcements|join('\n') }}{%- endif -%}</textarea>
                 <div style="margin-bottom: 10px; display: flex; justify-content: center; gap: 20px; align-items: center;">
-                    <button type="button" onclick="toggleMode(this)" class="admin-badge" style="background-color: #f0f0f0; color: #333; font-size: 14px; border: 1px solid #ccc; margin-top: 25px; display: flex; justify-content: center; align-items: center; padding: 12px 15px; width: 40%; cursor: pointer;">
+                    <button id= "changer_btn" type="button" onclick="toggleMode(this)" class="admin-badge" style="background-color: #f0f0f0; color: #333; font-size: 14px; border: 1px solid #ccc; margin-top: 25px; display: flex; justify-content: center; align-items: center; padding: 12px 15px; width: 40%; cursor: pointer;">
                              החלף לקובץ הנחיות
                     </button>
 
@@ -85,12 +91,12 @@
         </div>
     </div>
     <div class="table-card" style="width: 100%; margin-bottom:20px; display: flex; gap: 24px;">
-        <div class="data-table-card" style="flex: 1; margin: 0; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; display: flex; flex-direction: column;">
+        <div class="data-table-card" style="flex: 1; margin: 0; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; display: flex; flex-direction: column; height: 450px">
             <h2 style="font-size: 28px; margin-bottom: 20px; color: #333;">מעקב בקשות</h2>
-            <div class="logs-container" style="font-family: 'Rubik', sans-serif; min-height: 200px; max-height: 300px; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #f0f0f0;">
+            <div class="logs-container" style="font-family: 'Rubik', sans-serif; min-height: 200px; max-height: 400px; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #f0f0f0;">
                 <ul style="list-style: none; padding: 0; margin: 0; direction: ltr;">
                     {% if request_warehouse_logger %}
-                        {% for log in request_warehouse_logger %}
+                        {% for log in request_warehouse_logger | reverse %}
                             <li style="padding: 10px; border-bottom: 1px solid #f9f9f9; direction: lrt; font-size: 13px;">
                                 <span style="color: #999; margin-right: 8px;">{{ log.timestamp }}</span>
                                 <span style="color: {% if 'APPROVED' in log.message %}#28a745{% elif 'REJECTED' in log.message %}#dc3545{% else %}#2575fc{% endif %}; font-weight: bold;">
@@ -108,6 +114,9 @@
         <div style="flex: 2; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 8px; direction: rtl;">
                     <h3 style="margin: 0; font-size: 28px; text-align: right; color: #2575fc;">ניהול בקשות מחסן</h3>
+                     <span style="background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
+                        נא לאשר את הסיראליים בהתאם בפקודה
+                    </span>
                     <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
                         שאר הבקשות הן בקשות בין משתמשים
                     </span>
@@ -215,15 +224,25 @@
             </div>
     </div>
     <div class="table-card" style="width: 100%; margin-bottom:20px; display: flex; gap: 24px;">
-        <div class="data-table-card" style="flex: 1; margin: 0; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; display: flex; flex-direction: column;">
-            <h2 style="font-size: 28px; margin-bottom: 20px; color: #333;">מעקב מיוחדים</h2>
-            <div class="logs-container" style="min-height: 200px; max-height: 220px; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #f0f0f0;">
+        <div class="data-table-card" style="flex: 1; margin: 0; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; display: flex; flex-direction: column; height: 450px">
+            <h2 style="font-size: 28px; margin-bottom: 20px; color: #333;">מעקב בקשות מהצוות</h2>
+            <div class="logs-container" style="min-height: 200px; height: 400px; overflow-y: auto; background: #fff; border-radius: 8px; border: 1px solid #f0f0f0;">
                 <ul style="list-style: none; padding: 0; margin: 0; direction: ltr;">
                     {% if special_logger %}
-                        {% for log in special_logger %}
+                        {% for log in special_logger | reverse  %}
                             <li style="padding: 10px; border-bottom: 1px solid #f9f9f9; text-align: left; font-size: 13px; font-family: 'Rubik', sans-serif;">
                                 <span style="color: #999; margin-right: 8px;">{{ log.timestamp }}</span>
-                                <span style="color: {% if 'אושר' in log.message %}#28a745{% elif 'סורב' in log.message %}#dc3545{% else %}#2575fc{% endif %}; font-weight: bold;">
+                                <span style="color:
+                                    {% if 'SUCCESS' in log.message %}
+                                        #28a745
+                                    {% elif 'CREATED' in log.message %}
+                                        #ef6c00
+                                    {% elif 'DELETED' in log.message %}
+                                        #dc3545
+                                    {% else %}
+                                        #2575fc
+                                    {% endif %};
+                                    font-weight: bold;">
                                     [{{ log.level }}]
                                 </span>
                                 <span style="direction: ltr; display: inline-block;">{{ log.message }}</span>
@@ -237,19 +256,12 @@
         </div>
         <div style="flex: 2; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 8px; direction: rtl;">
-                    <h3 style="margin: 0; font-size: 28px; color: #cc0000;">ניהול בקשות מיוחדות</h3>
+                    <h3 style="margin: 0; font-size: 28px; color: #cc0000;">ניהול בקשות מהצוות</h3>
                     <span style="background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
                         נא לוודא כפילות סיריאליים בפקודה
                     </span>
-                    <button type="button"
-                            onclick="document.getElementById('groupDialog').style.display='flex'"
-                            class="btn-create"
-                            title="רשימת האנשים לבקשה מיוחדת"
-                            style="margin: 0; background: white; color: #cc0000; border: 2px solid #cc0000; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
-                        הגדר מיוחדים
-                    </button>
                 </div>
-                <div style="max-height: 250px; overflow-y: auto;">
+                <div style="max-height: 400px; overflow-y: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #f8f9fa; color: #555;">
@@ -266,8 +278,8 @@
                             {% if all_special %}
                                 {% for req in all_special %}
                                 <tr style="border-bottom: 1px solid #eee; font-family: 'Rubik', sans-serif;">
-                                    <td style="padding: 12px; text-align: center;">
-                                        <div style="display: flex; justify-content: center; gap: 8px;">
+                                    <td style="padding: 10px; text-align: center; gap: 8px;">
+                                        <div style="display: flex; justify-content: center; gap: 4px;">
                                             {% if req.status == 'ממתין' %}
                                                 <button data-desc="{{ req.description }}"
                                                         onclick="handleSpecial('{{ req.id }}', 'approve', this.getAttribute('data-desc'))"
@@ -315,27 +327,64 @@
                                                 </span>
                                             {% endif %}
                                         </div>
+                                        <div style="margin-top: 10px; display: flex; justify-content: center;">
+                                            {% if req.status != 'סורב' %}
+                                                <button onclick="updateTargetDate('{{ req.id }}')"
+                                                        style="
+                                                            background: #f8f9fa;
+                                                            color: #495057;
+                                                            padding: 6px 12px;
+                                                            border-radius: 6px;
+                                                            border: 1px solid #dee2e6;
+                                                            font-weight: bold;
+                                                            font-size: 13px;
+                                                            cursor: pointer;
+                                                            align-items: center;
+                                                            justify-content: center;
+                                                            transition: 0.2s;
+                                                            font-family: 'Rubik', sans-serif;
+                                                        "
+                                                        onmouseover="this.style.background='#495057'; this.style.color='#fff'; this.style.borderColor='#495057';"
+                                                        onmouseout="this.style.background='#f8f9fa'; this.style.color='#495057'; this.style.borderColor='#dee2e6';">
+                                                    עדכן תאריך יעד
+                                            </button>
+                                            {% endif %}
+                                        </div>
                                     </td>
 
-                                    <td style="padding: 12px; text-align: center; width: 20%">
+                                    <td style="padding: 12px; text-align: center; width: 25%; vertical-align: top;">
                                         {% set serials_list = (req.serials | from_json) if req.serials else [] %}
-                                        <div class="serials-container" style="direction: ltr; text-align: center; font-family: monospace;">
-                                            {% if req.serials %}
+
+                                        <div class="serials-outer-wrapper" style="display: flex; flex-direction: column; gap: 8px; align-items: center; font-family: 'Rubik', sans-serif;">
+                                            {% if req.serials and serials_list %}
                                                 {% for group in serials_list | groupby("line_id") %}
-                                                    <div class="serial-group" style="margin-bottom: 8px; padding: 4px; border-bottom: 1px solid #eee;">
-                                                        <strong style="color: #333;">{{ group.grouper }} : </strong>
-                                                        <span style="color: #555;">{</span>
-                                                        {% for item in group.list %}
-                                                            <span style="color: {{ '#155724' if item.is_green else '#1971c2' }}; font-weight: bold;">
-                                                                "{{ item.serial }}"
-                                                            </span>{% if not loop.last %}, {% endif %}
-                                                        {% endfor %}
-                                                        <span style="color: #555;">}</span>
+                                                    <div class="serial-group" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 8px; width: 100%; box-sizing: border-box;">
+                                                        <div style="font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px id #eee; padding-bottom: 3px; display: flex; justify-content: space-between;">
+                                                            <span>LINE ID</span>
+                                                            <strong style="color: #333;">{{ group.grouper }}</strong>
+                                                        </div>
+
+                                                        <div style="display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; direction: ltr;">
+                                                            {% for item in group.list %}
+                                                                <span style="
+                                                                    display: inline-block;
+                                                                    padding: 2px 8px;
+                                                                    border-radius: 4px;
+                                                                    font-family: 'monospace';
+                                                                    font-size: 12px;
+                                                                    font-weight: 600;
+                                                                    background: {{ '#ebfbee' if item.is_green else '#e7f5ff' }};
+                                                                    color: {{ '#2b8a3e' if item.is_green else '#1971c2' }};
+                                                                    border: 1px solid {{ '#b2f2bb' if item.is_green else '#a5d8ff' }};
+                                                                ">
+                                                                    {{ item.serial }}
+                                                                </span>
+                                                            {% endfor %}
+                                                        </div>
                                                     </div>
                                                 {% endfor %}
                                             {% else %}
-                                                {% set serials_list = [] %}
-                                                <p>טרם הוגדר</p>
+                                                <span style="color: #adb5bd; font-style: italic; font-size: 13px;">טרם הוגדרו סריאלים</span>
                                             {% endif %}
                                         </div>
                                     </td>
@@ -351,10 +400,14 @@
                                     </td>
 
                                     <td style="padding: 12px; text-align: center;">
-                                        <div style="font-size: 12px; color: #555;">{{ req.finish_date }}</div>
+                                        {% if req.finish_date < today %}
+                                            <div style="font-size: 12px; color: #c62828; font-weight: bold;">{{ req.finish_date }}</div>
+                                        {% else %}
+                                            <div style="font-size: 12px; color: #555;">{{ req.finish_date }}</div>
+                                        {% endif %}
                                     </td>
 
-                                    <td style="padding: 12px; text-align: center;">
+                                    <td style="padding: 1px; text-align: center;">
                                         <div style="font-size: 12px; color: #333;">{{ req.ask_by }}</div>
                                     </td>
 
@@ -375,13 +428,127 @@
                 </div>
         </div>
     </div>
+    <div class="table-card" style="width: 100%; margin-bottom:20px; display: flex; gap: 24px;">
+        <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: auto; padding: 20px;">
+            <img src="{{ url_for('static', filename='images/explain.png') }}"
+                 style="width: 70%; height: auto; border-radius: 8px; transform: scale(1.099)">
+        </div>
+    </div>
+
+    <div class="table-card" style="width: 100%; margin-bottom:20px; display: flex; gap: 24px; direction: rtl;">
+        <div style="flex: 1; background: #fafafa; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 8px;">
+            <h3 style="margin: 0; font-size: 22px; color: #cc0000;">שירותי מייל</h3>
+            <div id="emailError"
+            style="display:none;
+                    color: #c92a2a;
+                    background: #fff5f5;
+                    border: 1px solid #ffcccc;
+                    padding: 10px;
+                    text-align: center;
+                    margin-bottom: 15px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    transition: all 0.3s ease;">
+            </div>
+        </div>
+
+        <form id="quickEmailForm" style="display: flex; flex-direction: column; gap: 12px; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 5px; gap: 12px; width: 100%; justify-content: center;">
+                <input type="text" id="emailRecipient" name="recipient" placeholder="כתובת אימייל ליעד..." required
+                   style="width: 60%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Rubik', sans-serif;">
+
+                <button type="button" onclick="openBroadcastList()"
+                    style="width: 20%;
+                           height: 40px;
+                           display: flex;
+                           justify-content: center;
+                           align-items: center;
+                           font-family: 'Rubik', sans-serif;
+                           background: #cc0000;
+                           color: white;
+                           padding: 0;
+                           border: none;
+                           border-radius: 6px;
+                           font-weight: bold;
+                           cursor: pointer;
+                           transition: 0.3s;"
+                    onmouseover="this.style.background='#a50000'"
+                    onmouseout="this.style.background='#cc0000'">
+                    <img style="transform: scale(0.8);
+                                filter: brightness(0) invert(1);
+                                max-height: 80%;
+                                width: auto;"
+                         src="{{ url_for('static', filename=broadcast | default('images/broadcast.png')) }}"
+                         title="רשימת תפוצה">
+                </button>
+            </div>
+
+            <input type="text" id="emailSubject" name="subject" placeholder="נושא ההודעה..." required
+                   style="width: 80%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Rubik', sans-serif;">
+
+            <textarea id="emailBody" name="body" placeholder="תוכן ההודעה..." rows="5" required
+                      style="width: 80%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: 'Rubik', sans-serif; resize: none;"></textarea>
+
+            <div style="width: 100%; margin-bottom: 10px; display: flex; justify-content: center; gap: 20px; align-items: center;">
+                <button type="submit" id="sendEmailBtn"
+                    style="width: 30%; text-align: center; justify-content: center; align-items: center; font-family: 'Rubik', sans-serif; background: #cc0000; color: white; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s;"
+                    onmouseover="this.style.background='#a50000'"
+                    onmouseout="this.style.background='#cc0000'">
+                    שלח הודעה
+                </button>
+            </div>
+        </form>
+    </div>
+        <div style="flex: 1; background: #fafafa; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #eee;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 8px;">
+                <h3 style="margin: 0; font-size: 22px; color: #cc0000;">מצבים לשליחת מייל</h3>
+                <span style="background-color: #f0f0f0; color: #666; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8em;">
+                    מצבים שנשלחים באופן אוטומטי
+                </span>
+            </div>
+
+            <div style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                <div style="padding: 10px; background: white; border-right: 4px solid #cc0000; border-radius: 4px; font-size: 0.9em; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex-grow: 1;">
+                        <strong style="display: block;">תקשורת עם המשתמש</strong>
+                        <p style="margin: 5px 0 0; color: #777; font-size: 0.85em;">במצב של יצירה, עדכון פרטים, החלפה ואיפוס סיסמא ומחיקת החשבון.</p>
+                    </div>
+
+                    <div style="margin-right: 15px; font-size: 1.2em;">
+                        ✅
+                    </div>
+                </div>
+                <div style="padding: 10px; background: white; border-right: 4px solid #cc0000; border-radius: 4px; font-size: 0.9em; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex-grow: 1;">
+                        <strong>הודעות על בקשות מהצוות</strong>
+                        <p style="margin: 5px 0 0; color: #777; font-size: 0.85em;">במצב של בקשה שנוצרה, נערכה, שעודכנו הסיראליים, שהסתיימו הבדיקות ובקשה שסורבה.</p>
+                    </div>
+                    <div style="margin-right: 15px; font-size: 1.2em;">
+                        ✅
+                    </div>
+                </div>
+                <div style="padding: 10px; background: white; border-right: 4px solid #cc0000; border-radius: 4px; font-size: 0.9em; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
+                     <div style="flex-grow: 1;">
+                         <strong>הודעות על בקשות לחתימות</strong>
+                         <p style="margin: 5px 0 0; color: #777; font-size: 0.85em;">במצב של בקשות בין משתמשים ובקשות מהמחסן.</p>
+                     </div>
+                    <div style="margin-right: 15px; font-size: 1.2em;">
+                        ✅
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 
     <div style="display: flex; gap: 24px;">
         <div class="data-table-card" style="flex: 1; margin: 0; background-color: #f0f7ff; border: 1px solid #d0e3ff;">
             <h3 style="direction: rtl; font-size: 28px; margin-bottom: 20px">נתוני התחברות</h3>
             <ul style="width: 100%; list-style:none; padding:0; direction:ltr; max-height: 150px; overflow-y: auto;">
                 {% if logs %}
-                    {% for log in logs %}
+                    {% for log in logs  | reverse %}
                         <li style="padding:10px; border-bottom:1px solid #eee;">
                             <span style="color:gray">{{ log.timestamp }}</span>
                             [<strong>{{ log.level }}</strong>] {{ log.message }}
@@ -393,7 +560,7 @@
             </ul>
         </div>
         <div class="data-table-card" style="flex: 1; margin: 0; background-color: #fffaf0; border: 1px solid #ffecb3;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; direction: rtl;">
+            <div style="display: flex; justify-content: space-between; align-items: center; direction: rtl;">
                 <h3 style="direction: rtl; font-size: 28px; margin-bottom: 20px">נתוני עריכה</h3>
                 <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
                     קוד אישור ואימות תוצאות הינו: 1234
@@ -403,7 +570,7 @@
                     <div class="logs-container" style="dir: rtl; text-align: left;">
                         <ul style="list-style: none; padding: 0; margin: 0;">
                             {% if test_logs %}
-                                {% for log in test_logs %}
+                                {% for log in test_logs | reverse %}
                                     <li style="padding:10px; border-bottom:1px solid #eee; dir: rtl; text-align: left;">
                                         <span style="color:gray">{{ log.timestamp }}</span>
                                         [<strong>{{ log.level }}</strong>] {{ log.message }}
@@ -441,7 +608,7 @@
             </div>
             <ul style="width: 100%; list-style:none; padding:0; direction:ltr; max-height: 150px; overflow-y: auto;">
                 {% if report_logs %}
-                    {% for log in report_logs %}
+                    {% for log in report_logs | reverse %}
                         <li style="padding:10px; border-bottom:1px solid #eee;">
                             <span style="color:gray">{{ log.timestamp }}</span>
                             [<strong>{{ log.level }}</strong>] {{ log.message }}
@@ -487,7 +654,7 @@
                     <div class="logs-container" style="dir: rtl; text-align: left;">
                         <ul style="list-style: none; padding: 0; margin: 0;">
                             {% if sign_logs %}
-                                {% for log in sign_logs %}
+                                {% for log in sign_logs | reverse %}
                                     <li style="padding:10px; border-bottom:1px solid #eee; dir: rtl; text-align: left;">
                                         <span style="color:gray">{{ log.timestamp }}</span>
                                         [<strong>{{ log.level }}</strong>] {{ log.message }}
@@ -508,7 +675,44 @@
         חזור להתחלה
     </h2>
 </div>
-<!-------------------- CREATE USER MODAL -------------------->
+<div id="broadcastModal" dir="rtl" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background-color: white; padding: 30px; border-radius: 15px; width: 450px; max-width: 90%; box-shadow: 0 15px 35px rgba(0,0,0,0.3); font-family: 'Rubik', sans-serif; position: relative; animation: fadeIn 0.3s ease-out;">
+
+        <h3 style="color: #cc0000; margin: 0 0 10px 0; text-align: center; font-size: 24px;">ניהול רשימות תפוצה</h3>
+        <p style="font-size: 15px; color: #555; text-align: center; margin-bottom: 25px;">בחר את יעד השליחה להוספה לדיווח:</p>
+
+        <div id="modalAlert" style="display:none; padding: 12px; margin-bottom: 20px; border-radius: 8px; font-size: 14px; text-align: center; font-weight: bold;"></div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px; text-align: right;">
+
+            <div style="border: 1px solid #eaeaea; padding: 12px; border-radius: 10px; background: #fdfdfd;">
+                <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 8px; color: #333;">נמענים מרובים (הפרד בפסיק):</label>
+                <textarea id="usersListInput" placeholder="example@mail.com, user@mail.com"
+                          style="width: 100%; height: 70px; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-family: 'Rubik'; resize: none; box-sizing: border-box; font-size: 13px;"></textarea>
+            </div>
+
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 12px; border: 1px solid #eaeaea; border-radius: 10px; background: #fdfdfd; transition: 0.2s;"
+                   onmouseover="this.style.borderColor='#cc0000'" onmouseout="this.style.borderColor='#eaeaea'">
+                <input type="checkbox" id="allAdminsCheck" style="accent-color: #cc0000; width: 18px; height: 18px; cursor: pointer;">
+                <span style="font-weight: bold; font-size: 15px; color: #333;">שלח לכל מנהלי המערכת</span>
+            </label>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 30px;">
+            <button onclick="processBroadcast()"
+                    style="flex: 2; background: #cc0000; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 6px rgba(204,0,0,0.2); text-align: center; justify-content: center; align-items: center; font-family: 'Rubik', sans-serif;"
+                    onmouseover="this.style.background='#a50000'" onmouseout="this.style.background='#cc0000'">
+                אשר והוסף נמענים
+            </button>
+            <button onclick="closeBroadcastModal()"
+                    style="text-align: center; justify-content: center; align-items: center; font-family: 'Rubik', sans-serif; flex: 1; background: #f0f0f0; color: #444; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;"
+                    onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
+                ביטול
+            </button>
+        </div>
+    </div>
+</div>
+    <!-------------------- CREATE USER MODAL -------------------->
 <div id="userModal" class="modal">
     <div class="modal-content">
         <h2>יצירת משתמש חדש</h2>
@@ -614,19 +818,19 @@
 </div>
 <!-------------------- REMOVE USER MODAL -------------------->
     <div id="deleteConfirmModal" class="modal" style="display: none; z-index: 2000;">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <h2 style="color: #e74c3c;">אישור מחיקה</h2>
-        <p>האם אתה בטוח שברצונך למחוק את המשתמש:</p>
-        <p id="delete-user-display-name" style="font-weight: bold; font-size: 20px; margin: 15px 0;"></p>
-        <p style="color: gray; font-size: 14px;">פעולה זו אינה ניתנת לביטול.</p>
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h2 style="color: #e74c3c;">אישור מחיקה</h2>
+            <p>האם אתה בטוח שברצונך למחוק את המשתמש:</p>
+            <p id="delete-user-display-name" style="font-weight: bold; font-size: 20px; margin: 15px 0;"></p>
+            <p style="color: gray; font-size: 14px;">פעולה זו אינה ניתנת לביטול.</p>
 
-        <br>
-        <div class="button-group" style="display: flex; justify-content: center; gap: 10px;">
-            <button type="button" id="confirmDeleteBtn" class="btn-create" style="background-color: #e74c3c;">מחק משתמש</button>
-            <button type="button" onclick="closeDeleteModal()" class="btn-cancel">ביטול</button>
+            <br>
+            <div class="button-group" style="display: flex; justify-content: center; gap: 10px;">
+                <button type="button" id="confirmDeleteBtn" class="btn-create" style="background-color: #e74c3c;">מחק משתמש</button>
+                <button type="button" onclick="closeDeleteModal()" class="btn-cancel">ביטול</button>
+            </div>
         </div>
     </div>
-</div>
     <div id="customConfirmModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; z-index: 5000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); direction: rtl; font-family: 'Rubik', sans-serif;">
             <div class="modal-content" style="background: white; padding: 25px; border-radius: 15px; width: 400px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); text-align: center;">
 
@@ -731,9 +935,288 @@
             </div>
         </div>
     </div>
+    <div id="updateDateModal" dir="rtl" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div style="background-color: white; padding: 30px; border-radius: 15px; width: 400px; max-width: 90%; box-shadow: 0 15px 35px rgba(0,0,0,0.3); font-family: 'Rubik', sans-serif; text-align: center; border-top: 6px solid #495057;">
+
+            <h2 style="color: #2575fc; margin-bottom: 10px;">עדכון תאריך יעד</h2>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">בחר תאריך יעד חדש עבור הבקשה:</p>
+
+            <div id="updateDateAlert" style="display:none; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-size: 13px; font-weight: bold;"></div>
+
+            <div style="margin-bottom: 25px;">
+                <input type="date" id="newTargetDate"
+                       style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik'; font-size: 16px; text-align: center; box-sizing: border-box;">
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 10px;">
+                <button type="button" id="confirmUpdateDateBtn"
+                        class="btn-create" style="justify-content: center;">
+                    עדכן תאריך
+                </button>
+                <button type="button" onclick="closeUpdateDateModal()"
+                        class="btn-cancel" style="justify-content: center;">
+                    ביטול
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-------------------- SCRIPTS -------------------->
 <script>
+    let currentRequestIdToUpdate = null;
+    function updateTargetDate(requestId) {
+        currentRequestIdToUpdate = requestId;
+        const modal = document.getElementById('updateDateModal');
+        const alertBox = document.getElementById('updateDateAlert');
+
+        // איפוס שדות
+        document.getElementById('newTargetDate').value = "";
+        alertBox.style.display = 'none';
+
+        modal.style.display = 'flex';
+    }
+
+    function closeUpdateDateModal() {
+        document.getElementById('updateDateModal').style.display = 'none';
+    }
+
+    // לוגיקת העדכון
+    document.getElementById('confirmUpdateDateBtn').onclick = async function() {
+        const newDate = document.getElementById('newTargetDate').value;
+        const alertBox = document.getElementById('updateDateAlert');
+        const btn = this;
+
+        // ולידציה בסיסית
+        if (!newDate) {
+            showInternalAlert("נא לבחור תאריך", "error");
+            return;
+        }
+
+        const selectedDate = new Date(newDate);
+        selectedDate.setHours(0, 0, 0, 0); // הוספת נקודה-פסיק
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // תיקון: הסרת הסוגריים מ-today
+        if (selectedDate < today) {
+            showInternalAlert("נא לבחור תאריך שטרם עבר", "error");
+            return;
+        }
+
+        // מצב טעינה
+        btn.disabled = true;
+        btn.innerText = "מעדכן...";
+
+        try {
+            const response = await fetch(`/update_request_date/${currentRequestIdToUpdate}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ finish_date: newDate })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showInternalAlert("התאריך עודכן בהצלחה!", "success");
+
+                // רענון העמוד או עדכון השורה בטבלה לאחר שנייה
+                setTimeout(() => {
+                    location.reload();
+                }, 1200);
+            } else {
+                showInternalAlert("שגיאה: " + (data.error || "עדכון נכשל"), "error");
+                btn.disabled = false;
+                btn.innerText = "עדכן תאריך";
+            }
+        } catch (err) {
+            showInternalAlert("שגיאת תקשורת עם השרת", "error");
+            btn.disabled = false;
+            btn.innerText = "עדכן תאריך";
+        }
+    };
+
+    // פונקציית עזר להתראות בתוך המודל
+    function showInternalAlert(message, type) {
+        const alertBox = document.getElementById('updateDateAlert');
+        alertBox.innerText = message;
+        alertBox.style.display = 'block';
+
+        if (type === "success") {
+            alertBox.style.background = "#ebfbee";
+            alertBox.style.color = "#2b8a3e";
+            alertBox.style.border = "1px solid #d3f9d8";
+        } else {
+            alertBox.style.background = "#fff5f5";
+            alertBox.style.color = "#c92a2a";
+            alertBox.style.border = "1px solid #ffcccc";
+        }
+    }
+
+    // סגירה בלחיצה מחוץ למודל
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('updateDateModal');
+        if (event.target == modal) {
+            closeUpdateDateModal();
+        }
+    });
+
+    function openBroadcastList() {
+        // איפוס שדות
+        document.getElementById('usersListInput').value = "";
+        document.getElementById('allAdminsCheck').checked = false;
+
+        // איפוס כל הצ'קבוקסים של המדורים
+        const madorChecks = document.querySelectorAll('input[name="madorChoice"]');
+        madorChecks.forEach(cb => cb.checked = false);
+
+        const alertBox = document.getElementById('modalAlert');
+        alertBox.style.display = 'none';
+
+        document.getElementById('broadcastModal').style.display = 'flex';
+    }
+
+    function closeBroadcastModal() {
+        document.getElementById('broadcastModal').style.display = 'none';
+    }
+
+    async function processBroadcast() {
+        const alertBox = document.getElementById('modalAlert');
+        const allAdminsChecked = document.getElementById('allAdminsCheck').checked;
+        const manualInput = document.getElementById('usersListInput').value;
+
+        let finalEmailList = [];
+
+        // הצגת מצב טעינה בתוך הדיאלוג
+        alertBox.style.display = 'block';
+        alertBox.innerText = "מעבד נתונים...";
+        alertBox.style.background = "#e9ecef";
+        alertBox.style.color = "#495057";
+        alertBox.style.border = "1px solid #ced4da";
+
+        // 1. משיכת מנהלים מהשרת (דינמי)
+        if (allAdminsChecked) {
+            try {
+                const response = await fetch('/get_admin_emails');
+                const data = await response.json();
+                if (data.success && data.emails) {
+                    finalEmailList = finalEmailList.concat(data.emails);
+                }
+            } catch (err) {
+                console.error("Failed to fetch admins:", err);
+            }
+        }
+
+
+        // 3. הוספת משתמשים ידניים
+        if (manualInput.trim()) {
+            const manual = manualInput.split(',')
+                .map(e => e.trim())
+                .filter(e => e.includes('@'));
+            finalEmailList = finalEmailList.concat(manual);
+        }
+
+        // הסרת כפילויות (Unique List)
+        const uniqueEmails = [...new Set(finalEmailList)];
+
+        if (uniqueEmails.length === 0) {
+            alertBox.innerText = "נא לבחור לפחות יעד אחד!";
+            alertBox.style.background = "#fff5f5";
+            alertBox.style.color = "#c92a2a";
+            alertBox.style.border = "1px solid #ffcccc";
+            return;
+        }
+
+        // הצלחה - עדכון השדה הראשי
+        document.getElementById('emailRecipient').value = uniqueEmails.join(', ');
+
+        // הודעת אישור סופית בתוך הדיאלוג
+        alertBox.innerText = `נוספו ${uniqueEmails.length} נמענים בהצלחה!`;
+        alertBox.style.background = "#ebfbee";
+        alertBox.style.color = "#2b8a3e";
+        alertBox.style.border = "1px solid #d3f9d8";
+
+        // סגירה אוטומטית אחרי שנייה וחצי
+        setTimeout(closeBroadcastModal, 1500);
+    }
+
+    // סגירה בלחיצה מחוץ למודל
+    window.onclick = function(event) {
+        const modal = document.getElementById('broadcastModal');
+        if (event.target == modal) {
+            closeBroadcastModal();
+        }
+    }
+
+    document.getElementById('quickEmailForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const btn = document.getElementById('sendEmailBtn');
+        const alertDiv = document.getElementById('emailError');
+        const recipientInput = document.getElementById('emailRecipient').value;
+
+        // ניקוי והכנה לשליחה
+        alertDiv.style.display = 'none';
+
+        // בדיקת תקינות בסיסית לפני השליחה לשרת
+        if (!validateEmails(recipientInput)) {
+            showAlert("כתובת האימייל אינה תקינה", "#c92a2a", "#fff5f5", "#ffcccc");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'שולח...';
+
+        const payload = {
+            recipient: recipientInput,
+            subject: document.getElementById('emailSubject').value,
+            body: document.getElementById('emailBody').value
+        };
+
+        fetch('/send_quick_email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert("המייל נשלח לתור השליחה בהצלחה!", "#2b8a3e", "#ebfbee", "#d3f9d8");
+                document.getElementById('quickEmailForm').reset();
+            } else {
+                showAlert("שגיאה: " + data.error, "#c92a2a", "#fff5f5", "#ffcccc");
+            }
+        })
+        .catch(err => {
+            showAlert("שגיאת תקשורת מול השרת", "#c92a2a", "#fff5f5", "#ffcccc");
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerText = 'שלח הודעה';
+        });
+    });
+
+    function validateEmails(input) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emails = input.split(',').map(e => e.trim());
+        return emails.every(email => emailRegex.test(email));
+    }
+
+    // פונקציה לעדכון והצגת תיבת ההתראה
+    function showAlert(message, color, bg, border) {
+        const alertDiv = document.getElementById('emailError');
+        alertDiv.innerText = message;
+        alertDiv.style.color = color;
+        alertDiv.style.background = bg;
+        alertDiv.style.border = `1px solid ${border}`;
+        alertDiv.style.display = 'block';
+
+        // העלמת ההתראה אוטומטית אחרי 5 שניות
+        setTimeout(() => {
+            alertDiv.style.display = 'none';
+        }, 5000);
+    }
+
     let currentSpecialIdToDelete = null;
     function removeSpecialAdmin(special_id) {
         currentSpecialIdToDelete = special_id;

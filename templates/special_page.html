@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מיוחדים</title>
+    <title>בקשות מהצוות</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
@@ -11,6 +11,27 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
+    /* עיצוב בסיסי לבועות הסינון */
+    .filter-pill {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent; /* הכנה למסגרת */
+        opacity: 0.7; /* שקיפות קלה למי שלא נבחר */
+    }
+
+    .filter-pill:hover {
+        opacity: 1;
+        transform: translateY(-2px); /* קפיצה קטנה למעלה */
+    }
+
+    /* העיצוב של הבועה שנבחרה כרגע */
+    .filter-pill.active {
+        opacity: 1;
+        border-color: #444; /* מסגרת כהה להדגשה */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        transform: scale(1.05); /* הגדלה קלה */
+    }
+
     .close-btn {
         color: #888;
         transition: color 0.2s;
@@ -43,8 +64,8 @@
 <div class="main-page-wrapper" style="justify-content: center; max-height: 1500px; margin-top: 55px; width: 100%; display: flex; direction: rtl; padding: 0px; gap: 10px; font-family: 'Rubik', sans-serif;">
     <div class="content-main-area" style="width: 70%; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 15px;">
 
-        <h2 style="font-size: 52px; font-weight: bold; color: #B8860B; ; display: block; padding: 5px; margin-bottom: 5px">
-            בקשות מיוחדות
+        <h2 style="font-size: 52px; font-weight: bold; color: #2575fc; ; display: block; padding: 5px; margin-bottom: 5px">
+            בקשות מהצוות
         </h2>
 
         <div style="text-align: center; margin-bottom: 1px;">
@@ -73,7 +94,7 @@
                        style="font-family: 'Rubik', sans-serif; width: 100%; padding: 12px 40px 12px 12px; border-radius: 8px; border: 1px solid #ddd; outline: none; transition: border-color 0.3s;">
             </div>
             <span onclick="document.getElementById('serialModal').style.display='flex'"
-                  style="display: inline-flex; align-items: center; gap: 8px; font-family: 'Rubik', sans-serif; background: #B8860B; color: white; padding: 8px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;"
+                  style="display: inline-flex; align-items: center; gap: 8px; font-family: 'Rubik', sans-serif; background: #2575fc; color: white; padding: 8px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;"
                   onmouseover="this.style.filter='brightness(1.1)'; this.style.transform='translateY(-2px)';"
                   onmouseout="this.style.filter='brightness(1)'; this.style.transform='translateY(0)';"
                   onmousedown="this.style.transform='translateY(0)'">
@@ -81,10 +102,27 @@
                 <svg style="width: 24px; height: 24px; fill: white;" viewBox="0 0 24 24">
                     <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                 </svg>
-                חיפוש מתקדם
+                מצב סיראלי
             </span>
         </div>
 
+        <div id="statusFilters" style="width: 100%; margin-top: 15px; justify-content: center; display: flex; gap: 10px; flex-wrap: wrap;">
+            <span onclick="filterByStatus('all', this)" class="filter-pill active" style="display: inline-block; min-width: 80px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #f1f3f5; color: #495057;">
+                הכל
+            </span>
+            <span onclick="filterByStatus('ממתין', this)" class="filter-pill" style="display: inline-block; min-width: 80px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #e0e0e0; color: #616161;">
+                ממתין
+            </span>
+            <span onclick="filterByStatus('בתהליך', this)" class="filter-pill" style="display: inline-block; min-width: 80px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #fff3e0; color: #ef6c00;">
+                בתהליך
+            </span>
+            <span onclick="filterByStatus('טופל', this)" class="filter-pill" style="display: inline-block; min-width: 80px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #e8f5e9; color: #2e7d32;">
+                טופל
+            </span>
+            <span onclick="filterByStatus('סורב', this)" class="filter-pill" style="display: inline-block; min-width: 80px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #ffebee; color: #c62828;">
+                סורב
+            </span>
+        </div>
         <div style="overflow-y: auto; width: 100%;">
             <div style="max-height: 400px; background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #eee;">
                 <table style="width: 100%; border-collapse: collapse; text-align: center;">
@@ -101,69 +139,105 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for report in all_special_requests %}
-                            <tr class="request-row" data-id="{{ report.id }}" style="border-bottom: 1px solid #f1f1f1;">
-                                <td style="padding: 15px; color: #555;">{{ report.id }}</td>
-                                <td style="padding: 15px;"><strong>{{ report.title }}</strong></td>
-                                <td style="padding: 15px; color: #555;">{{ report.ask_by }}</td>
-                                <td style="padding: 15px; color: #555;">{{ report.target }}</td>
-                                <td style="padding: 15px; color: #888;">{{ report.request_date }}</td>
-                                <td style="padding: 15px; color: #888;">{{ report.finish_date }}</td>
+                        {% if user.code in [0, 1] %}
+                            {# מצב מנהל - מציג את כל הדוחות #}
+                            {% for report in all_special_requests %}
+                                <tr class="request-row" data-id="{{ report.id }}" data-status="{{ report.status }}" style="border-bottom: 1px solid #f1f1f1; direction: rtl;">                                    <td style="padding: 15px; color: #555; text-align: right;">{{ report.id }}</td>
+                                    <td style="padding: 15px; text-align: center;"><strong>{{ report.title }}</strong></td>
+                                    <td style="padding: 15px; color: #555; text-align: center;">{{ report.ask_by }}</td>
+                                    <td style="padding: 15px; color: #555; text-align: center;">{{ report.target }}</td>
+                                    <td style="padding: 15px; color: #888; text-align: center;">{{ report.request_date }}</td>
+                                    <td style="padding: 15px; color: #888; text-align: center;">{{ report.finish_date }}</td>
 
-                                <td style="padding: 15px;">
-                                    <span style="padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; justify-content: center;
-                                                    background: {{ '#e0e0e0' if report.status == 'ממתין'
-                                                                 else ('#fff3e0' if report.status == 'בתהליך'
-                                                                 else ('#e8f5e9' if report.status == 'טופל'
-                                                                 else '#ffebee')) }};
-                                                    color: {{ '#616161' if report.status == 'ממתין'
-                                                             else ('#ef6c00' if report.status == 'בתהליך'
-                                                             else ('#2e7d32' if report.status == 'טופל'
-                                                             else '#c62828')) }};">
-                                                    {{ report.status }}
-                                    </span>
-                                </td>
+                                    <td style="padding: 15px; text-align: center;">
+                                        <span style="display: inline-block; min-width: 80px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;
+                                                        background: {{ '#e0e0e0' if report.status == 'ממתין'
+                                                                     else ('#fff3e0' if report.status == 'בתהליך'
+                                                                     else ('#e8f5e9' if report.status == 'טופל'
+                                                                     else '#ffebee')) }};
+                                                        color: {{ '#616161' if report.status == 'ממתין'
+                                                                 else ('#ef6c00' if report.status == 'בתהליך'
+                                                                 else ('#2e7d32' if report.status == 'טופל'
+                                                                 else '#c62828')) }};">
+                                            {{ report.status }}
+                                        </span>
+                                    </td>
 
-                                <td style="padding: 15px; display: flex; gap: 8px; justify-content: center; align-items: center;">
-                                    <button onclick="viewReport('{{ report.id }}')"
-                                            style="
-                                                background: #f8f9fa;
-                                                color: #555;
-                                                padding: 6px 12px;
-                                                border-radius: 6px;
-                                                border: 1px solid #ddd;
-                                                font-weight: bold;
-                                                font-size: 13px;
-                                                cursor: pointer;
-                                                transition: 0.2s;
-                                                font-family: 'Rubik', sans-serif;
-                                            "
-                                            onmouseover="this.style.background='#e9ecef'; this.style.color='#333'; this.style.borderColor='#ccc';"
-                                            onmouseout="this.style.background='#f8f9fa'; this.style.color='#555'; this.style.borderColor='#ddd';">
-                                        צפה
-                                    </button>
-                                    <button onclick="removeSpecial('{{ report.id }}')"
-                                            style="
-                                                background: #fff5f5;
-                                                color: #e03131;
-                                                padding: 6px 12px;
-                                                border-radius: 6px;
-                                                border: 1px solid #ffe3e3;
-                                                font-weight: bold;
-                                                font-size: 13px;
-                                                cursor: pointer;
-                                                transition: 0.2s;
-                                                font-family: 'Rubik', sans-serif;
-                                            "
-                                            onmouseover="this.style.background='#e03131'; this.style.color='#fff'; this.style.borderColor='#e03131';"
-                                            onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131'; this.style.borderColor='#ffe3e3';">
-                                        מחק
-                                    </button>
+                                    <td style="padding: 15px; display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                        <button onclick="viewReport('{{ report.id }}')"
+                                                class="btn-view"
+                                                style="background: #f8f9fa; color: #555; padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Rubik', sans-serif;"
+                                                onmouseover="this.style.background='#e9ecef'; this.style.color='#333';"
+                                                onmouseout="this.style.background='#f8f9fa'; this.style.color='#555';">
+                                            צפה
+                                        </button>
+                                        <button onclick="removeSpecial('{{ report.id }}')"
+                                                class="btn-delete"
+                                                style="background: #fff5f5; color: #e03131; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffe3e3; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Rubik', sans-serif;"
+                                                onmouseover="this.style.background='#e03131'; this.style.color='#fff';"
+                                                onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131';">
+                                            מחק
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+
+                        {% elif user.code not in [0, 1] %}
+                            {% set ns = namespace(found=false) %}
+                            {% for report in all_special_requests if report.ask_by == user.name %}
+                                {% set ns.found = true %}
+                                <tr class="request-row" data-id="{{ report.id }}" data-status="{{ report.status }}" style="border-bottom: 1px solid #f1f1f1; direction: rtl;">
+                                    <td style="padding: 15px; color: #555; text-align: center;">{{ report.id }}</td>
+                                    <td style="padding: 15px; text-align: center;"><strong>{{ report.title }}</strong></td>
+                                    <td style="padding: 15px; color: #555; text-align: center;">{{ report.ask_by }}</td>
+                                    <td style="padding: 15px; color: #555; text-align: center;">{{ report.target }}</td>
+                                    <td style="padding: 15px; color: #888; text-align: center;">{{ report.request_date }}</td>
+                                    <td style="padding: 15px; color: #888; text-align: center;">{{ report.finish_date }}</td>
+
+                                    <td style="padding: 15px; text-align: center;">
+                                        <span style="display: inline-block; min-width: 80px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;
+                                                        background: {{ '#e0e0e0' if report.status == 'ממתין'
+                                                                     else ('#fff3e0' if report.status == 'בתהליך'
+                                                                     else ('#e8f5e9' if report.status == 'טופל'
+                                                                     else '#ffebee')) }};
+                                                        color: {{ '#616161' if report.status == 'ממתין'
+                                                                 else ('#ef6c00' if report.status == 'בתהליך'
+                                                                 else ('#2e7d32' if report.status == 'טופל'
+                                                                 else '#c62828')) }};">
+                                            {{ report.status }}
+                                        </span>
+                                    </td>
+
+                                    <td style="padding: 15px; display: flex; gap: 8px; justify-content: center; align-items: center;">
+                                        <button onclick="viewReport('{{ report.id }}')"
+                                                class="btn-view"
+                                                style="background: #f8f9fa; color: #555; padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Rubik', sans-serif;"
+                                                onmouseover="this.style.background='#e9ecef'; this.style.color='#333';"
+                                                onmouseout="this.style.background='#f8f9fa'; this.style.color='#555';">
+                                            צפה
+                                        </button>
+                                        <button onclick="removeSpecial('{{ report.id }}')"
+                                                class="btn-delete"
+                                                style="background: #fff5f5; color: #e03131; padding: 6px 12px; border-radius: 6px; border: 1px solid #ffe3e3; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Rubik', sans-serif;"
+                                                onmouseover="this.style.background='#e03131'; this.style.color='#fff';"
+                                                onmouseout="this.style.background='#fff5f5'; this.style.color='#e03131';">
+                                            מחק
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+
+                            {% if not ns.found %}
+                                <tr><td colspan="8" style="padding: 30px; color: #999; text-align: center;">אין לך בקשות פעילות במערכת.</td></tr>
+                            {% endif %}
+
+                        {% endif %}
+                            <tr id="noResultsRow" style="display: none;">
+                                <td colspan="8" style="padding: 30px; color: #999; text-align: center; border-radius: 8px;">
+                                    <i class="fas fa-search" style="display: block; font-size: 24px; margin-bottom: 10px; opacity: 0.5;"></i>
+                                    לא נמצאו בקשות בסטטוס זה.
                                 </td>
                             </tr>
-                            {% else %}
-                            <tr><td colspan="6" style="padding: 30px; color: #999; direction: rtl;">טרם נשלחו בקשות.</td></tr>
-                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -171,75 +245,119 @@
     </div>
     <div class="sidebar-container" style="margin-top: 50px; width: 30%">
         <div class="updates-block" style="margin-top: 20px">
-                <h3 style="color: #B8860B; margin-top: 0;">יצירת בקשה מיוחדת</h3>
+                <h3 style="color: #2575fc; margin-top: 0;">יצירת בקשה מהצוות</h3>
                 <p>
-                    מלאו את הבקשה בהתאם והגדירו את הצורך של כל מוצר ומוצר ותהליך הבדיקה הרצוי. רשאים למלא את הבקשה הם המשתמשים הבאים
+                    מלאו את הבקשה בהתאם והגדירו את הצורך של כל מוצר ומוצר ותהליך הבדיקה הרצוי, כך שהצוות יוכל להתאים את הבדיקות לצורך הנדרש.
                 </p>
-                {% for user in special_users %}
-                    <span style="background-color: white; color: #D4A017; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; margin: 2px; border: 1px solid #eee;">{{ user }}</span>
-                {% endfor %}
-                <br>
                 <br>
                 <div style="display: flex; justify-content: center; width: 100%;">
                     <button onclick="document.getElementById('newSpecialModal').style.display='flex'"
-                        style="background: #B8860B; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.3s ease; font-family: 'Rubik', sans-serif;"
+                        style="background: #2575fc; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.3s ease; font-family: 'Rubik', sans-serif;"
                                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 117, 252, 0.3)';"
                                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(37, 117, 252, 0.2)';">
                         בקשה חדשה
                     </button>
                 </div>
-                <div style="display: flex; justify-content: center; width: 100%; margin-top: 8px">
-                    <span style="direction: rtl; text-align: center; width: 80%; display: flex; align-items: center; justify-content: center; background-color: #fff9eb; color: #5d4037; padding: 5px 15px; border-radius: 10px; font-weight: bold; font-size: 0.85em; margin: 15px auto; border: 1px solid #ffe0b2; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                <div style="display: flex; justify-content: center; width: 100%; margin-top: 8px;">
+                    <span style="direction: rtl; text-align: center; width: 60%; display: flex; align-items: center; justify-content: center; background-color: #fff9eb; color: #5d4037; padding: 5px 15px; border-radius: 10px; font-weight: bold; font-size: 0.75em; margin: 15px auto; border: 1px solid #ffe0b2; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
                         <svg style="width: 18px; height: 18px; fill: #B8860B;" viewBox="0 0 24 24">
                             <path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
                         </svg>
                         לאחר שהבקשה טופלה - בקשו את הסריאליים
-                        <a href="{{ url_for('sign_page') }}" title="חתימות" style="color: #B8860B; text-decoration: none; background: white; padding: 3px 10px; border-radius: 5px; border: 1px solid #B8860B; transition: all 0.3s ease;"
+                        <a href="{{ url_for('sign_page') }}" title="חתימות" style="color: #B8860B; text-decoration: none; background: white; padding: 3px 6px; border-radius: 5px; border: 1px solid #B8860B; transition: all 0.3s ease;"
                            onmouseover="this.style.background='#B8860B'; this.style.color='white';"
                            onmouseout="this.style.background='white'; this.style.color='#B8860B';">
                            כאן
                         </a>
                     </span>
                 </div>
+            <span style="direction: rtl; text-align: center; width: 60%; display: flex; align-items: center; justify-content: center; background-color: #fff9eb; color: #5d4037; padding: 5px 15px; border-radius: 10px; font-weight: bold; font-size: 0.75em; margin: 3px auto; border: 1px solid #ffe0b2; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+                        <svg style="width: 18px; height: 18px; fill: #B8860B;" viewBox="0 0 24 24">
+                            <path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                        </svg>
+                        הסריאליים ימתינו במחסן בתום ביצוע הבדיקות
+            </span>
         </div>
         <div id="requests_container" class="updates-block" style="margin-top: 20px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); font-family: 'Rubik', sans-serif; direction: rtl;">
-            <h3 style="color: #B8860B; margin-top: 0; margin-bottom: 20px;">מעקב בקשות</h3>
+            <h3 style="color: #2575fc; margin-top: 0; margin-bottom: 20px;">מעקב בקשות</h3>
 
             <div style="max-height: 370px; overflow-y: auto;">
-                {% for report in all_special_requests | sort(attribute='finish_date') %}
-                <div style="margin-bottom: 20px; padding: 15px;
-                         border-right: 4px solid {{ '#00c853' if report.status == 'טופל'
-                         else ('#f59f00' if report.status == 'בתהליך'
-                         else ('#d32f2f' if report.status == 'סורב'
-                         else '#2575fc')) }};
-                         background: #f9f9f9; border-radius: 4px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-weight: bold; color: #333;">{{ report.title }}</span>
-                        <span style="font-size: 12px; color: #777;">{{ report.finish_date }}</span>
-                    </div>
+                {% if user.code in [0, 1] %}
+                    {% for report in all_special_requests | sort(attribute='finish_date') %}
+                        <div style="margin-bottom: 20px; padding: 15px;
+                                 border-right: 4px solid {{ '#00c853' if report.status == 'טופל'
+                                 else ('#f59f00' if report.status == 'בתהליך'
+                                 else ('#d32f2f' if report.status == 'סורב'
+                                 else '#2575fc')) }};
+                                 background: #f9f9f9; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: bold; color: #333;">{{ report.title }}</span>
+                                <span style="font-size: 12px; color: #777;">{{ report.finish_date }}</span>
+                            </div>
 
-                   {% set percentage = (report.current / report.total * 100) if report.total > 0 else 0 %}
-                    <div style="width: 100%; background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; border: 1px solid #dee2e6;">
-                        <div id="progress-bar-{{ report.id }}"
-                             data-percentage="{{ percentage | round | int }}"
-                             class="progress-bar-animated"
-                             style="height: 100%;
-                                    width: 0%;
-                                    background-color: {{ '#00c853' if percentage >= 100 else '#2575fc' }};
-                                    transition: width 1.5s ease-in-out;">
+                           {% set percentage = (report.current / report.total * 100) if report.total > 0 else 0 %}
+                            <div style="width: 100%; background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; border: 1px solid #dee2e6;">
+                                <div id="progress-bar-admin-{{ report.id }}"
+                                     data-percentage="{{ percentage | round | int }}"
+                                     class="progress-bar-animated"
+                                     style="height: 100%;
+                                            width: 0%;
+                                            background-color: {{ '#00c853' if percentage >= 100 else '#2575fc' }};
+                                            transition: width 1.5s ease-in-out;">
+                                </div>
+                            </div>
+                            <div style="font-size: 10px; color: #666; text-align: left; margin-top: 2px;">
+                                {{ report.current }} מתוך {{ report.total }} הושלמו ({{ percentage | round | int }}%)
+                            </div>
+
+                            <div style="margin-top: 5px; font-size: 12px; color: #555;">
+                                סטטוס: <strong>{{ report.status }}</strong>
+                            </div>
                         </div>
-                    </div>
-                    <div style="font-size: 10px; color: #666; text-align: left; margin-top: 2px;">
-                        {{ report.current }} מתוך {{ report.total }} הושלמו ({{ percentage | round | int }}%)
-                    </div>
+                    {% else %}
+                        <p style="text-align: center; color: #999;">אין בקשות פעילות כרגע.</p>
+                    {% endfor %}
 
-                    <div style="margin-top: 5px; font-size: 12px; color: #555;">
-                        סטטוס: <strong>{{ report.status }}</strong>
-                    </div>
-                </div>
-                {% else %}
-                <p style="text-align: center; color: #999;">אין בקשות פעילות כרגע.</p>
-            {% endfor %}
+                {% elif user.code not in [0, 1] %}
+                    {% set ns = namespace(user_found=false) %}
+                    {% for report in all_special_requests | sort(attribute='finish_date') if report.ask_by == user.name %}
+                        {% set ns.user_found = true %}
+                        <div style="margin-bottom: 20px; padding: 15px;
+                                 border-right: 4px solid {{ '#00c853' if report.status == 'טופל'
+                                 else ('#f59f00' if report.status == 'בתהליך'
+                                 else ('#d32f2f' if report.status == 'סורב'
+                                 else '#2575fc')) }};
+                                 background: #f9f9f9; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: bold; color: #333;">{{ report.title }}</span>
+                                <span style="font-size: 12px; color: #777;">{{ report.finish_date }}</span>
+                            </div>
+
+                           {% set percentage = (report.current / report.total * 100) if report.total > 0 else 0 %}
+                            <div style="width: 100%; background: #e9ecef; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; border: 1px solid #dee2e6;">
+                                <div id="progress-bar-user-{{ report.id }}"
+                                     data-percentage="{{ percentage | round | int }}"
+                                     class="progress-bar-animated"
+                                     style="height: 100%;
+                                            width: 0%;
+                                            background-color: {{ '#00c853' if percentage >= 100 else '#2575fc' }};
+                                            transition: width 1.5s ease-in-out;">
+                                </div>
+                            </div>
+                            <div style="font-size: 10px; color: #666; text-align: left; margin-top: 2px;">
+                                {{ report.current }} מתוך {{ report.total }} הושלמו ({{ percentage | round | int }}%)
+                            </div>
+
+                            <div style="margin-top: 5px; font-size: 12px; color: #555;">
+                                סטטוס: <strong>{{ report.status }}</strong>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                    {% if not ns.user_found %}
+                        <p style="text-align: center; color: #999;">אין לך בקשות פעילות כרגע.</p>
+                    {% endif %}
+                {% endif %}
             </div>
         </div>
     </div>
@@ -250,7 +368,7 @@
 
         <span class="close-btn" onclick="document.getElementById('newSpecialModal').style.display='none'" style="position: absolute; left: 20px; top: 10px; font-size: 30px; cursor: pointer;">&times;</span>
 
-        <h2 style="color: #B8860B; margin-top: 0; text-align: center; margin-bottom: 20px;">יצירת בקשה מיוחדת</h2>
+        <h2 style="color: #2575fc; margin-top: 0; text-align: center; margin-bottom: 20px;">יצירת בקשה מהצוות</h2>
 
         <div id="dialogStatusMessage" style="display: none; width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: bold; font-family: 'Rubik', sans-serif; box-sizing: border-box;"></div>
 
@@ -275,9 +393,14 @@
                 <textarea name="description" rows="4" required placeholder="שם המוצר:תהליך:כמות" style="margin-top: 8px; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; resize: none;"></textarea>
             </div>
 
-            <div style="background-color: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px dashed #B8860B;">
-                <label style="font-weight: bold; font-size: 13px; color: #B8860B; display: block; margin-bottom: 5px;">הערה</label>
+            <div style="background-color: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px dashed #2575fc;">
+                <label style="font-weight: bold; font-size: 13px; color: #2575fc; display: block; margin-bottom: 5px;">הערה</label>
                 <p style="margin: 0; font-size: 12px; color: #555;">הסיריאליים של המוצרים יוגדרו אוטומטית על ידי המערכת בהמשך התהליך.</p>
+            </div>
+
+            <div style="background-color: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px dashed #cc0000;">
+                <label style="font-weight: bold; font-size: 13px; color: #cc0000; display: block; margin-bottom: 5px;">הבהרה</label>
+                <p style="margin: 0; font-size: 12px; color: #555;">לאחר סיום הבקשה, על המבקש לשלוח בקשת משיכה מהמחסן.</p>
             </div>
 
             <div>
@@ -286,7 +409,7 @@
             </div>
 
             <div style="display: flex; justify-content: center; margin-top: 10px;">
-                <button type="button" onclick="submitSpecialRequest()" style="font-family: 'Rubik', sans-serif; background: #B8860B; color: white; border: none; padding: 12px 40px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.3s;">
+                <button type="button" onclick="submitSpecialRequest()" style="font-family: 'Rubik', sans-serif; background: #2575fc; color: white; border: none; padding: 12px 40px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: background 0.3s;">
                     שלח בקשה
                 </button>
             </div>
@@ -297,7 +420,7 @@
     <div class="modal-content" style="background-color: #fff; padding: 30px; border-radius: 15px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); direction: rtl; text-align: right; font-family: 'Rubik', sans-serif;">
         <span class="close-btn" onclick="document.getElementById('viewSpecialModal').style.display='none'" style="position: absolute; left: 20px; top: 10px; font-size: 30px; cursor: pointer;">&times;</span>
 
-        <h2 id="view_title" style="color: #B8860B; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">---</h2>
+        <h2 id="view_title" style="color: #2575fc; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">---</h2>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; background: #f8f9fa; padding: 15px; border-radius: 10px;">
             <div><span style="font-weight: bold;">מבקש:</span> <span id="view_ask_by">---</span></div>
@@ -351,7 +474,7 @@
         <span class="close-btn"
               onclick="document.getElementById('serialModal').style.display='none'">&times;</span>
 
-        <h2 style="color: #2575fc; margin-top: 0; margin-bottom: 25px; font-weight: bold;">חיפוש מתקדם</h2>
+        <h2 style="color: #2575fc; margin-top: 0; margin-bottom: 25px; font-weight: bold;">מצב סיראלי</h2>
 
         <form method="POST" action="{{ url_for('special_page') }}" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
             <input type="text" name="serialASK" placeholder="הכנס מספר סידורי..." required
@@ -373,9 +496,9 @@
                         {% if product.status == 'R' or product.status == 'RED' %}
                         <span style="color: red;">אדום (תקול)</span>
                         {% elif product.status == 'W' or product.status == 'WHITE' %}
-                        <span style="color: #555;">לבן (תקין)</span>
+                        <span style="color: #555;">לבן (עבר הלבנה)</span>
                         {% elif product.status == 'B' or product.status == 'BLACK' %}
-                        <span style="color: black;">שחור (בבדיקה)</span>
+                        <span style="color: black;">שחור (עבר השחרה)</span>
                         {% elif product.status == 'N' or product.status == 'NONE' %}
                         <span style="color: gray;">חדש (טרם נבדק)</span>
                         {% else %}
@@ -393,6 +516,32 @@
     </div>
 </div>
 <script>
+    function filterByStatus(status, element) {
+        document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+        element.classList.add('active');
+
+        const rows = document.querySelectorAll('.request-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status');
+            if (status === 'all' || rowStatus === status) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noResultsRow = document.getElementById('noResultsRow');
+        if (visibleCount === 0) {
+            noResultsRow.style.display = ''; // הצגת השורה
+        } else {
+            noResultsRow.style.display = 'none'; // הסתרת השורה
+        }
+    }
+
+
     function filterSpecials() {
         const input = document.getElementById('reportSearch');
         const filter = input.value.toLowerCase().trim();

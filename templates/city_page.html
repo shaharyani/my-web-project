@@ -25,41 +25,42 @@
             <div class="big-rectangle">
                 <div class="values-grid">
                     <div class="value-item black">
-                        <div class="label">BLACK</div>
+                        <div class="label">שחור</div>
                         <div class="number">{{ counts.BLACK }}</div>
                     </div>
                     <div class="value-item red">
-                        <div class="label">RED</div>
+                        <div class="label">תקול</div>
                         <div class="number">{{ counts.RED }}</div>
                     </div>
                     <div class="value-item white">
-                        <div class="label">WHITE</div>
+                        <div class="label">לבן</div>
                         <div class="number">{{ counts.WHITE }}</div>
                     </div>
                     <div class="value-item gray">
-                        <div class="label">GRAY</div>
+                        <div class="label">חדש</div>
                         <div class="number">{{ counts.GRAY }}</div>
                     </div>
                 </div>
             </div>
 
-            {% if is_admin %}
-            <div class="gray-edit-section">
-                <h4 style="margin-bottom: 15px;">הוספת מוצר חדש ב{{ city_name }}</h4>
-                <form method="POST" action="{{ url_for('add_product', city_name=city_name) }}" class="gray-edit-controls" style="display: flex; flex-direction: column; gap: 10px;">
-                    <input type="text" name="serial" placeholder="מס' סידורי" required style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;">
-                    <select name="code" required style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;">
-                        <option value="" disabled selected>קוד אישי</option>
-                        {% for code_option in all_codes %}
-                            <option value="{{ code_option }}">{{ code_option }}</option>
-                        {% endfor %}
-                    </select>
-                    <div style="display: flex; justify-content: flex-start;">
-                        <button type="submit" style="padding:10px 20px; border:none; border-radius:6px; background:#3a6b3a; color:white; font-weight:bold; cursor:pointer;">הוסף</button>
-                    </div>
-                </form>
-            </div>
-            <div class="emergency-edit-section">
+            {% if is_admin or editor %}
+                <div class="gray-edit-section">
+                    <h4 style="margin-bottom: 15px;">הוספת מוצר חדש ב{{ city_name }}</h4>
+                    <form method="POST" action="{{ url_for('add_product', city_name=city_name) }}" class="gray-edit-controls" style="display: flex; flex-direction: column; gap: 10px;">
+                        <input type="text" name="serial" placeholder="סיראלי" required style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;">
+                        <select name="code" required style="padding:5px; border-radius:6px; border:1px solid #ccc; width: 50%; font-size:16px;">
+                            <option value="" disabled selected>קוד אישי</option>
+                            {% for code_option in all_codes %}
+                                <option value="{{ code_option }}">{{ code_option }}</option>
+                            {% endfor %}
+                        </select>
+                        <div style="display: flex; justify-content: flex-start;">
+                            <button type="submit" style="padding:10px 20px; border:none; border-radius:6px; background:#3a6b3a; color:white; font-weight:bold; cursor:pointer;">הוסף</button>
+                        </div>
+                    </form>
+                </div>
+                {% if is_admin %}
+                    <div class="emergency-edit-section">
                 <h4 style="margin-bottom: 15px;">כמות לחירום ב{{ city_name }}</h4>
                 <p style="dir: rtl; margin-bottom: 15px;">כמות זו הינה מוגדרת לחירום ואין לאשר יותר ממנה</p>
 
@@ -91,10 +92,8 @@
                             border: 1px solid {{ text_color }};">
                     לבן: {{ amount_current_white_serials }} | שחור: {{ amount_current_serials - amount_current_white_serials }}
                 </span>
-                <p style="direction: rtl; font-size:10px; text-align: center">
-                    המוצרים שנמצאים במחסן ועברו תהליך הלבנה או השחרה בלבד.
-                </p>
             </div>
+                {% endif %}
             {% endif %}
         </div>
 
@@ -102,9 +101,9 @@
             <div class="filter-section">
                 <input type="text" id="tableFilter" class="filter-input" placeholder="הקלד כאן..." dir="rtl">
                 <select id="columnSelect" class="filter-select">
-                    <option value="3">מספר סידורי</option>
-                    <option value="2">קוד אישי</option>
-                    <option value="1">מצב</option>
+                    <option value="0">סיראלי</option>
+                    <option value="1">קוד אישי</option>
+                    <option value="2">מצב</option>
                 </select>
                 <h3 class="filter-title">בחר אפשרות סינון:</h3>
             </div>
@@ -113,10 +112,10 @@
                 <thead>
                     <tr>
                         <th>תוצאות</th>
-                        <th>כלל התקלות</th>
+                        <th>הערות</th>
                         <th>מצב</th>
                         <th>קוד אישי</th>
-                        <th>מספר סידורי</th>
+                        <th>סיראלי</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -127,16 +126,29 @@
                                 <img src="{{ url_for('static', filename='images/down-arrow.png') }}" class="view-icon" alt="view" id="icon-{{ p.serial }}">
                             </div>
                         </td>
-                        <td class="view-cell">
-                            {% if p.reports == 0 %}
-                                <span style="background-color: #28a745; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
-                                    {{ p.reports }}
-                                </span>
-                            {% else %}
-                                <span style="background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
-                                    {{ p.reports }}
-                                </span>
-                            {% endif %}
+                        <td style="text-align: center; vertical-align: middle;">
+                            <div onclick="noteAD('{{ p.serial }}')" style="cursor:pointer; position: relative; display: inline-block;">
+                                <img src="{{ url_for('static', filename='images/comment.png') }}"
+                                     style="width: 24px; height: 24px; opacity: 0.8; transition: 0.2s;"
+                                     onmouseover="this.style.opacity='1'"
+                                     onmouseout="this.style.opacity='0.8'"
+                                     alt="notes">
+
+                                    {% if p.notes and p.notes|length > 2 %}
+                                        <span style="
+                                            position: absolute;
+                                            top: -2px;
+                                            right: -2px;
+                                            height: 10px;
+                                            width: 10px;
+                                            background-color: #ff4444;
+                                            border-radius: 50%;
+                                            border: 2px solid white;
+                                            box-shadow: 0 0 4px rgba(0,0,0,0.2);
+                                            display: block;
+                                        "></span>
+                                    {% endif %}
+                            </div>
                         </td>
                         <td id="status-display-{{ p.serial }}" style="text-align: center; vertical-align: middle;">
                             {% if p.status in ['R', 'RED'] %}
@@ -157,7 +169,21 @@
                         <td colspan="5">
                             <div id="content-{{ p.serial }}" style="max-height: 350px; overflow-y: auto; padding: 15px; text-align: right;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; direction: rtl;">
-                                    <strong style="font-size: 1.1em; white-space: nowrap;">כלל הבדיקות עבור: {{ p.serial }}</strong>
+                                   <div style="display: flex; flex-direction: column;">
+                                        <strong style="font-size: 1.1em; white-space: nowrap;">כלל הבדיקות עבור: {{ p.serial }}</strong>
+                                       {% if user.type == 0 or user.type == 1 %}
+                                            <strong style="font-size: 1em; white-space: nowrap; color: #666;">סה"כ שימושים: {{ p.count }}</strong>
+                                       {% endif %}
+                                      {% if p.reports_count == 0 %}
+                                             <span style="display: inline-block; width: 50%; text-align: center; background-color: #28a745; color: white; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85em;">
+                                                 אין תקלות שתועדו
+                                             </span>
+                                        {% else %}
+                                             <span style="display: inline-block; width: 50%; text-align: center; background-color: #cc0000; color: white; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85em;">
+                                                 סה"כ תקלות: {{ p.reports_count }}
+                                             </span>
+                                        {% endif %}
+                                    </div>
 
                                     {% if user.type == 0 or user.type == 1 %}
                                         <div id="dynamic-status-wrapper-{{ p.serial }}" class="dynamic-wrapper" style="display: none; align-items: center; gap: 10px;">
@@ -216,7 +242,7 @@
             <hr style="border: 0; border-top: 1px solid #ddd; margin-top: 15px;">
             <h4>{{ file_title3 }}</h4><p>{{ des3 }}</p>
             <a href="{{ url_for('open_excel', filepath=pdf_paths[2]) }}" target="_blank"><img class="icon" src="{{ url_for('static', filename='images/xls.png') }}" alt="XLS"></a>
-            {% if is_admin %}
+            {% if is_admin or editor %}
                 <h5 onclick="openCityDialog()" style="cursor:pointer; font-size: 1rem; color: #2575fc; text-align: center;">עריכת הפרטים</h5>
             {% endif %}
         </div>
@@ -374,8 +400,150 @@
         </div>
     </div>
 </div>
+<div id="notesDialog" class="modal-overlay" dir="rtl" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="confirm-box" style="max-width: 500px; width: 95%; text-align: center; padding: 25px; border-radius: 12px; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
 
+        <h3 id="notesHeader" style="margin-bottom: 12px; color: #cc0000; font-family: 'Rubik', sans-serif; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; font-size: 22px;">
+            הערות למוצר: <span id="noteSerialTitle"></span>
+        </h3>
+
+        <div id="existingNotesContainer" style="max-height: 250px; overflow-y: auto; margin-bottom: 20px; padding: 10px; background: #fdfdfd; border-radius: 8px; border: 1px solid #f0f0f0; display: flex; flex-direction: column; gap: 10px; text-align: right;">
+            </div>
+        {% if is_admin or editor %}
+            <div id="newNoteSection" style="margin-bottom: 20px;">
+                <p style="font-size: 14px; color: #555; margin-bottom: 8px; text-align: right; font-weight: bold;">הוסף הערה חדשה:</p>
+                <textarea id="newNoteInput" placeholder="כתוב כאן את ההערה שלך..."
+                          style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 15px; outline: none; resize: none; box-sizing: border-box;" rows="3"></textarea>
+            </div>
+
+            <div class="confirm-buttons" style="display: flex; justify-content: center; gap: 12px;">
+                <button id="saveNoteBtn" type="button" onclick="saveProductNote()"
+                        style="font-family: 'Rubik', sans-serif; padding: 10px 25px; border: none; border-radius: 6px; background: #cc0000; color: white; font-weight: bold; cursor: pointer; transition: 0.2s;">
+                    שמור הערה
+                </button>
+                <button type="button" onclick="closeNotesDialog()"
+                        style="font-family: 'Rubik', sans-serif; padding: 10px 25px; border: none; border-radius: 6px; background: #6c757d; color: white; font-weight: bold; cursor: pointer;">
+                    סגור
+                </button>
+            </div>
+        {% else %}
+            <div class="confirm-buttons" style="display: flex; justify-content: center; gap: 12px;">
+                <button type="button" onclick="closeNotesDialog()"
+                        style="font-family: 'Rubik', sans-serif; padding: 10px 25px; border: none; border-radius: 6px; background: #6c757d; color: white; font-weight: bold; cursor: pointer;">
+                    סגור
+                </button>
+            </div>
+        {% endif %}
+    </div>
+</div>
 <script>
+    let currentActiveSerial = ""; // משתנה גלובלי לשמירת הסריאלי הנוכחי
+    function noteAD(serial) {
+        currentActiveSerial = serial;
+        document.getElementById('noteSerialTitle').innerText = serial;
+
+        // תיקון: נקה את השדה רק אם הוא קיים (רק למנהלים)
+        const inputField = document.getElementById('newNoteInput');
+        if (inputField) {
+            inputField.value = "";
+        }
+
+        const container = document.getElementById('existingNotesContainer');
+        container.innerHTML = '<p style="color: #999; text-align:center;">טוען הערות...</p>';
+
+        // פתיחת הדיאלוג
+        document.getElementById('notesDialog').style.display = 'flex';
+
+        fetch(`/get_notes/${serial}`)
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = "";
+
+                // כאן נבדוק גם אם להראות את כפתור המחיקה בתוך ה-JS
+                const isAdminOrEditor = {{ 'true' if is_admin or editor else 'false' }};
+
+                if (data.notes && data.notes.length > 0) {
+                    data.notes.forEach((note, i) => {
+                        const noteDiv = document.createElement('div');
+                        noteDiv.style.cssText = "margin-bottom: 15px; display: flex; flex-direction: column;";
+
+                        // כפתור מחיקה יופיע רק אם המשתמש מורשה
+                        const deleteBtn = isAdminOrEditor
+                            ? `<span onclick="confirmDeleteNote(${i})" style="cursor:pointer; color: #d1d1d1; font-size: 16px;" onmouseover="this.style.color='#ff4444'" onmouseout="this.style.color='#d1d1d1'">✕</span>`
+                            : '';
+
+                        noteDiv.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding: 0 4px;">
+                                <div style="font-size: 11px; color: #999;">
+                                    <span style="color: #cc0000; font-weight: bold;">●</span> ${note.user || 'מערכת'} | ${note.date}
+                                </div>
+                                ${deleteBtn}
+                            </div>
+                            <div style="background: #fdfdfd; padding: 12px; border-radius: 8px; border: 1px solid #f0f0f0; color: #444; font-size: 14px; text-align: right;">
+                                ${note.text}
+                            </div>
+                        `;
+                        container.appendChild(noteDiv);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                } else {
+                    container.innerHTML = '<p style="color: #999; text-align:center; margin-top: 20px;">אין הערות קודמות למוצר זה.</p>';
+                }
+            });
+    }
+
+    function confirmDeleteNote(index) {
+        fetch('/delete_note', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ serial: currentActiveSerial, index: index })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // רענון הדיאלוג כדי להציג את הרשימה המעודכנת
+                noteAD(currentActiveSerial);
+
+                // אם לא נשארו הערות, נסיר את הנקודה האדומה מהטבלה
+                if (data.remaining === 0) {
+                    const iconContainer = document.querySelector(`div[onclick="noteAD('${currentActiveSerial}')"]`);
+                    const dot = iconContainer.querySelector('span');
+                    if (dot) dot.remove();
+                }
+            }
+        });
+    }
+
+    function saveProductNote() {
+        const text = document.getElementById('newNoteInput').value.trim();
+        if (!text) return;
+
+        fetch('/add_note', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ serial: currentActiveSerial, text: text })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // רענון הדיאלוג
+                noteAD(currentActiveSerial);
+
+                // בונוס: עדכון ויזואלי של הנקודה האדומה בטבלה ללא רענון דף
+                const iconContainer = document.querySelector(`div[onclick="noteAD('${currentActiveSerial}')"]`);
+                if (iconContainer && !iconContainer.querySelector('span')) {
+                    const dot = document.createElement('span');
+                    dot.style.cssText = "position: absolute; top: -2px; right: -2px; height: 10px; width: 10px; background-color: #ff4444; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.2);";
+                    iconContainer.appendChild(dot);
+                }
+            }
+        });
+    }
+
+    function closeNotesDialog() {
+        document.getElementById('notesDialog').style.display = 'none';
+    }
+
     function openCityDialog() {
         const modal = document.getElementById('statusDialog');
         if (modal) {
@@ -827,12 +995,46 @@
         });
 
         document.getElementById('tableFilter').addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            const colIdx = parseInt(document.getElementById('columnSelect').value);
-            document.querySelectorAll('#propertyTable tbody tr:not([id^="test-row-"])').forEach(row => {
-                const text = row.cells[colIdx].textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
+            const query = this.value.toLowerCase().trim();
+            const selectedValue = document.getElementById('columnSelect').value;
+
+            const columnMapping = {
+                "0": 4, // המשתמש בחר "מספר סידורי" (0) -> הקוד הולך לעמודה 2 בטבלה
+                "1": 3, // המשתמש בחר "קוד אישי" (1)    -> הקוד הולך לעמודה 0 בטבלה
+                "2": 2  // המשתמש בחר "מצב" (2)         -> הקוד הולך לעמודה 1 בטבלה
+            };
+
+            const colIdx = columnMapping[selectedValue];
+
+            const rows = document.querySelectorAll('#propertyTable tbody tr:not([id^="test-row-"])');
+
+            rows.forEach(row => {
+                const cell = row.cells[colIdx];
+                if (!cell) return;
+
+                let text = "";
+
+                // בדיקה אם מדובר בעמודת המצב (בטבלה היא אינדקס 1)
+                const selectInside = cell.querySelector('select');
+                if (selectInside) {
+                    text = selectInside.options[selectInside.selectedIndex].text;
+                } else {
+                    text = cell.innerText || cell.textContent;
+                }
+
+                const cleanText = text.toLowerCase().trim();
+
+                if (query === "") {
+                    row.style.display = '';
+                } else {
+                    row.style.display = cleanText.includes(query) ? '' : 'none';
+                }
             });
+        });
+
+        // בונוס: הפעלת הסינון מחדש כשמחליפים עמודה ב-Select
+        document.getElementById('columnSelect').addEventListener('change', function() {
+            document.getElementById('tableFilter').dispatchEvent(new Event('input'));
         });
     });
 

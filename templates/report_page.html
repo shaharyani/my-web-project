@@ -42,9 +42,14 @@
         </div>
 
         <div style="width: 50%; margin-top: 5px; justify-content: center; display: flex;">
-            <input type="text" id="reportSearch" placeholder="חפש לפי נושא התקלה..."
-                   oninput="filterReports()"
-                   style="width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif;">
+            <h2 style="color: #2575fc; margin-bottom: 15px; font-size: 1em; padding-right: 15px; text-align: right; margin-left: 15px">חפש נושא:</h2>
+            <select id="topicFilter" style="width: 40%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif;" onchange="filterReports()">
+                <option value="כלל נושאים" selected>כלל הנושאים</option>
+                <option value="תקלה טכנית">תקלה טכנית</option>
+                <option value="דיווח בטיחות">דיווח בטיחות</option>
+                <option value="תחזוקה מונעת">תחזוקה מונעת</option>
+                <option value="אחר">אחר</option>
+            </select>
         </div>
 
         <div style="overflow-y: auto; width: 100%;">
@@ -96,8 +101,8 @@
                 </table>
             </div>
         </div>
-
-        <div style="overflow-y: auto; width: 100%; margin-top: 15px;">
+        {% if editor or is_admin %}
+            <div style="overflow-y: auto; width: 100%; margin-top: 15px;">
             <h2 style="color: #666; margin-bottom: 15px; font-size: 1.4em; border-right: 4px solid #ccc; padding-right: 15px; text-align: right;">דיווחים נוספים</h2>
             <div style="background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #eee;">
                 <table style="max-height: 500px; overflow-y: auto; width: 100%; border-collapse: collapse; text-align: center;">
@@ -106,9 +111,7 @@
                             <th style="padding: 15px; color: #555;">דווח ע"י</th>
                             <th style="padding: 15px; color: #555;">נושא</th>
                             <th style="padding: 15px; color: #555;">תאריך תקלה</th>
-                            {% if is_admin or editor %}
-                                <th style="padding: 15px; color: #555;">סטוטס</th>
-                            {% endif %}
+                            <th style="padding: 15px; color: #555;">סטוטס</th>
                             <th style="padding: 15px; color: #555;">אחר</th>
                         </tr>
                     </thead>
@@ -118,13 +121,11 @@
                             <td style="padding: 15px; color: #2575fc; font-weight: bold;">{{ report.written_by }}</td>
                             <td style="padding: 15px; font-weight: bold;">{{ report.report_title }}</td>
                             <td style="padding: 15px; color: #888;">{{ report.error_date }}</td>
-                            {% if is_admin or editor %}
-                                <td style="padding: 15px; color: #888;">
-                                    <span style="padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; background: {{ '#e1f5fe' if report.report_status == 'ממתין' else '#e8f5e9' }}; color: {{ '#0288d1' if report.report_status == 'ממתין' else '#2e7d32' }};">
+                            <td style="padding: 15px; color: #888;">
+                                <span style="padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; background: {{ '#e1f5fe' if report.report_status == 'ממתין' else '#e8f5e9' }}; color: {{ '#0288d1' if report.report_status == 'ממתין' else '#2e7d32' }};">
                                         {{ report.report_status }}
-                                    </span>
-                                </td>
-                            {% endif %}
+                                </span>
+                            </td>
                             <td style="margin-top: 10px; display: flex; gap: 8px; justify-content: center; align-items: center;">
                                 <span onclick="viewReport('{{ report.id }}')" style="background: #f8f9fa; color: #555; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #ddd; cursor: pointer; transition: 0.2s;"
                                        onmouseover="this.style.background='#e9ecef'; this.style.borderColor='#bbb'"
@@ -154,6 +155,7 @@
                 </table>
             </div>
         </div>
+        {% endif %}
     </div>
     <div class="sidebar-container" style="margin-top: 50px; width: 30%">
         <div class="updates-block" style="margin-top: 20px">
@@ -259,7 +261,7 @@
 
         <div style="direction: rtl; text-align: right;">
             <h2 style="color: #2575fc; margin-top: 0; text-align: center; margin-bottom: 20px; font-family: 'Rubik', sans-serif;">יצירת דיווח חדש</h2>
-
+            <div id="dialogStatusMessage" style="display: none; width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; text-align: center; font-weight: bold; font-family: 'Rubik', sans-serif; box-sizing: border-box;"></div>
             <form action="{{ url_for('create_report') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px;">
                 <div>
                     <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">נושא הדיווח:</label>
@@ -278,9 +280,24 @@
                     <input type="date" id="error_date_israel" name="error_date" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}" maxlength="10" required class="modern-date-input" style="width: 25%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 14px; background: #fdfdfd; color: #333;">
                 </div>
 
-                <div>
-                    <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">סיראליים מקושרים:</label>
-                    <input type="text" id="error_serials" name="error_serials" placeholder="SN-00123" required style="width: 25%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 14px; background: #fdfdfd; color: #333;">
+                <div style="width: 100%; text-align: right; margin-bottom: 15px;">
+                    <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">סריאליים מקושרים:</label>
+
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" id="serialInput" placeholder="הקלד מספר סריאלי..."
+                               style="width: 30%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif;">
+                        <button type="button" onclick="addSerialTag()"
+                                style="padding: 10px 15px; background: #1971c2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Rubik', sans-serif;"
+                                onmouseover="this.style.background='#1b5fd7'"
+                                onmouseout="this.style.background='#2575fc'">
+                            הוסף
+                        </button>
+                    </div>
+
+                    <div id="serialsTagsContainer" style="width: 80%; display: none; padding: 15px; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 30px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+
+                    <input type="hidden" id="error_serials" name="error_serials" value="">
                 </div>
 
                 <div>
@@ -290,7 +307,7 @@
                 </div>
 
                 <div>
-                    <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">קבצים (עד 15MB):</label>
+                    <label style="font-weight: bold; font-size: 14px; display: block; margin-bottom: 5px;">קבצים (עד 5MB):</label>
                     <input type="file" name="report_files" multiple
                         style="font-family: 'Rubik', sans-serif; font-size: 12px; color: #666 ;">
                 </div>
@@ -311,7 +328,7 @@
     <div class="modal-content" style="background-color: #fff; padding: 30px; border-radius: 15px; width: 90%; max-width: 600px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); direction: rtl; text-align: right; font-family: 'Rubik', sans-serif;">
         <span class="close-btn" onclick="document.getElementById('viewReportModal').style.display='none'" style="position: absolute; left: 20px; top: 10px; font-size: 30px; cursor: pointer;">&times;</span>
 
-        <h2 id="view_title" style="color: #2575fc; margin-top: 0; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">נושא הדיווח</h2>
+        <h2 id="view_title" style="color: #2575fc; margin-top: 5px; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">נושא הדיווח</h2>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px;">
             <div>
@@ -337,10 +354,15 @@
             <div id="view_notes" style="background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 8px; min-height: 80px; white-space: pre-wrap; font-size: 14px; line-height: 1.6;"></div>
         </div>
 
+        <div style="margin-bottom: 20px;">
+            <h4 style="margin-bottom: 8px; color: #333;">סיראליים משוכיים:</h4>
+            <div id="view_serials" style="background: #fdfdfd; border: 1px solid #eee; padding: 15px; border-radius: 8px; min-height: 80px; white-space: pre-wrap; font-size: 14px; line-height: 1.6;"></div>
+        </div>
+
         <div id="files_section">
             <h4 style="margin-bottom: 8px; color: #333;">קבצים מצורפים:</h4>
             <div id="view_files" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                </div>
+            </div>
         </div>
 
         <div id="admin_reply_section" style="margin-top: 20px; display: none;">
@@ -404,6 +426,109 @@
 </div>
 
 <script>
+    function showDialogStatus(message, isError = true) {
+        const statusDiv = document.getElementById('dialogStatusMessage');
+        if (!statusDiv) return;
+
+        statusDiv.innerText = message;
+        statusDiv.style.display = 'block';
+
+        if (isError) {
+            statusDiv.style.backgroundColor = "#fff5f5";
+            statusDiv.style.color = "#e03131";
+            statusDiv.style.border = "1px solid #ffc9c9";
+        } else {
+            statusDiv.style.backgroundColor = "#ebfbee";
+            statusDiv.style.color = "#2b8a3e";
+            statusDiv.style.border = "1px solid #b2f2bb";
+        }
+
+        // אופציונלי: העלמת ההודעה אוטומטית אחרי 4 שניות
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, 4000);
+    }
+
+    let serialsList = [];
+    function addSerialTag() {
+        const input = document.getElementById('serialInput');
+        const container = document.getElementById('serialsTagsContainer');
+        const value = input.value.trim();
+
+        if (value === "") {
+            showDialogStatus("אנא הזן מספר סריאלי");
+            return;
+        }
+
+        // בדיקה אם קיים - במקום alert() נשתמש ב-Div הסטטוס
+        if (serialsList.includes(value)) {
+            showDialogStatus(`הסריאל ${value} כבר קיים ברשימה`);
+            input.value = "";
+            return;
+        }
+
+        serialsList.push(value);
+        input.value = "";
+
+        // הצגת הקונטיינר ברגע שיש סריאל ראשון
+        container.style.display = 'flex';
+
+        renderSerials();
+
+        // הצלחה (אופציונלי)
+        showDialogStatus("סריאל נוסף בהצלחה", false);
+    }
+
+    function removeSerial(index) {
+        serialsList.splice(index, 1);
+
+        if (serialsList.length === 0) {
+            document.getElementById('serialsTagsContainer').style.display = 'none';
+        }
+
+        renderSerials();
+    }
+
+    function renderSerials() {
+        const container = document.getElementById('serialsTagsContainer');
+        const hiddenInput = document.getElementById('error_serials');
+
+        container.innerHTML = "";
+
+        serialsList.forEach((sn, index) => {
+            const span = document.createElement('span');
+            span.style.cssText = `
+                display: inline-flex;
+                align-items: center;
+                background: #e7f5ff;
+                color: #1971c2;
+                padding: 5px 12px;
+                border-radius: 20px;
+                font-size: 13px;
+                font-weight: bold;
+                border: 1px solid #a5d8ff;
+                direction: ltr;
+            `;
+
+            span.innerHTML = `
+                ${sn}
+                <span onclick="removeSerial(${index})" style="margin-left: 8px; cursor: pointer; color: #cc0000; font-size: 14px; font-weight: normal;">✕</span>
+            `;
+
+            container.appendChild(span);
+        });
+
+        hiddenInput.value = serialsList.join(',');
+    }
+
+    // אפשרות להוסיף גם בלחיצה על Enter
+    document.getElementById('serialInput')?.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSerialTag();
+        }
+    });
+
     function updateStats(tech, safety, maint, other) {
         const total = tech + safety + maint + other;
         console.log("Total Reports:", total);
@@ -439,35 +564,80 @@
         );
     };
 
-    function filterReports() {
-        const input = document.getElementById('reportSearch');
-        const filter = input.value.toLowerCase();
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('error_date_israel');
 
-        // Select both tables
+        // יצירת מחרוזת תאריך בפורמט YYYY-MM-DD (הפורמט ש-HTML דורש ל-max)
+        const today = new Date().toISOString().split('T')[0];
+
+        // הגדרת הערך המקסימלי
+        dateInput.setAttribute('max', today);
+
+        // אופציונלי: הגדרת ברירת מחדל להיום
+        dateInput.value = today;
+    });
+
+    function filterReports() {
+        // 1. שליפת הערכים משני המסננים
+        const searchInput = document.getElementById('reportSearch');
+        const searchText = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+        const topicSelect = document.getElementById('topicFilter');
+        const selectedTopic = topicSelect ? topicSelect.value : "כלל נושאים";
+
+        // 2. מעבר על כל הטבלאות (שלי ושל כולם)
         const tables = document.querySelectorAll('table');
 
         tables.forEach(table => {
             const rows = table.querySelectorAll('tbody tr');
+            let visibleCount = 0;
 
             rows.forEach(row => {
-                // Check if this row is a placeholder (the "no reports" row)
-                const rowText = row.innerText.toLowerCase();
-                const isPlaceholder = rowText.includes('טרם שלחת') || rowText.includes('אין דיווחים');
-
-                // If it is a placeholder, only show it if the search box is empty
+                // בדיקה אם זו שורת "אין דוחות" (Placeholder)
+                const isPlaceholder = row.innerText.includes('טרם שלחת') || row.innerText.includes('אין דיווחים');
                 if (isPlaceholder) {
-                    row.style.display = filter === "" ? '' : 'none';
+                    row.style.display = 'none'; // נטפל בזה בסוף
                     return;
                 }
 
-                // Standard filter logic for data rows
-                if (rowText.includes(filter)) {
-                    row.style.display = ''; // Show row
+                const rowText = row.innerText.toLowerCase();
+
+                // לוגיקת הצלבה:
+                // א. האם הטקסט בחיפוש קיים בשורה?
+                const matchesSearch = searchText === "" || rowText.includes(searchText);
+
+                // ב. האם הנושא שנבחר קיים בשורה?
+                const matchesTopic = selectedTopic === "כלל נושאים" || rowText.includes(selectedTopic.toLowerCase());
+
+                // הצגת השורה רק אם שני התנאים מתקיימים
+                if (matchesSearch && matchesTopic) {
+                    row.style.display = '';
+                    visibleCount++;
                 } else {
-                    row.style.display = 'none'; // Hide row
+                    row.style.display = 'none';
                 }
             });
+
+            // 3. טיפול בשורת ה-"אין נתונים" בתוך הטבלה הספציפית
+            // אם הטבלה ריקה לגמרי אחרי הסינון, נציג שורה ריקה גנרית
+            handleEmptyTable(table, visibleCount, searchText, selectedTopic);
         });
+    }
+
+    function handleEmptyTable(table, visibleCount, searchText, selectedTopic) {
+        let emptyRow = table.querySelector('.no-results-found');
+
+        if (visibleCount === 0) {
+            if (!emptyRow) {
+                emptyRow = document.createElement('tr');
+                emptyRow.className = 'no-results-found';
+                emptyRow.innerHTML = `<td colspan="7" style="padding: 20px; color: #999; text-align: center;">לא נמצאו דוחות תואמים לחיפוש שלך</td>`;
+                table.querySelector('tbody').appendChild(emptyRow);
+            }
+            emptyRow.style.display = '';
+        } else if (emptyRow) {
+            emptyRow.style.display = 'none';
+        }
     }
 
     // תיקון: ה-Listener צריך להיות על שדה הקלט בטופס הדיווח החדש
@@ -496,10 +666,12 @@
         const modal = document.getElementById('viewReportModal');
         const notesDiv = document.getElementById('view_notes');
         const filesDiv = document.getElementById('view_files');
+        const serialsDiv = document.getElementById('view_serials');
 
         modal.style.display = 'flex';
         notesDiv.innerText = 'טוען...';
         filesDiv.innerHTML = '';
+        if (serialsDiv) serialsDiv.innerHTML = '';
 
         fetch(`/get_report_details/${id}`)
             .then(response => response.json())
@@ -509,28 +681,45 @@
                     return;
                 }
 
+                // עדכון שדות טקסט בסיסיים
                 document.getElementById('view_title').innerText = data.title;
                 document.getElementById('view_author').innerText = data.written_by;
                 document.getElementById('view_error_date').innerText = data.error_date;
                 document.getElementById('view_report_date').innerText = data.report_date;
 
+                // עיצוב סטטוס דינמי (הוספתי תמיכה בסטטוסים הנוספים שלך)
                 const statusEl = document.getElementById('view_status');
                 statusEl.innerText = data.status;
-
-                // עיצוב סטטוס דינמי - מותאם לממתין/טופל בלבד
                 const statusColors = {
-                    'ממתין': { bg: '#e1f5fe', text: '#0288d1' },
-                    'טופל': { bg: '#e8f5e9', text: '#2e7d32' }
+                    'ממתין': { bg: '#e0e0e0', text: '#616161' },
+                    'בתהליך': { bg: '#fff3e0', text: '#ef6c00' },
+                    'טופל': { bg: '#e8f5e9', text: '#2e7d32' },
+                    'סורב': { bg: '#ffebee', text: '#c62828' }
                 };
                 const colors = statusColors[data.status] || statusColors['ממתין'];
                 statusEl.style.background = colors.bg;
                 statusEl.style.color = colors.text;
 
+                // הצגת סריאלים מקושרים כ-Spans
+                if (serialsDiv) {
+                    if (data.report_serials && data.report_serials.trim() !== "") {
+                        const serialsArray = data.report_serials.split(',');
+                        serialsArray.forEach(sn => {
+                            const span = document.createElement('span');
+                            span.innerText = sn.trim();
+                            span.style = "display:inline-block; background:#e7f5ff; color:#1971c2; padding:3px 10px; border-radius:15px; font-size:12px; font-weight:bold; border:1px solid #a5d8ff; margin-left:5px; margin-bottom:5px; direction:ltr;";
+                            serialsDiv.appendChild(span);
+                        });
+                    } else {
+                        serialsDiv.innerHTML = '<span style="color:#999; font-size:12px;">אין סריאלים מקושרים</span>';
+                    }
+                }
+
                 notesDiv.innerText = data.user_note || "אין תיאור זמין";
 
+                // טיפול בתגובת מנהל
                 const replySection = document.getElementById('admin_reply_section');
                 const replyContent = document.getElementById('view_admin_reply');
-
                 if (data.reply_notes && data.reply_notes.length > 0) {
                     replySection.style.display = 'block';
                     replyContent.innerText = data.reply_notes.join('\n---\n');
@@ -538,6 +727,7 @@
                     replySection.style.display = 'none';
                 }
 
+                // טיפול בקבצים
                 filesDiv.innerHTML = '';
                 if (data.files && data.files.length > 0) {
                     data.files.forEach(path => {
@@ -548,13 +738,12 @@
                             link.href = '/' + path;
                             link.target = '_blank';
                             link.innerText = '📄 ' + displayName;
-                            link.className = "file-link-style";
-                            link.style = "background:#eef4ff; color:#2575fc; padding:5px 10px; border-radius:5px; text-decoration:none; border:1px solid #d0e1ff; font-size:12px; margin-left:5px; font-family: 'Rubik', sans-serif !important;";
+                            link.style = "background:#eef4ff; color:#2575fc; padding:5px 10px; border-radius:5px; text-decoration:none; border:1px solid #d0e1ff; font-size:12px; margin-left:5px; display:inline-block; margin-bottom:5px;";
                             filesDiv.appendChild(link);
                         }
                     });
                 } else {
-                    filesDiv.innerHTML = '<span style="color:#999;">אין קבצים מצורפים</span>';
+                    filesDiv.innerHTML = '<span style="color:#999; font-size:12px;">אין קבצים מצורפים</span>';
                 }
             })
             .catch(err => {

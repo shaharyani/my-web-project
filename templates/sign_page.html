@@ -50,6 +50,9 @@
             המידע מתעדכן בהמשך היום
         </span>
         <span style="background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; margin: 5px">
+            משיכות ממחסן רק לאחר סיום הבקשה שאושרה
+        </span>
+        <span style="background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em; margin: 5px">
             לעזרה פנה למנהל
         </span>
     </div>
@@ -73,7 +76,7 @@
                 </ul>
             </div>
             <div class="updates-block" style="width: 80%; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 2px 10px rgba(0,0,0,0.05); direction: rtl;">
-                <h3 style="margin-top: 0; font-size: 1.2em;">מוצרים שחזרו למחסן</h3>
+                <h3 style="margin-top: 0; font-size: 1.2em;">מוצרים שבמחסן</h3>
                 <div style="margin-bottom: 15px;">
                     <select id="cityFilter" onchange="filterProductsByCity()" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Rubik', sans-serif; font-size: 13px; cursor: pointer; background: #fdfdfd;">
                         <option value="all">כל הערים</option>
@@ -88,7 +91,16 @@
                     {% for item in all_retrun_items %}
                         <li class="return-item" data-city="{{ item.city_name }}" style="padding: 10px 8px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
                             <strong>{{ item.serial }}</strong>
-                            <span style="font-size: 11px; color: #999; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">{{ item.city_name }}</span>
+                                {% if item.status == 'RED' %}
+                                    <span style="background: #ffcccc; color: #cc0000; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">תקול</span>
+                                {% elif item.status == 'WHITE' %}
+                                    <span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">לבן</span>
+                                {% elif item.status == 'BLACK' %}
+                                    <span style="background: #333333; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">שחור</span>
+                                {% else %}
+                                    <span style="background: #f0f0f0; color: #777777; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">חדש</span>
+                                {% endif %}
+                            <span style="font-size: 11px; color: #333; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">{{ item.city_name }}</span>
                         </li>
                     {% endfor %}
 
@@ -240,7 +252,7 @@
                                   </svg>
                     </button>
                 </div>
-                <p style="color: #666; font-size: 13px;">כל הבקשות הממתינות מהמחסן מופעות כאן.</p>
+                <p style="color: #666; font-size: 13px;">כל הבקשות הממתינות למחסן מופעות כאן.</p>
                 <ul style="list-style: none; padding: 0; font-size: 14px;">
                     {% if user_product_requests | selectattr('status', 'equalto', 'ממתין') | list | length > 0 %}
                         {% for pr in user_product_requests | selectattr('status', 'equalto', 'ממתין') %}
@@ -409,8 +421,18 @@
                         <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">מספר סידורי:</label>
                         <input type="text" id="req_serial" placeholder="הקש מספר סידורי" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Rubik', sans-serif;">
 
-                        <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">סיבה / שימוש:</label>
-                        <input type="text" id="req_used_for" placeholder="ציין את סיבת הבקשה" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Rubik', sans-serif;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #555;">עבור:</label>
+                        <select id="req_used_for"  style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: 'Rubik', sans-serif;">
+                            <option value="all">בחר את הבקשה שביקשת לבצע</option>
+                            {% for usr in user_special_requests %}
+                                {% if usr.status == "טופל" %}
+                                    <option value="{{ usr.title }}">{{ usr.title }}</option>
+                                {% endif %}
+                            {% else %}
+                                <option disabled>אין בקשות שטופלו להצגה</option>
+                            {% endfor %}
+                            <option value="אישור מנהל">>> אישור מנהל</option>
+                        </select>
                     </div>
 
                     <div id="warehouseAlert"

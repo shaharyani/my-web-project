@@ -31,9 +31,9 @@ def create_all_dbs():
             city_name TEXT NOT NULL,
             status TEXT CHECK(status IN ('R','W','B','N')) DEFAULT 'N',
             owner TEXT,
-            notes TEXT,          -- רשימת הערות בפורמט JSON
-            all_codes TEXT,      -- רשימת כל הקודים בפורמט JSON
-            report INTEGER
+            notes TEXT,
+            report_count INTEGER DEFAULT 0,
+            count INTEGER DEFAULT 0
         )
     """)
     conn1.commit()
@@ -82,9 +82,9 @@ def create_all_dbs():
             error_date TEXT,
             report_title TEXT,
             report_date TEXT DEFAULT (datetime('now', 'localtime')),
-            report_status TEXT DEFAULT 'ממתין'
-        );
-    
+            report_status TEXT DEFAULT 'ממתין',
+             report_serials TEXT
+        );        
         CREATE TABLE IF NOT EXISTS report_notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             report_id INTEGER NOT NULL,
@@ -133,11 +133,6 @@ def create_all_dbs():
             status TEXT,
             total INTEGER,
             current INTEGER
-        );
-    
-        -- טבלה חדשה עבור משתמשים מורשי מיוחדים (users_group)
-        CREATE TABLE IF NOT EXISTS special_users (
-            username TEXT PRIMARY KEY
         );
     """)
 

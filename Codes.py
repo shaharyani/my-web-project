@@ -70,6 +70,18 @@ class Codes:
         return result[0] if result[0] is not None else 0
 
     @staticmethod
+    def get_all_city_names():
+        conn = sqlite3.connect('static/db/codes.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT city_name FROM city_codes")
+        rows = cursor.fetchall()
+        conn.close()
+
+        city_list = [row['city_name'] for row in rows]
+        return city_list
+
+    @staticmethod
     def get_all_city_codes():
         """שולף את כל הערים והקודים מ-codes.db"""
         conn = sqlite3.connect('static/db/codes.db')
@@ -107,3 +119,21 @@ class Codes:
             except:
                 continue
         return True  # הקוד לא נמצא באף עיר
+
+    @staticmethod
+    def get_city_by_code(code):
+        conn = sqlite3.connect('static/db/codes.db')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT city_name, all_codes FROM city_codes WHERE all_codes LIKE ?", (f'%"{code}"%',))
+        rows = cursor.fetchall()
+        conn.close()
+
+        data = {}
+        for row in rows:
+            try:
+                data[row['city_name']] = json.loads(row['all_codes'])
+            except:
+                data[row['city_name']] = []
+        return list(data.keys())[0] if data else None

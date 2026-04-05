@@ -318,9 +318,9 @@
                         {% if product.status == 'R' or product.status == 'RED' %}
                         <span style="color: red;">אדום (תקול)</span>
                         {% elif product.status == 'W' or product.status == 'WHITE' %}
-                        <span style="color: #555;">לבן (תקין)</span>
+                        <span style="color: #555;">לבן (עבר הלבנה)</span>
                         {% elif product.status == 'B' or product.status == 'BLACK' %}
-                        <span style="color: black;">שחור (בבדיקה)</span>
+                        <span style="color: black;">שחור (עבר השחרה)</span>
                         {% elif product.status == 'N' or product.status == 'NONE' %}
                         <span style="color: gray;">חדש (טרם נבדק)</span>
                         {% else %}
@@ -355,7 +355,16 @@
                                 {% for item in all_retrun_items %}
                                     <li class="return-item" data-city="{{ item.city_name }}" style="padding: 10px 8px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center;">
                                         <strong>{{ item.serial }}</strong>
-                                        <span style="font-size: 11px; color: #999; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">{{ item.city_name }}</span>
+                                        {% if item.status == 'RED' %}
+                                            <span style="background: #ffcccc; color: #cc0000; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">תקול</span>
+                                        {% elif item.status == 'WHITE' %}
+                                            <span style="background: #d4edda; color: #155724; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">לבן</span>
+                                        {% elif item.status == 'BLACK' %}
+                                            <span style="background: #333333; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">שחור</span>
+                                        {% else %}
+                                            <span style="background: #f0f0f0; color: #777777; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 20px;">חדש</span>
+                                        {% endif %}
+                                        <span style="font-size: 11px; color: #333; background: #f0f0f0; padding: 2px 6px; border-radius: 4px;">{{ item.city_name }}</span>
                                     </li>
                                 {% endfor %}
 
@@ -392,10 +401,10 @@
                 <div class="values-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
 
                     {% for color, list, label, color_code in [
-                        ('black', black_list, 'BLACK', '#333'),
-                        ('red', red_list, 'RED', '#d9534f'),
-                        ('white', white_list, 'WHITE', 'white'),
-                        ('gray', gray_list, 'GRAY', '#777')
+                        ('black', black_list, 'שחור', '#333'),
+                        ('red', red_list, 'אדום', '#d9534f'),
+                        ('white', white_list, 'לבן', 'white'),
+                        ('gray', gray_list, 'חדש', '#777')
                     ] %}
                     <div class="value-item {{ color }}"
                          data-serials="במצב {{ label }}:&#10;{{ list or 'אין נתונים' }}"
@@ -435,10 +444,7 @@
                     <a class="profile-btn" href="https://github.com/shaharyani/my-web-project" target="_blank"><img src="{{ url_for('static', filename=logo | default('images/logo.png')) }}" title="תיעוד מצב הגלים" style="transform: scale(1.4)"></a>
                 {% endif %}
 
-                {% if is_admin or user.name in special_users %}
-                    <a class="profile-btn" href="{{ url_for('special_page') }}"><img style="transform: scale(0.8)" src="{{ url_for('static', filename='images/request.png') }}" title="בקשה"></a>
-                {% endif %}
-
+                <a class="profile-btn" href="{{ url_for('special_page') }}"><img style="transform: scale(0.8)" src="{{ url_for('static', filename='images/request.png') }}" title="בקשה מהצוות"></a>
                 <a class="profile-btn" onclick="document.getElementById('serialModal').style.display='flex'"><img src="{{ url_for('static', filename='images/search.png') }}" title="חיפוש מתקדם"></a>
                 <a class="profile-btn" href="{{ url_for('sign_page') }}"><img style="transform: scale(0.7)" src="{{ url_for('static', filename='images/signature.png') }}" title="חתימות"></a>
                 <a class="profile-btn" href="{{ url_for('report_page') }}"><img style="transform: scale(0.8)" src="{{ url_for('static', filename='images/report.png') }}" title="תקלות"></a>

@@ -1,5 +1,6 @@
 import json
 import sqlite3
+from traceback import print_tb
 
 from flask import Flask, session, redirect, render_template, url_for, make_response, send_file, abort, send_from_directory, request, jsonify, flash
 from functools import wraps
@@ -18,6 +19,7 @@ from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 from static.helper.AppContns import UPLOAD_FOLDER, REPORT_FOLDER, LOG_FILE, CITIES_PATH, DATA_FILE, WAREHOUSE_FILE, LOG_TEST_FILE, LOG_SIGN_FILE, LOG_REPORT_FILE, LOG_REQ_WAREHOUSE_FILE, LOG_SPECIAL_FILE
+from static.helper.EmailManager import EmailManager
 from static.helper.LogCreator import create_logger
 from static.helper.db import get_users_db, get_products_db, get_tests_db, get_reports_db, get_requests_db
 import os
@@ -119,6 +121,38 @@ def load_user_from_cookie():
             if temp_user:
                 session["user_name"] = temp_user.get_name()
 
+
+@app.route('/login/sso')
+def sso_login():
+    # כאן תבוא הלוגיקה שתלויה בספק ה-SSO שלך
+    # דוגמה לניתוב חיצוני (למשל ל-Azure AD או Google):
+    # sso_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?..."
+
+    # לצורך הפיתוח שלך, נפנה לנתיב שמטפל באימות:
+    return redirect(url_for('auth_process'))
+
+
+@app.route('/auth/callback')
+def auth_callback():
+    # כאן השרת החיצוני מחזיר את המשתמש עם "Token"
+    # עליך לאמת את ה-Token ולמצוא את המשתמש ב-DB שלך
+    user_email = "user@company.com"  # נשלף מה-Token
+
+    # בדיקה אם המשתמש קיים ב-SQLite שלך
+    conn = get_users_db()
+    conn.row_factory = sqlite3.Row  # מאפשר גישה לפי שם עמודה
+    cursor = conn.cursor()
+
+    # בדיקה אם המשתמש קיים בטבלה
+    cursor.execute("SELECT * FROM users WHERE email = ?", (user_email,))
+    user = cursor.fetchone()
+
+    if user:
+        session['user_id'] = user['id']
+        return redirect(url_for('admin_dashboard'))
+    else:
+        return "משתמש לא מורשה במערכת", 403
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -141,7 +175,7 @@ def get_product_by_serial(serial):
     # הוספנו את city_name לשאילתה כדי להתאים למבנה ה-Class
     cursor.execute(
         """
-        SELECT id, serial, code, land_type, city_name, status, owner, notes
+        SELECT id, serial, code, land_type, city_name, status, owner, notes, report_count, count
         FROM products
         WHERE serial = ?
         """,
@@ -203,7 +237,6 @@ def home():
     return render_template(
         'index.html',
         user=user if user else None,
-        special_users = get_all_specials_users(),
         user_code=user.type if user else None,
         global_counts=get_all_status(),
         is_admin=user.is_admin,
@@ -235,7 +268,7 @@ def get_announcements(file=DATA_FILE):
 def update_announcements():
     # Get the text from the textarea
     raw_text = request.form.get('updates_text', '')
-    file = DATA_FILE if request.form.get("targetInput") == "announcements" else WAREHOUSE_FILE
+    file = DATA_FILE if request.form.get("target_file") == "announcements" else WAREHOUSE_FILE
 
     # 1. Split into lines, strip spaces, and remove empty entries
     all_lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
@@ -245,7 +278,10 @@ def update_announcements():
     with open(file, "w", encoding="utf-8") as f:
         f.write("\n".join(announcements_list))
 
-    flash("הנחיות עודכנו בהצלחה", "success")
+    if file == DATA_FILE:
+        flash("עדכונים נשמרו בהצלחה", "success")
+    else:
+        flash("הנחיות עודכנו בהצלחה", "success")
     return redirect(url_for('admin_dashboard'))
 
 def get_all_status():
@@ -279,7 +315,7 @@ def load_product_by_city(city_name):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, serial, code, land_type, city_name, status, owner, notes, report
+        SELECT id, serial, code, land_type, city_name, status, owner, notes, report_count, count
         FROM products
         WHERE city_name = ?
         ORDER BY id DESC
@@ -300,7 +336,8 @@ def load_product_by_city(city_name):
             status=STATUS_MAP.get(row[5], row[5]),
             owner=row[6],
             notes=notes_list,
-            reports=row[8]
+            reports_count=row[8],
+            count=row[9]
         )
 
         products.append(p)
@@ -515,6 +552,88 @@ def set_eme_amount(city_name):
 
     return redirect(url_for('city_page', city_name=city_name, amount_eme=amount_eme))
 
+
+@app.route("/get_notes/<serial>")
+@login_required
+def get_notes(serial):
+    conn = get_products_db()
+    product = conn.execute('SELECT notes FROM products WHERE serial = ?', (serial,)).fetchone()
+    conn.close()
+
+    if product:
+        raw_notes = product[0] if product[0] else "[]"
+        notes_data = json.loads(raw_notes)
+        return jsonify({'notes': notes_data})  # כאן Flask הופך את זה ל-JSON תקין ל-JS
+
+    return jsonify({'notes': []})
+
+@app.route("/add_note", methods=["POST"])
+@login_required
+def add_note():
+    data = request.get_json()
+    serial = data.get('serial')
+    note_text = data.get('text')
+
+    if not serial or not note_text:
+        return jsonify({'status': 'error', 'message': 'Missing data'}), 400
+
+    conn = get_products_db()
+    try:
+        product = conn.execute('SELECT notes FROM products WHERE serial = ?', (serial,)).fetchone()
+
+        if product is None:
+            return jsonify({'status': 'error', 'message': 'Product not found'}), 404
+
+        try:
+            current_notes = json.loads(product['notes']) if product['notes'] else []
+        except (ValueError, TypeError):
+            current_notes = []
+
+        new_note = {
+            'date': datetime.now().strftime("%d/%m/%Y %H:%M"),
+            'text': note_text,
+            'user': get_current_user().name  # מוסיף גם מי כתב את ההערה לתיעוד
+        }
+
+        current_notes.append(new_note)
+
+        conn.execute('UPDATE products SET notes = ? WHERE serial = ?',
+                     (json.dumps(current_notes, ensure_ascii=False), serial))
+        conn.commit()
+
+        return jsonify({'status': 'success', 'notes_count': len(current_notes)})
+
+    except Exception as e:
+        print(f"Error adding note: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route("/delete_note", methods=["POST"])
+@login_required
+def delete_note():
+    data = request.get_json()
+    serial = data.get('serial')
+    note_index = data.get('index')  # האינדקס של ההערה ברשימה
+
+    conn = get_products_db()
+    product = conn.execute('SELECT notes FROM products WHERE serial = ?', (serial,)).fetchone()
+
+    if product and product[0]:
+        notes_list = json.loads(product[0])
+
+        if 0 <= note_index < len(notes_list):
+            del notes_list[note_index]
+
+            conn.execute('UPDATE products SET notes = ? WHERE serial = ?',
+                         (json.dumps(notes_list, ensure_ascii=False), serial))
+            conn.commit()
+            conn.close()
+            return jsonify({'status': 'success', 'remaining': len(notes_list)})
+
+    conn.close()
+    return jsonify({'status': 'error', 'message': 'Could not delete note'}), 400
+
 @app.route("/city_page/<city_name>")
 @login_required
 def city_page(city_name):
@@ -552,6 +671,7 @@ def city_page(city_name):
         "city_page.html",
         user=user,
         is_admin=user.admin_check(),
+        editor=user.type == 1,
         gray_value=gray_value,
         city_name=city_name,
         global_counts=global_counts,
@@ -835,7 +955,7 @@ def add_code_route():
 
     # 1. בדיקה גלובלית - האם הקוד קיים בעיר כלשהי במערכת?
     if not Codes.is_code_globally_unique(new_code):
-        message = f"הקוד {new_code} כבר תפוס על ידי עיר אחרת!"
+        message = f"הקוד {new_code} כבר תפוס על ידי עיר אחרת"
         flash(message, "error")
         return jsonify({"success": False, "message": message})
 
@@ -914,6 +1034,10 @@ def create_user():
             email=email
         )
 
+        subject = f" נוצר בהצלחה{new_user.name}המשתמש "
+        body = ""
+        email_sender(current_user, new_user.email, subject, body)
+
         flash(f"המשתמש {name} נוצר בהצלחה.", "success")
     except Exception as e:
         app.logger.error(f"Error creating user: {e}")
@@ -961,6 +1085,11 @@ def edit_user():
     app.logger.info(
         f"User '{user.name}' (ID: {user.id}) updated: type={user.type}, admin={user.is_admin} by {current_user.name}."
     )
+
+    subject = f"{user.name}עדכן פרטי המשתמש "
+    body = ""
+    email_sender(current_user, user.email, subject, body)
+
     return redirect(url_for("admin_dashboard"))
 
 @app.route("/change_password", methods=["POST"])
@@ -984,6 +1113,10 @@ def change_password():
     flash("סיסמה עודכנה בהצלחה", "success")
     app.logger.info(f"User '{user.name}' (ID: {user.id}) changed password.")
 
+    subject = "עדכן סיסמא"
+    body = ""
+    email_sender(get_current_user(), user.email, subject, body)
+
     return redirect("/user_page")
 
 @app.route('/delete_user/<username>', methods=['POST'])
@@ -1006,17 +1139,36 @@ def delete_user(username):
         conn.commit()
         conn.close()
         flash(f"User {username} has been deleted.", "success")
+
+        subject = "מחיקת חשבון במצב הגלים"
+        body = ""
+        email_sender(current_user, user_to_delete.email, subject, body)
     else:
         flash(f"User {username} not found.", "error")
 
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/get_admin_emails', methods=['GET'])
+@login_required
+def get_admin_emails():
+    try:
+        conn = get_users_db()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT email FROM users WHERE type = 0 AND email IS NOT NULL")
+        emails = [row[0] for row in cursor.fetchall()]
+
+        conn.close()
+        return jsonify({'success': True, 'emails': emails})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route("/admin")
 @login_required
 def admin_dashboard():
     current_user = get_current_user()
     if not current_user or not current_user.is_admin:
-        flash("למשתמש זה אין הרשאות מנהל.", "error")
+        flash("למשתמש זה אין הרשאות מנהל", "error")
         return redirect(url_for("home"))
 
     # --- Load users from DB ---
@@ -1039,18 +1191,77 @@ def admin_dashboard():
         "admin.html",
         user=current_user.get_name(),
         users=users,
-        users_group = get_all_specials_users(),
+        today=str(datetime.now()),
         all_warehouse_requests= [req for req in get_all_product_requests_from_db() if req["to_user"] == "מחסן"],
         all_special = get_all_special_requests(),
-        logs=get_logs(5,LOG_FILE),
-        test_logs=get_logs(3,LOG_TEST_FILE),
-        sign_logs=get_logs(6,LOG_SIGN_FILE),
+        logs=get_logs(9,LOG_FILE),
+        test_logs=get_logs(5,LOG_TEST_FILE),
+        sign_logs=get_logs(10,LOG_SIGN_FILE),
         report_logs=get_logs(6,LOG_REPORT_FILE),
-        request_warehouse_logger=get_logs(6,LOG_REQ_WAREHOUSE_FILE),
-        special_logger=get_logs(6,LOG_SPECIAL_FILE),
+        request_warehouse_logger=get_logs(9,LOG_REQ_WAREHOUSE_FILE),
+        special_logger=get_logs(9,LOG_SPECIAL_FILE),
         announcements=get_announcements(DATA_FILE),
         des_content=get_announcements(WAREHOUSE_FILE)
     )
+
+@app.route('/update_request_date/<int:req_id>', methods=['POST'])
+@login_required
+def update_request_date(req_id):
+    data = request.get_json()
+    new_date = data.get('finish_date')
+
+    if not new_date:
+        return jsonify({'success': False, 'error': 'תאריך חסר'})
+
+    try:
+        conn = get_requests_db()
+        conn.execute('UPDATE requests SET finish_date = ? WHERE id = ?', (new_date, req_id))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+def email_sender(user, recipient, subject, body):
+    server_info = {
+        'host': 'smtp.office365.com',
+        'port': 587,
+        'user': user.email,
+        'password': user.password,
+        'MAIL_USE_TLS': True,
+        'MAIL_USE_SSL': False,
+    }
+
+    manager = EmailManager()
+    manager.send_async(
+        server_config=server_info,
+        recipient_email=recipient,
+        subject=subject,
+        body_html=body
+    )
+
+@app.route('/send_quick_email', methods=['POST'])
+@login_required
+def send_quick_email():
+    data = request.get_json()
+    user = get_current_user()
+
+    server_info = {
+        'host': 'smtp.office365.com',
+        'port': 587,
+        'user': user.email,
+        'password': user.password,
+    }
+
+    manager = EmailManager()
+    manager.send_async(
+        server_config=server_info,
+        recipient_email=data.get('recipient'),
+        subject=data.get('subject'),
+        body_html=data.get('body')
+    )
+
+    return jsonify({'success': True})
 
 @app.route('/reset_password_to_default', methods=['POST'])
 @login_required
@@ -1062,11 +1273,16 @@ def reset_password_to_default():
         conn = get_users_db()
         cursor = conn.cursor()
 
-        # הערה: מומלץ להצפין את '123' אם המערכת שלך משתמשת ב-Hash
         hashed_password = generate_password_hash('123')
         cursor.execute("UPDATE users SET password = ? WHERE id = ?", (hashed_password, user_id))
         conn.commit()
-        # TODO: Add here the sending massage process to the user's e-mail
+
+        cursor.execute("SELECT email FROM users WHERE id = ?", user_id)
+        email_to_send = cursor.fetchall()[0][0]
+
+        subject = "הסיסמא עודכנה ל-123"
+        body = ""
+        email_sender(get_current_user(), email_to_send, subject, body)
 
         return jsonify({'success': True})
     except Exception as e:
@@ -1115,6 +1331,14 @@ def handle_request(request_id, action):
 
             request_warehouse_logger.info(f"ADMIN '{admin_user.name}' APPROVED to '{user_name}' the {serial} from warehouse")
             sign_logger.info(f"User '{user_name}' signed for the {serial} from warehouse")
+
+            cursor1.execute("""
+                                UPDATE products 
+                                SET count = count + 1 
+                                WHERE serial = ?
+                            """, (serial,))
+            conn1.commit()
+
             cursor.execute("UPDATE product_requests SET status = ? WHERE id = ?", ('אושר', request_id))
             conn.commit()
             api_receive_warehouse_transfer(serial, user_name)
@@ -1157,6 +1381,24 @@ def user_page():
         profile_image=profile_image
     )
 
+
+@app.route('/check_availability', methods=['POST'])
+@login_required
+def check_availability():
+    data = request.get_json()
+    city = data.get('city_name', '').strip()
+    code = data.get('code', '').strip()
+
+    existing_codes = Codes.get_all_city_codes()
+    existing_cities = Codes.get_all_city_names()
+    flat_codes = [item for sublist in existing_codes.values() for item in sublist]
+
+    return jsonify({
+        'city_exists': True if city in existing_cities else False,
+        'code_exists': True if code in flat_codes else False,
+        'existing_city': Codes.get_city_by_code(code) if code != '' else None,
+    })
+
 @app.route('/newItems')
 @login_required
 def newItems():
@@ -1185,7 +1427,7 @@ def get_all_products_from_db():
 
     # Selecting the columns required by the Product class constructor
     cursor.execute("""
-        SELECT id, serial, code, land_type, city_name, status, owner, notes, report 
+        SELECT id, serial, code, land_type, city_name, status, owner, notes, report_count, count 
         FROM products
     """)
 
@@ -1214,7 +1456,8 @@ def get_all_products_from_db():
             status=STATUS_MAP.get(row[5], row[5]),
             owner=row[6],
             notes=notes_list,
-            reports=row[8]
+            reports_count=row[8],
+            count=row[9]
         )
         products.append(p)
 
@@ -1265,17 +1508,6 @@ def get_all_special_requests():
     conn.close()
     return requests_list
 
-def get_all_specials_users():
-    conn = get_requests_db()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT username FROM special_users")
-    rows_users = cursor.fetchall()
-    users_group = [row[0] for row in rows_users]
-    conn.close()
-
-    return users_group
-
 @app.route('/get_special_details/<int:report_id>')
 def get_special_details(report_id):
     conn = get_requests_db()
@@ -1309,33 +1541,6 @@ def get_special_details(report_id):
         'success': True,
         'report': report_data
     })
-
-@app.route('/update_special_users', methods=['POST'])
-@login_required
-def update_special_users():
-    admin_user = get_current_user()
-
-    data = request.get_json()
-    selected_users = data.get('users', [])
-
-    try:
-        conn = get_requests_db()
-        cursor = conn.cursor()
-
-        cursor.execute("DELETE FROM special_users")
-
-        for username in selected_users:
-            cursor.execute("INSERT INTO special_users (username) VALUES (?)", (username,))
-
-        conn.commit()
-        conn.close()
-
-        global users_group
-        users_group = selected_users
-        special_logger.info(f"ADMIN '{admin_user.name}' UPDATED the special users to {len(selected_users)}")
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/create_special', methods=['POST'])
 @login_required
@@ -1384,6 +1589,10 @@ def create_special():
                   get_current_user().name, status, total, current))
         special_logger.info(f"USER '{user.name}' CREATED a special request '{title}'")
 
+        subject = f"{title} יצר את הבקשה לצוות {user.name}המשתמש "
+        body = ""
+        email_sender(get_current_user(), user.email, subject, body)
+
         conn.commit()
         conn.close()
     except Exception as e:
@@ -1409,8 +1618,16 @@ def delete_special(report_id):
         conn.close()
         if user.is_admin:
             special_logger.info(f"Admin '{user.name}' DELETED '{title}'")
+
+            subject = f"{title} מחק את הבקשה לצוות {user.name}המנהל "
+            body = ""
+            email_sender(user, user.email, subject, body)
         else:
             special_logger.info(f"USER '{user.name}' DELETED '{title}'")
+
+            subject = f"{title} מחק את הבקשה לצוות {user.name}המשתמש "
+            body = ""
+            email_sender(user, user.email, subject, body)
         return jsonify({'success': True})
     else:
         conn.close()
@@ -1435,7 +1652,7 @@ def handle_special(request_id):
     if not special_request:
         return jsonify({'success': False, 'message': 'הדו"ח לא נמצא'}), 404
     else:
-        if special_serials:
+        if special_serials and special_serials != "[]":
             try:
                 cursor.execute("""
                     UPDATE requests 
@@ -1446,6 +1663,14 @@ def handle_special(request_id):
             except Exception as e:
                 conn.close()
                 return jsonify({'success': False, 'message': str(e)}), 500
+            conn.close()
+        elif special_serials == "[]":
+            cursor.execute("""
+                            UPDATE requests 
+                            SET status = ? 
+                            WHERE id = ?
+                            """, ("סורב", request_id))
+            conn.commit()
             conn.close()
         else:
             if new_status == 'approve':
@@ -1533,6 +1758,9 @@ def update_serials():
                 """, (json.dumps(processed_serials), current_count, request_id))
 
             special_logger.info(f"ADMIN '{admin_user.name}' UPDATED serials for request '{request_id}'")
+            #subject = f"{title} עדכן סיראליים לבקשה לצוות {admin_user.name}המנהל "
+            #body = ""
+            #email_sender(admin_user, user.email, subject, body)
 
             conn.commit()
             conn.close()
@@ -1555,65 +1783,97 @@ def check_special(special_serial, status):
     return False
 
 @app.route('/trigger_async_refresh/<int:request_id>')
+@login_required
 def trigger_async_refresh(request_id):
-    # הפעל את הפונקציה שמעדכנת את הנתונים ב-DB
-    auto_refresh_green_status(request_id)
+    try:
+        auto_refresh_green_status(request_id)
 
-    # שלוף מחדש כדי להחזיר את הערכים המדויקים ל-JS
-    conn = get_requests_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT current, total FROM requests WHERE id = ?", (request_id,))
-    row = cursor.fetchone()
-    conn.close()
+        conn = get_requests_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT current, total FROM requests WHERE id = ?", (request_id,))
+        row = cursor.fetchone()
+        conn.close()
 
-    return jsonify({'success': True, 'current': row[0], 'total': row[1]})
+        if row:
+            return jsonify({'success': True, 'current': row[0], 'total': row[1]})
+        return jsonify({'success': False, 'error': 'Request not found'})
+
+    except Exception as e:
+        print(f"Refresh error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def auto_refresh_green_status(request_id):
     conn = get_requests_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT serials, description, total, current FROM requests WHERE id = ?", (request_id,))
+    cursor.execute("SELECT serials, description, total, current, status FROM requests WHERE id = ?", (request_id,))
     row = cursor.fetchone()
+
+    # הגנה 1: אם השורה לא נמצאה בכלל
     if not row:
         conn.close()
         return
 
-    serials = json.loads(row[0])
+    # הגנה 2: טיפול במקרה שהשדה serials ריק או None
+    serials_raw = row[0]
+    if not serials_raw:
+        print(f"Warning: Serials field is empty for request {request_id}")
+        conn.close()
+        return
+
+    try:
+        serials = json.loads(serials_raw)
+    except json.JSONDecodeError:
+        print(f"Error: Serials for request {request_id} is not a valid JSON: {serials_raw}")
+        conn.close()
+        return
+
     description_text = row[1] or ""
-    total = row[2]
-    past_current = row[3]
+    total = row[2] or 0
+    past_current = row[3] or 0
 
     actions_map = {}
     lines = description_text.strip().split('\n')
     for idx, line in enumerate(lines):
         if ':' in line:
             parts = line.split(':')
-            # הנחה: השורה היא city:action:amount
             if len(parts) >= 2:
                 actions_map[idx] = parts[1].strip()
 
     current_count = 0
 
-    for item in serials:
-        # שימוש ב-line_id כדי למצוא את הפעולה המתאימה מהתיאור
-        l_id = int(item.get('line_id', 0))
-        action = actions_map.get(l_id, '')
+    # הגנה 3: וודא ש-serials הוא אכן רשימה לפני הלולאה
+    if isinstance(serials, list):
+        for item in serials:
+            l_id = int(item.get('line_id', 0))
+            action = actions_map.get(l_id, '')
 
-        if action == 'הלבנה':
+            # ברירת מחדל אם אין פעולה מזוהה
             status_to_check = "WHITE"
-        elif action == 'השחרה':
-            status_to_check = "BLACK"
+            if action == 'הלבנה':
+                status_to_check = "WHITE"
+            elif action == 'השחרה':
+                status_to_check = "BLACK"
 
-        is_green = check_special(item.get('serial'), status_to_check)
-        item['is_green'] = is_green
-        item['action'] = action
+            is_green = check_special(item.get('serial'), status_to_check)
+            item['is_green'] = is_green
+            item['action'] = action
 
-        if is_green:
-            current_count += 1
-    new_status = 'טופל' if current_count >= total else 'בתהליך'
+            if is_green:
+                current_count += 1
 
-    if past_current != current_count:
+    new_status = 'טופל' if current_count >= total and total > 0 else 'בתהליך'
+
+    if past_current != current_count and  current_count != total:
         special_logger.info(f"Request '{request_id}' is NOW {current_count}/{total} finished")
+        print(f"Request '{request_id}' updated: {current_count}/{total}")
+
+    if current_count >= total and total > 0 and row[4] != 'טופל':
+        special_logger.info(f"SUCCESS: Request '{request_id}' is finished ({current_count}/{total})")
+
+    if serials_raw == "[]":
+        new_status = 'סורב'
+        current_count = 0
 
     cursor.execute("UPDATE requests SET serials = ?, current = ?, status = ? WHERE id = ?",
                    (json.dumps(serials), current_count, new_status, request_id))
@@ -1631,7 +1891,6 @@ def get_all_requests_json():
 def special_page():
     user = get_current_user()
     all_special_requests = get_all_special_requests()
-    special_users = get_all_specials_users()
 
     product = None
     show_modal = False
@@ -1644,7 +1903,6 @@ def special_page():
 
     return render_template("special_page.html",
                            user=user,
-                           special_users=special_users,
                            all_special_requests=all_special_requests,
                            product=product,
                            show_modal=show_modal)
@@ -1690,8 +1948,9 @@ def sign_page():
     to_user_product_requests = [r for r in all_product_requests if r['to_user'] == user.name]
     pending_requests = [r for r in all_product_requests if r['status'] == 'ממתין' and r['user'] == user.name]
     available_names = [u.name for u in available_users]
+    user_special_requests = [usr for usr in get_all_special_requests() if usr.ask_by == user.name]
 
-    return render_template("sign_page.html", user=user, products=owned_products, remote_list_items=get_announcements(WAREHOUSE_FILE), all_retrun_items=all_return_items, all_cities=all_cities, user_product_requests=user_product_requests, to_user_product_requests=to_user_product_requests, available_names=available_names, pending_requests=pending_requests)
+    return render_template("sign_page.html", user=user, products=owned_products, remote_list_items=get_announcements(WAREHOUSE_FILE), all_retrun_items=all_return_items, all_cities=all_cities, user_product_requests=user_product_requests, to_user_product_requests=to_user_product_requests, available_names=available_names, pending_requests=pending_requests, user_special_requests=user_special_requests)
 
 @app.route('/transfer_to_warehouse/<serial>', methods=['POST'])
 @login_required
@@ -1777,6 +2036,9 @@ def request_product():
         if serial in all_requested_serials and existing_request['status'] == 'ממתין':
             return jsonify({'success': False, 'message': 'הסיראלי הזה כבר נמצא בהליך בקשה'}), 400
 
+        if used_for == "all":
+            return jsonify({'success': False, 'message': 'נא לשייך בקשה רלוונטית שביקשת לבצע'}), 400
+
         user = get_current_user()
 
         with get_requests_db() as conn:
@@ -1854,7 +2116,8 @@ def get_all_reports_from_db():
                 notes=notes,
                 report_status=row['report_status'],
                 reply_notes=reply_notes,
-                report_files=report_files
+                report_files=report_files,
+                report_serials=row['report_serials'],
             )
             reports_list.append(report)
 
@@ -1882,6 +2145,19 @@ def report_page():
 
     return render_template("report_page.html", user=user, all_reports=all_reports, user_reports=user_reports, is_admin=is_admin, editor=editor, tech_data=tech_data, safety_data=safety_data, maint_data=maint_data, other_data=other_data)
 
+def update_product_reports(serial):
+    conn = get_products_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE products 
+        SET report_count = report_count + 1 
+        WHERE serial = ?
+    """, (serial,))
+
+    conn.commit()
+    conn.close()
+
 @app.route('/create_report', methods=['POST'])
 @login_required
 def create_report():
@@ -1891,6 +2167,7 @@ def create_report():
     error_date = request.form.get('error_date')
     notes_content = request.form.get('notes')
     report_date_now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    report_serials_raw = request.form.get('error_serials') or ""
 
     files = request.files.getlist('report_files')
     file_paths_list = []
@@ -1900,9 +2177,9 @@ def create_report():
 
     try:
         cursor.execute("""
-            INSERT INTO reports (written_by, error_date, report_title, report_date, report_status)
-            VALUES (?, ?, ?, ?, ?)
-        """, (user.name, error_date, report_title, report_date_now, "ממתין"))
+            INSERT INTO reports (written_by, error_date, report_title, report_date, report_status, report_serials)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (user.name, error_date, report_title, report_date_now, "ממתין", report_serials_raw))
 
         report_id = cursor.lastrowid
 
@@ -1912,7 +2189,6 @@ def create_report():
                 unique_name = f"{report_id}_.{filename}"
                 path = os.path.join(REPORT_FOLDER, unique_name)
                 file.save(path)
-
                 cursor.execute("INSERT INTO report_files (report_id, file_path) VALUES (?, ?)", (report_id, path))
                 file_paths_list.append(path)
 
@@ -1922,28 +2198,17 @@ def create_report():
                 VALUES (?, ?, 'user_note')
             """, (report_id, notes_content))
 
-        new_report_obj = Report(
-            id=report_id,
-            written_by=user.name,
-            error_date=error_date,
-            report_date=report_date_now,
-            report_title=report_title,
-            notes=notes_content,
-            report_status="ממתין",
-            reply_notes=None,
-            report_files=",".join(file_paths_list)
-        )
-        report_logger.info(f"User '{user.name}' created a report '{report_title}'")
+        if report_serials_raw.strip():
+            serials_list = [s.strip() for s in report_serials_raw.split(',') if s.strip()]
+            for serial in serials_list:
+                update_product_reports(serial)
 
-        # אישור סופי של כל הפעולות במסד הנתונים
         conn.commit()
         flash('הדיווח נשלח בהצלחה', 'success')
-        print(f"Report {report_id} successfully created and object initialized for {user.name}")
-
     except Exception as e:
-        if conn: conn.rollback()  # ביטול הכל במקרה של תקלה (אטומיות)
+        if conn: conn.rollback()
         print(f"Error during report creation: {e}")
-        flash('אירעה שגיאה בתהליך שליחת הדיווח.', 'danger')
+        flash(f'אירעה שגיאה: {e}', 'danger')
     finally:
         if conn: conn.close()
 
@@ -1988,6 +2253,7 @@ def get_report_details(report_id):
         'status': report['report_status'],
         'report_date': report['report_date'],
         'error_date': report['error_date'],
+        'report_serials': report['report_serials'],
         'user_note': user_note,
         'reply_notes': reply_notes,
         'files': files
@@ -2006,6 +2272,19 @@ def get_report_title(report_id):
         return report['report_title']
     return "דיווח לא נמצא"
 
+def zero_product_reports(serial):
+    conn = get_products_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE products 
+        SET report_count = MAX(0, report_count - 1)
+        WHERE serial = ?
+    """, (serial,))
+
+    conn.commit()
+    conn.close()
+
 @app.route('/delete_report/<int:report_id>', methods=['POST'])
 @login_required
 def delete_report(report_id):
@@ -2014,7 +2293,8 @@ def delete_report(report_id):
     cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT written_by FROM reports WHERE id = ?", (report_id,))
+        # 1. שליפת פרטי הדיווח (כולל הסריאלים) לפני המחיקה
+        cursor.execute("SELECT written_by, report_serials FROM reports WHERE id = ?", (report_id,))
         report = cursor.fetchone()
 
         if not report:
@@ -2023,7 +2303,8 @@ def delete_report(report_id):
         if report[0] != user.name and not user.is_admin:
             return jsonify({'success': False, 'error': 'אין לך הרשאה למחוק דיווח זה'}), 403
 
-        report_title = get_report_title(report_id)
+        serials_string = report[1] or ""
+        report_title = get_report_title(report_id)  # פונקציה קיימת שלך
 
         cursor.execute("SELECT file_path FROM report_files WHERE report_id = ?", (report_id,))
         files = cursor.fetchall()
@@ -2039,13 +2320,20 @@ def delete_report(report_id):
         cursor.execute("DELETE FROM report_notes WHERE report_id = ?", (report_id,))
         cursor.execute("DELETE FROM reports WHERE id = ?", (report_id,))
 
+        if serials_string.strip():
+            serials_list = [s.strip() for s in serials_string.split(',') if s.strip()]
+            for sn in serials_list:
+                zero_product_reports(sn)
+
         report_logger.info(f"User '{user.name}' deleted report ID {report_id} (Title: {report_title})")
+
         conn.commit()
         return jsonify({'success': True})
 
     except Exception as e:
         if conn:
             conn.rollback()
+        print(f"Error deleting report: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         if conn:
