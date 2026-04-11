@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import traceback
 from traceback import print_tb
 
 from flask import Flask, session, redirect, render_template, url_for, make_response, send_file, abort, send_from_directory, request, jsonify, flash
@@ -9,7 +10,9 @@ import re
 from collections import Counter
 from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
-from static.helper.APIFlusk import api_process_warehouse_transfer, api_update_process_users_transfer, api_receive_warehouse_transfer, api_send_all_product_owners, api_send_all_product_status, api_update_product_status
+from static.helper.APIFlusk import api_process_warehouse_transfer, api_update_process_users_transfer, \
+    api_receive_warehouse_transfer, api_send_all_product_owners, api_send_all_product_status, api_update_product_status, \
+    connect_to_tamir
 from Codes import Codes
 from Product import Product
 from Report import Report
@@ -39,6 +42,7 @@ app.config['REPORT_FOLDER'] = REPORT_FOLDER
 os.makedirs(REPORT_FOLDER, exist_ok=True)
 
 create_all_dbs()
+connect_to_tamir()
 
 test_logger = create_logger('test_logger')
 sign_logger = create_logger('sign_logger')
@@ -58,11 +62,24 @@ def page_not_found(e):
 
 @app.errorhandler(405)
 def method_not_supported(e):
-    return render_template("405.html"), 404
+    return render_template("405.html"), 405
 
 @app.errorhandler(401)
 def page_unauthorized(e):
     return render_template("401.html"), 401
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    error_details = traceback.format_exc()
+    return render_template("500.html", error_msg=e, error_details=error_details), 500
+
+@app.errorhandler(502)
+def bad_gateway(e):
+    return render_template("502.html"), 502
+
+@app.errorhandler(503)
+def service_unavailable(e):
+    return render_template("503.html"), 503
 
 def get_logs(limit=6, file=None):
     logs = []
@@ -121,7 +138,7 @@ def load_user_from_cookie():
             if temp_user:
                 session["user_name"] = temp_user.get_name()
 
-
+# TODO: Finish the connection here to the SSO of the Unit
 @app.route('/login/sso')
 def sso_login():
     # כאן תבוא הלוגיקה שתלויה בספק ה-SSO שלך
@@ -131,7 +148,7 @@ def sso_login():
     # לצורך הפיתוח שלך, נפנה לנתיב שמטפל באימות:
     return redirect(url_for('auth_process'))
 
-
+# TODO: Make the check of the user_email of the token
 @app.route('/auth/callback')
 def auth_callback():
     # כאן השרת החיצוני מחזיר את המשתמש עם "Token"
@@ -278,10 +295,7 @@ def update_announcements():
     with open(file, "w", encoding="utf-8") as f:
         f.write("\n".join(announcements_list))
 
-    if file == DATA_FILE:
-        flash("עדכונים נשמרו בהצלחה", "success")
-    else:
-        flash("הנחיות עודכנו בהצלחה", "success")
+    flash("הנתונים נשמרו בהצלחה", "success")
     return redirect(url_for('admin_dashboard'))
 
 def get_all_status():
@@ -1687,6 +1701,18 @@ def handle_special(request_id):
                                         SET status = ? 
                                         WHERE id = ?
                                     """, ("סורב", request_id))
+
+                cursor1 = conn.cursor()
+                cursor1.execute("SELECT title, ask_by FROM requests WHERE id = ?", (request_id,))
+                request_row = cursor1.fetchone()
+
+                admin_user = get_current_user()
+                title = request_row[0]
+                user = User.get_by_name(request_row[1])
+                subject = f" נדחתה{title}הבקשה לצוות "
+                body = ""
+                email_sender(admin_user, user.email, subject, body)
+
                 conn.commit()
                 conn.close()
     return jsonify({
@@ -1758,9 +1784,11 @@ def update_serials():
                 """, (json.dumps(processed_serials), current_count, request_id))
 
             special_logger.info(f"ADMIN '{admin_user.name}' UPDATED serials for request '{request_id}'")
-            #subject = f"{title} עדכן סיראליים לבקשה לצוות {admin_user.name}המנהל "
-            #body = ""
-            #email_sender(admin_user, user.email, subject, body)
+            title = request_row['title']
+            user = User.get_by_name(request_row['ask_by'])
+            subject = f"{title} עדכן סיראליים לבקשה לצוות {admin_user.name}המנהל "
+            body = ""
+            email_sender(admin_user, user.email, subject, body)
 
             conn.commit()
             conn.close()
@@ -1806,7 +1834,7 @@ def auto_refresh_green_status(request_id):
     conn = get_requests_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT serials, description, total, current, status FROM requests WHERE id = ?", (request_id,))
+    cursor.execute("SELECT serials, description, total, current, status, title, ask_by FROM requests WHERE id = ?", (request_id,))
     row = cursor.fetchone()
 
     # הגנה 1: אם השורה לא נמצאה בכלל
@@ -1870,6 +1898,12 @@ def auto_refresh_green_status(request_id):
 
     if current_count >= total and total > 0 and row[4] != 'טופל':
         special_logger.info(f"SUCCESS: Request '{request_id}' is finished ({current_count}/{total})")
+        admin_user = User.get_by_name("שחר יהודה יאני")
+        title = row[5]
+        user = User.get_by_name(row[6])
+        subject = f" הגיעה ליעדה!{title}הבקשה לצוות "
+        body = ""
+        email_sender(admin_user, user.email, subject, body)
 
     if serials_raw == "[]":
         new_status = 'סורב'
@@ -2072,6 +2106,10 @@ def send_product_to_user():
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (sender.name, target_user, "ממתין", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), serial, "העברה בין משתמשים"))
             conn.commit()
+
+            subject = f"{target_user.name} אל- {sender.name} לאישור נשלח מ- {serial}העברה של "
+            body = ""
+            email_sender(sender, target_user.email, subject, body)
 
         return jsonify({'success': True})
     except Exception as e:
@@ -2370,4 +2408,4 @@ def add_admin_reply():
 
 # ------------------ Run App ------------------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

@@ -2,7 +2,7 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
-    <title>401 - אין הרשאה</title>
+    <title>502 - שרת לא מגיב</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
@@ -12,7 +12,7 @@
             height: 100vh;
 
             /* רקע */
-            background-image: url("{{ url_for('static', filename='images/401banner.png') }}");
+            background-image: url("{{ url_for('static', filename='images/502banner.png') }}");
             background-size: 60%;
             background-position: center;
             background-repeat: no-repeat;

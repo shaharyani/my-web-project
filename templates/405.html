@@ -7,27 +7,40 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
         body {
+            /* הגדרת גובה מלא כדי שהכפתור יוכל לרדת לתחתית */
+            margin: 0;
+            height: 100vh;
+
+            /* רקע */
             background-image: url("{{ url_for('static', filename='images/405banner.png') }}");
             background-size: 60%;
-            background-position: center;   /* center image */
-            background-repeat: no-repeat;  /* no tiling */
+            background-position: center;
+            background-repeat: no-repeat;
+
+            /* סידור אלמנטים */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* דוחף הכל למטה */
+            align-items: center;       /* ממרכז אופקית */
+            padding-bottom: 50px;      /* רווח מהקצה התחתון של המסך */
+            box-sizing: border-box;
         }
 
         a {
-            margin-top: 600px;
-            display: flex;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 15px 30px;
             color: #2575fc;
             font-weight: bold;
-            font-size: 48px;
-            border-radius: 6px;
-            align-items: flex-end;
+            font-size: 32px; /* גודל מעט יותר פרופורציונלי */
+            border: 3px solid #2575fc;
+            border-radius: 12px;
+            transition: all 0.3s ease;
         }
 
         a:hover {
             background: #2575fc;
-            color: white
+            color: white;
+            transform: translateY(-5px); /* אפקט קטן בציפה */
         }
     </style>
 </head>

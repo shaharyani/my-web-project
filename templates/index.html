@@ -283,6 +283,7 @@
                 <label style="font-weight: bold; color: #cc0000; display: block; margin-top: 15px;">
                     מחיקה או עריכה של תיקיות או קבצים אחרים תוביל לפגיעה בתיעוד
                 </label>
+                <span style="background-color: #f0f0f0; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">הניתוב: C:\Users\shaha\Desktop\cities</span>
                 <label style="font-weight: bold; color: white; background: #cc0000; display: block; padding: 5px">
                     אין לעשות פעולות אחרות בפקודה
                 </label>
@@ -381,7 +382,7 @@
         <div id="statusDialog" class="modal-overlay">
             <div class="modal-content">
                 <span class="close-btn" onclick="closeGlobalStatus()">&times;</span>
-                <h2 style="color: #2575fc; margin-bottom: 5px; font-weight: bold;">סטטוס מוצרים - כל המערכת</h2>
+                <h2 style="color: #2575fc; margin-bottom: 5px; font-weight: bold; font-size: 32px;">סטטוס מוצרים - כל המערכת</h2>
                 <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
                     <span style="width: 60%; background-color: white; color: #777; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em; border: 1px solid #eee;">
                         המוצרים אשר עברו אי-פעם בדיקה כלשהי במערכת
@@ -400,25 +401,30 @@
 
                 <div class="values-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;">
 
-                    {% for color, list, label, color_code in [
-                        ('black', black_list, 'שחור', '#333'),
-                        ('red', red_list, 'אדום', '#d9534f'),
-                        ('white', white_list, 'לבן', 'white'),
-                        ('gray', gray_list, 'חדש', '#777')
+                   {% for color, list, label, color_code, num in [
+                        ('black', black_list, 'שחור', '#333', all_products | selectattr('status', 'equalto', 'BLACK') | list | length),
+                        ('red', red_list, 'אדום', '#d9534f', all_products | selectattr('status', 'equalto', 'RED') | list | length),
+                        ('white', white_list, 'לבן', white, all_products | selectattr('status', 'equalto', 'WHITE') | list | length),
+                        ('gray', gray_list, 'חדש', '#777', all_products | selectattr('status', 'equalto', 'NONE') | list | length)
                     ] %}
                     <div class="value-item {{ color }}"
-                         data-serials="במצב {{ label }}:&#10;{{ list or 'אין נתונים' }}"
+                         data-serials="במצב {{ label }}:&#10;{{ list if list else 'אין נתונים' }}"
                          style="
                             padding: 15px;
                             border-radius: 10px;
                             background: {{ '#333' if color == 'white' else '#f8f9fa' }};
                             border: 1px solid #ddd;
                             cursor: pointer;
-                            position: relative; /* חובה עבור ה-Tooltip */
-                         ">
+                            font-size: 32px;
+                            position: relative;
+                            text-align: center; /* ממרכז את התוכן */
+                            transition: transform 0.2s;
+                         "
+                         onmouseover="this.style.transform='translateY(-3px)'"
+                         onmouseout="this.style.transform='translateY(0)'">
 
                         <div class="label" style="font-weight: bold; color: {{ color_code }};">{{ label }}</div>
-                        <div class="number" style="font-size: 24px; color: {{ '#fff' if color == 'white' else '#333' }}">{{ global_counts[label] }}</div>
+                        <div class="number" style="font-size: 24px; color: {{ color_code }};">{{ num }}</div>
                     </div>
                     {% endfor %}
                 </div>

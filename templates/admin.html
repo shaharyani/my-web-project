@@ -16,6 +16,26 @@
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        .filter-pill {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent; /* הכנה למסגרת */
+            opacity: 0.7; /* שקיפות קלה למי שלא נבחר */
+        }
+
+        .filter-pill:hover {
+            opacity: 1;
+            transform: translateY(-2px); /* קפיצה קטנה למעלה */
+        }
+
+        /* העיצוב של הבועה שנבחרה כרגע */
+        .filter-pill.active {
+            opacity: 1;
+            border-color: #ddd; /* מסגרת כהה להדגשה */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transform: scale(1.05); /* הגדלה קלה */
+        }
     </style>
 <!-------------------- USERS TABLE -------------------->
 <div style="width: 100%; font-family: 'Rubik', sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px;">
@@ -24,6 +44,28 @@
         <div class="data-table-card" style="flex: 2; margin: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; direction: rtl; margin-bottom: 32px">
                 <h3 style="font-size: 32px; margin: 0;">ניהול משתמשים</h3>
+                <div id="usersFilters" style="width: 20%; margin: 0px; justify-content: center; display: flex; gap: 10px;">
+                        <span onclick="filterByUsers('all', this)" class="filter-pill active" style="display: inline-block; max-width: 60px; padding: 7px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #f1f3f5; color: #495057;">
+                            כולם
+                        </span>
+                        <span onclick="filterByUsers('מחוברים', this)" class="filter-pill" style="display: inline-block; max-width: 60px; padding: 7px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #e8f5e9; color: #2e7d32;">
+                                המחוברים
+                        </span>
+                        <span onclick="filterByUsers('0', this)" class="filter-pill"
+                              style="display: inline-block; max-width: 80px; padding: 7px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #e3f2fd; color: #1976d2; cursor: pointer;">
+                            המנהלים
+                        </span>
+
+                        <span onclick="filterByUsers('1', this)" class="filter-pill"
+                              style="display: inline-block; max-width: 80px; padding: 7px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #f3e5f5; color: #7b1fa2; cursor: pointer;">
+                            העורכים
+                        </span>
+
+                        <span onclick="filterByUsers('2', this)" class="filter-pill"
+                              style="display: inline-block; max-width: 80px; padding: 7px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #fff3e0; color: #ef6c00; cursor: pointer;">
+                            השאר
+                        </span>
+                    </div>
                 <button onclick="openModal()" class="btn-create">צור משתמש חדש</button>
             </div>
             <div style="max-height: 235px; overflow-y: auto; overflow-x: hidden; direction: rtl; align-items: flex;">
@@ -39,7 +81,7 @@
                             <th style="text-align: center;">פעולות</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="tbodyUser">
                         {% for user in users %}
                         <tr style="border-bottom: 1px solid #eee;">
                             <td>{{ user.id }}</td>
@@ -50,7 +92,6 @@
                             <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
                             <td style="display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 0;">
                                 {% if user.name != session.get('user_name') %}
-                                    <button style="display: flex; justify-content: center; align-items: center; background-color: #f59f00; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-family: 'Rubik', sans-serif; cursor: pointer; min-width: 80px;" onclick="openSetPasswordModal('{{ user.id }}', '{{ user.name }}', '{{ user.email }}')">אפס סיסמה</button>
                                     <button style="display: flex; justify-content: center; align-items: center; background-color:gray; color: white; border: none; border-radius: 4px; padding: 5px 10px; font-family: 'Rubik', sans-serif; cursor: pointer; min-width: 60px;"
                                             onclick="openEditModal('{{ user.id }}', '{{ user.name }}', '{{ user.mador }}', '{{ user.type }}', '{{ user.email }}')">
                                         ערוך
@@ -66,6 +107,12 @@
                             </td>
                         </tr>
                         {% endfor %}
+                        <tr id="noResultsRowUsers" style="display: none;">
+                                    <td colspan="7" style="padding: 30px; color: #999; text-align: center; border-radius: 8px;">
+                                        <i class="fas fa-search" style="display: block; font-size: 24px; margin-bottom: 10px; opacity: 0.5;"></i>
+                                        לא נמצאו בקשות בסטטוס זה
+                                    </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -257,6 +304,23 @@
         <div style="flex: 2; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; margin-bottom: 15px; padding-bottom: 8px; direction: rtl;">
                     <h3 style="margin: 0; font-size: 28px; color: #cc0000;">ניהול בקשות מהצוות</h3>
+                    <div id="statusFilters" style="width: 20%; margin: 0px; justify-content: center; display: flex; gap: 10px;">
+                        <span onclick="filterByStatus('all', this)" class="filter-pill active" style="display: inline-block; max-width: 40px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #f1f3f5; color: #495057;">
+                            הכל
+                        </span>
+                        <span onclick="filterByStatus('ממתין', this)" class="filter-pill" style="display: inline-block;  max-width: 40px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #e0e0e0; color: #616161;">
+                            ממתין
+                        </span>
+                        <span onclick="filterByStatus('בתהליך', this)" class="filter-pill" style="display: inline-block;  max-width: 40px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #fff3e0; color: #ef6c00;">
+                            בתהליך
+                        </span>
+                        <span onclick="filterByStatus('טופל', this)" class="filter-pill" style="display: inline-block; max-width: 40px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #e8f5e9; color: #2e7d32;">
+                            טופל
+                        </span>
+                        <span onclick="filterByStatus('סורב', this)" class="filter-pill" style="display: inline-block;  max-width: 40px; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; text-align: center; background: #ffebee; color: #c62828;">
+                            סורב
+                        </span>
+                    </div>
                     <span style="background-color: #cc0000; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9em;">
                         נא לוודא כפילות סיריאליים בפקודה
                     </span>
@@ -274,7 +338,7 @@
                                 <th style="text-align: center; padding: 12px; border-bottom: 2px solid #dee2e6; width: 25%;">מספר</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tbody">
                             {% if all_special %}
                                 {% for req in all_special %}
                                 <tr style="border-bottom: 1px solid #eee; font-family: 'Rubik', sans-serif;">
@@ -328,7 +392,7 @@
                                             {% endif %}
                                         </div>
                                         <div style="margin-top: 10px; display: flex; justify-content: center;">
-                                            {% if req.status != 'סורב' %}
+                                            {% if req.status != 'סורב' and req.status != 'טופל' %}
                                                 <button onclick="updateTargetDate('{{ req.id }}')"
                                                         style="
                                                             background: #f8f9fa;
@@ -400,7 +464,9 @@
                                     </td>
 
                                     <td style="padding: 12px; text-align: center;">
-                                        {% if req.finish_date < today %}
+                                        {% if req.status == 'טופל' or req.status == 'סורב' %}
+                                            <div style="font-size: 12px; color: #555;">{{ req.finish_date }}</div>
+                                        {% elif req.finish_date < today %}
                                             <div style="font-size: 12px; color: #c62828; font-weight: bold;">{{ req.finish_date }}</div>
                                         {% else %}
                                             <div style="font-size: 12px; color: #555;">{{ req.finish_date }}</div>
@@ -423,6 +489,12 @@
                                     </td>
                                 </tr>
                             {% endif %}
+                             <tr id="noResultsRow" style="display: none;">
+                                <td colspan="7" style="padding: 30px; color: #999; text-align: center; border-radius: 8px;">
+                                    <i class="fas fa-search" style="display: block; font-size: 24px; margin-bottom: 10px; opacity: 0.5;"></i>
+                                    לא נמצאו בקשות בסטטוס זה
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -532,7 +604,7 @@
                 <div style="padding: 10px; background: white; border-right: 4px solid #cc0000; border-radius: 4px; font-size: 0.9em; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
                      <div style="flex-grow: 1;">
                          <strong>הודעות על בקשות לחתימות</strong>
-                         <p style="margin: 5px 0 0; color: #777; font-size: 0.85em;">במצב של בקשות בין משתמשים ובקשות מהמחסן.</p>
+                         <p style="margin: 5px 0 0; color: #777; font-size: 0.85em;">במצב של בקשות בין משתמשים.</p>
                      </div>
                     <div style="margin-right: 15px; font-size: 1.2em;">
                         ✅
@@ -756,7 +828,7 @@
 </div>
 
 <!-------------------- EDIT USER MODAL -------------------->
-<div id="editUserModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
+    <div id="editUserModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
     <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 450px; direction: rtl; font-family: 'Rubik', sans-serif;">
         <h2 style="margin-top: 0;">עריכת פרטי <span id="display-name" style="margin-top: 0; color: #333"></span></h2>
 
@@ -792,28 +864,6 @@
                 <button type="button" onclick="closeEditModal()" class="btn-cancel">ביטול</button>
             </div>
         </form>
-    </div>
-</div>
-<!-------------------- SET PASSWORD 123 MODAL -------------------->
-<div id="setPasswordModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center;">
-    <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 400px; text-align: center; direction: rtl; font-family: 'Rubik', sans-serif;">
-        <h3 style="margin-top: 0;">איפוס סיסמה עבור: <span id="passwordUserName" style="color: #2575fc;"></span></h3>
-
-        <div id="passwordError" style="display: none; background: #fff5f5; color: #e03131; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ffa8a8;"></div>
-
-        <div id="passwordSuccessContent">
-            <div style="background: #e7f3ff; padding: 15px; border-radius: 10px; margin: 20px 0;">
-                <p style="margin: 0; font-size: 18px;">הסיסמה שונתה ל- <b style="color: #2b8a3e; font-size: 22px;">123</b></p>
-            </div>
-            <p style="color: #666; font-size: 0.9em; margin-bottom: 25px;">
-                הודעת עדכון נשלחה אל: <br>
-                <span id="passwordUserEmail" style="font-weight: bold; color: #333;"></span>
-            </p>
-        </div>
-
-        <div class="button-group" style="display: flex; justify-content: center;">
-            <button type="button" onclick="closeSetPasswordModal()" class="btn-cancel" style="padding: 10px 30px; cursor: pointer;">סגור הודעה</button>
-        </div>
     </div>
 </div>
 <!-------------------- REMOVE USER MODAL -------------------->
@@ -963,6 +1013,100 @@
 
     <!-------------------- SCRIPTS -------------------->
 <script>
+    function filterByUsers(status, element) {
+        // 1. עיצוב הכפתורים
+        const pills = document.querySelectorAll('.filter-pill');
+        pills.forEach(pill => {
+            pill.classList.remove('active');
+            pill.style.opacity = '0.6';
+        });
+        element.classList.add('active');
+        element.style.opacity = '1';
+
+        // 2. סינון השורות
+        const tbody = document.getElementById('tbodyUser');
+        const rows = tbody.querySelectorAll('tr:not(#noResultsRowUsers)');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            // עמודה 5 - עמודת ה"סוג" שמכילה 0, 1 או 2
+            const typeCell = row.querySelector('td:nth-child(5)');
+            const rowValue = typeCell ? typeCell.innerText.trim() : '';
+
+            // עמודה 2 - בדיקת Class "user-active" לצורך סינון מחוברים
+            const nameCell = row.querySelector('td:nth-child(2)');
+            const isConnected = nameCell ? nameCell.classList.contains('user-active') : false;
+
+            let show = false;
+
+            if (status === 'all') {
+                show = true;
+            } else if (status === 'מחוברים') {
+                show = isConnected;
+            } else {
+                // כאן אנחנו משווים את המספר שבעמודה למספר ששלחנו מהכפתור (0, 1 או 2)
+                show = (rowValue === status);
+            }
+
+            // הצגה או הסתרה
+            if (show) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // 3. טיפול במצב שאין תוצאות
+        const noResultsRow = document.getElementById('noResultsRowUsers');
+        if (noResultsRow) {
+            noResultsRow.style.display = (visibleCount === 0) ? '' : 'none';
+        }
+    }
+
+    function filterByStatus(status, element) {
+        const pills = document.querySelectorAll('#statusFilters .filter-pill');
+        const tbody = document.getElementById('tbody');
+
+        pills.forEach(pill => {
+            pill.classList.remove('active');
+            pill.style.boxShadow = 'none'; // איפוס צל אם קיים
+            pill.style.opacity = '0.6';    // עמעום כפתורים לא פעילים
+        });
+
+        element.classList.add('active');
+        element.style.opacity = '1';       // הדגשת הכפתור הפעיל
+        element.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+
+        // 2. סינון השורות בטבלה
+        const rows = tbody.querySelectorAll('tbody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            // אם הטבלה ריקה (שורת "אין בקשות"), נתעלם ממנה
+            if (row.cells.length <= 1) return;
+
+            // מציאת הטקסט של הסטטוס בתוך השורה
+            // אנחנו מחפשים את ה-span שמכיל את הסטטוס בעמודה הראשונה (פעולות)
+            const statusSpan = row.querySelector('td:first-child span');
+            const rowStatus = statusSpan ? statusSpan.innerText.trim() : '';
+
+           if (status === 'all' || rowStatus === status) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const noResultsRow = document.getElementById('noResultsRow');
+        if (visibleCount === 0) {
+            noResultsRow.style.display = ''; // הצגת השורה
+        } else {
+            noResultsRow.style.display = 'none'; // הסתרת השורה
+        }
+    }
+
     let currentRequestIdToUpdate = null;
     function updateTargetDate(requestId) {
         currentRequestIdToUpdate = requestId;
@@ -1682,48 +1826,6 @@
     }
     function closeModal() {
         document.getElementById('userModal').style.display = 'none';
-    }
-
-    function openSetPasswordModal(userId, userName, userEmail) {
-        const modal = document.getElementById('setPasswordModal');
-        const errorDiv = document.getElementById('passwordError');
-        const successDiv = document.getElementById('passwordSuccessContent');
-        const userNameSpan = document.getElementById('passwordUserName');
-        const emailSpan = document.getElementById('passwordUserEmail');
-
-        errorDiv.style.display = 'none';
-        successDiv.style.display = 'none';
-        userNameSpan.innerText = userName;
-        emailSpan.innerText = (userEmail && userEmail !== 'None') ? userEmail : 'לא הוזן אימייל';
-
-        modal.style.display = 'flex';
-
-        fetch('/reset_password_to_default', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                user_id: userId,
-                new_password: '123'
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                successDiv.style.display = 'block';
-            } else {
-                errorDiv.innerText = 'שגיאה: ' + data.message;
-                errorDiv.style.display = 'block';
-            }
-        })
-        .catch(err => {
-            console.error('Error:', err);
-            errorDiv.innerText = 'חלה שגיאה בתקשורת עם השרת';
-            errorDiv.style.display = 'block';
-        });
-    }
-
-    function closeSetPasswordModal() {
-        document.getElementById('setPasswordModal').style.display = 'none';
     }
 
     function openEditModal(id, name, mador, type, email) {

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>500 - שגיאה בקוד בשרת</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=logo | default('images/logo.png')) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            /* הגדרת גובה מלא כדי שהכפתור יוכל לרדת לתחתית */
+            margin: 0;
+            height: 100vh;
+
+            /* רקע */
+            background-image: url("{{ url_for('static', filename='images/500banner.png') }}");
+            background-size: 60%;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            /* סידור אלמנטים */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* דוחף הכל למטה */
+            align-items: center;       /* ממרכז אופקית */
+            padding-bottom: 50px;      /* רווח מהקצה התחתון של המסך */
+            box-sizing: border-box;
+        }
+
+        a {
+            text-decoration: none;
+            padding: 15px 30px;
+            color: #2575fc;
+            font-weight: bold;
+            font-size: 32px; /* גודל מעט יותר פרופורציונלי */
+            border: 3px solid #2575fc;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        a:hover {
+            background: #2575fc;
+            color: white;
+            transform: translateY(-5px); /* אפקט קטן בציפה */
+        }
+
+        .error-container {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #ffc9c9;
+            border-radius: 16px;
+            padding: 25px;
+            width: 90%;
+            max-width: 900px;
+            margin-top: 30px;
+            direction: ltr;
+            text-align: left;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px); /* אפקט זכוכית יפה */
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #c92a2a;
+            font-family: 'Consolas', 'monospace';
+            font-size: 14px;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .home-link {
+            display: inline-block;
+            text-decoration: none;
+            padding: 14px 40px;
+            color: #2575fc;
+            font-weight: bold;
+            font-size: 22px;
+            border: 2px solid #2575fc;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            background: white;
+            margin-top: 20px;
+        }
+
+        .home-link:hover {
+            background: #2575fc;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(37, 117, 252, 0.3);
+        }
+
+        .error-title {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-family: 'Rubik';
+            direction: rtl;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .debug-btn {
+            margin-top: 20px;
+            margin-bottom: 15px;
+            background: #f1f3f5;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Rubik';
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .debug-btn:hover {
+            background: #e9ecef;
+            color: #2575fc;
+        }
+        /* עיצוב הרקע שמאחורי הדיאלוג */
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="document.getElementById('error-dialog').showModal()" class="debug-btn">
+        🔍 הצג פרטי שגיאה טכניים
+    </button>
+
+    <dialog id="error-dialog" style="border: none; border-radius: 16px; padding: 0; width: 90%; max-width: 800px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); font-family: 'Rubik', sans-serif;">
+        <div style="padding: 20px; background: #fff; direction: rtl;">
+            <div style="display: flex; justify-content: space-between; align-items: center; justify-content: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; text-align: center;">פרטי שגיאה (Stack Trace)</h2>
+                <span class="close-btn" onclick="document.getElementById('error-dialog').close()">&times;</span>
+            </div>
+
+            <div style="direction: ltr; text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; overflow-x: auto; max-height: 400px;">
+                <pre style="margin: 0; font-family: 'Consolas', monospace; font-size: 13px; color: #c92a2a; white-space: pre-wrap;">{{ error_details }}</pre>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: center;">
+                    <button onclick="document.getElementById('error-dialog').close()"
+                            style="text-align: center; justify-content: center; align-items: center; font-family: 'Rubik', sans-serif; background: #f0f0f0; color: #444; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s;"
+                            onmouseover="this.style.background='#e0e0e0'" onmouseout="this.style.background='#f0f0f0'">
+                        סגור
+                    </button>
+            </div>
+        </div>
+    </dialog>
+
+    <a href="{{ url_for('home') }}">חזרה לדף הבית</a>
+
+</body>
+</html>

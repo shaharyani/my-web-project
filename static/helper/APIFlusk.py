@@ -117,3 +117,6 @@ def api_update_product_status(serial, status):
         "status": status,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+
+def connect_to_tamir():
+    pass
